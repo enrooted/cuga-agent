@@ -66,6 +66,8 @@ def tools_to_registry_yaml(tools: list[dict[str, Any]]) -> dict[str, Any]:
         }
         if t.get("auth"):
             entry["auth"] = t["auth"]
+        if t.get("delegated_tools"):
+            entry["delegated_tools"] = t["delegated_tools"]
         include = t.get("include")
         if isinstance(include, list) and len(include) > 0:
             entry["include"] = include
