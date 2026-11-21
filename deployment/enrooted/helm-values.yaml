@@ -1,0 +1,21 @@
+# Shared across backend replicas. The registry runs privately in each CUGA pod.
+existingSecret: cuga-handbook-credentials
+delegationSecret: cuga-handbook-profile
+env:
+  AGENT_SETTING_CONFIG: settings.openai.toml
+  # Supply the approved HTTPS endpoint and its served model ID in your release.
+  OPENAI_BASE_URL: ""
+  MODEL_NAME: ""
+  OPENAI_API_KEY: ""
+  CUGA_DELEGATION_CONFIG: /run/secrets/connector.yaml
+  CUGA_SECRET_KEY: ""
+  CUGA_REGISTRY_BINDING_KEY: ""
+  DYNACONF_STORAGE__MODE: prod
+  DYNACONF_STORAGE__POSTGRES_URL: ""
+  DYNACONF_AUTH__OIDC_CA_BUNDLE: /run/secrets/handbook-ca
+  DYNACONF_ADVANCED_FEATURES__CUGA_LITE_EXECUTION_MODE: function_calling
+  DYNACONF_ADVANCED_FEATURES__CUGA_LITE_FC_PROMPT_FRAGMENTS: '["evidence_first"]'
+  DYNACONF_ADVANCED_FEATURES__MAX_TOOL_CALLS_PER_RUN: "12"
+  DYNACONF_ADVANCED_FEATURES__TRACKER_ENABLED: "false"
+  DYNACONF_ADVANCED_FEATURES__LANGFUSE_TRACING: "false"
+  DYNACONF_OBSERVABILITY__OPENLIT: "false"
