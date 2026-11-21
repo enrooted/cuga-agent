@@ -152,6 +152,10 @@ class EvolveIntegration:
         turn_id: Optional[str] = None,
     ) -> None:
         """Store durable user facts/preferences without interrupting lite execution."""
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         if not user_id or not message:
             return
 
@@ -231,6 +235,10 @@ class EvolveIntegration:
         agent_id: Optional[str] = None,
     ) -> None:
         """Save the agent trajectory to Evolve for tip generation."""
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         if success and not settings.evolve.save_on_success:
             return
         if not success and not settings.evolve.save_on_failure:
