@@ -521,6 +521,10 @@ class ActivityTracker(object):
             f.write("")
 
     def collect_prompt(self, role: str, value: str):
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         # Prompts only exist to be saved on the next step. With the tracker off nothing
         # saves them, so keeping them would grow memory for no reader.
         if not settings.advanced_features.tracker_enabled:
@@ -557,6 +561,10 @@ class ActivityTracker(object):
             step (Step): The description of the step to collect.
         """
 
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         self.step_count += 1
         tracker_enabled = settings.advanced_features.tracker_enabled
         if not tracker_enabled and not AGENT_ANALYTICS:
@@ -803,6 +811,10 @@ class ActivityTracker(object):
 
     def to_file(self):
         """Save current task data to file in the experiment directory."""
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         if self.experiment_folder:
             # Save to experiment directory
             source_dir = os.path.join(self._base_dir, self.experiment_folder)
