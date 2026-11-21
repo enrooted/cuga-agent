@@ -63,6 +63,8 @@ env:
 # Name of an existing Secret containing sensitive env vars.
 # When set, sensitive keys are sourced via secretKeyRef instead of plain value.
 existingSecret: ""
+# Optional Secret containing connector.yaml and its public CA bundle.
+delegationSecret: ""
 
 resources:
   requests:

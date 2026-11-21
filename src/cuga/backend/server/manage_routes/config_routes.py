@@ -106,6 +106,9 @@ async def save_manage_config_publish(request: Request, agent_id: Optional[str] =
 
     data = await request.json()
     config = data.get("config", data) or {}
+    from cuga.backend.server.auth.keycloak_exchange import prepare_registrations
+
+    await prepare_registrations(config.get("tools"), request)
     agent_meta = config.get("agent")
     if not isinstance(agent_meta, dict) or not (agent_meta.get("name") or "").strip():
         return JSONResponse(

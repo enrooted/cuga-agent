@@ -118,11 +118,24 @@ async def post_registry_call(
     from cuga.backend.server.auth import gateway_tokens
     from cuga.backend.tools_env.registry import mcp_gateway
 
+    from cuga.backend.server.auth import keycloak_exchange
+
+    turn = keycloak_exchange.current_turn.get()
+    if turn and not keycloak_exchange.trusted_registry_url(url):
+        return 403, "Untrusted registry connection."
+    # Generic tools retain the existing HTTP behavior when delegation is disabled.
+    redirect_policy = {"allow_redirects": False} if turn or keycloak_exchange.delegation.enabled() else {}
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
-    async with session.post(url, json=payload, headers=_CALL_HEADERS, timeout=timeout) as response:
+    async with session.post(
+        url, json=payload, headers=_CALL_HEADERS, timeout=timeout, **redirect_policy
+    ) as response:
         status, text = response.status, await response.text()
     try:
-        extra = await gateway_tokens.retry_headers(status, text)
+        extra = await keycloak_exchange.retry_headers(status, text, url, payload)
+        if not extra:
+            extra = await gateway_tokens.retry_headers(status, text)
+    except keycloak_exchange.DelegationError as e:
+        return e.status, str(e)
     except gateway_tokens.GatewayAccessError as e:
         return 403, str(e)
     except mcp_gateway.GatewayError as e:  # the IAM cannot be reached or answered badly
@@ -130,7 +143,7 @@ async def post_registry_call(
     if not extra:
         return status, text
     async with session.post(
-        url, json=payload, headers={**_CALL_HEADERS, **extra}, timeout=timeout
+        url, json=payload, headers={**_CALL_HEADERS, **extra}, timeout=timeout, **redirect_policy
     ) as response:
         return response.status, await response.text()
 

@@ -1,5 +1,6 @@
 import hashlib
 from typing import Optional
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import HTTPException, Request
@@ -215,7 +216,16 @@ async def _get_validator() -> Optional[JWTValidator]:
     return _validator_cache[cache_key]
 
 
+def check_delegated_origin(request: Request, client) -> None:
+    origin = request.headers.get("origin")
+    if origin and request.method not in ("GET", "HEAD", "OPTIONS"):
+        endpoint = urlsplit(client.redirect_uri) if client else None
+        if not endpoint or origin != f"{endpoint.scheme}://{endpoint.netloc}":
+            raise HTTPException(403, "Invalid browser origin")
+
+
 async def get_current_user(request: Request) -> Optional[UserInfo]:
+    request.state.delegated_session = None
     if not _auth_enabled():
         return None
 
@@ -228,6 +238,21 @@ async def get_current_user(request: Request) -> Optional[UserInfo]:
         token = request.cookies.get(cookie_name)
     if not token:
         return None
+
+    if not creds and token.startswith("ds."):
+        from cuga.backend.tools_env.registry.delegation import enabled
+        from . import delegated_sessions
+        from .oidc_client import get_oidc_client
+
+        client = get_oidc_client()
+        check_delegated_origin(request, client)
+        session = await delegated_sessions.load("session", token) if enabled() and client else None
+        if not session or session["issuer"] != client.discovery_url.removesuffix(
+            "/.well-known/openid-configuration"
+        ):
+            raise HTTPException(401, "Sign in again")
+        request.state.delegated_session = token
+        return UserInfo.model_validate(session["user"])
 
     # Try to resolve validator from the token's own issuer first (supports IAM/non-OIDC tokens).
     # Fall back to the configured OIDC validator.

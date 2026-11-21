@@ -80,7 +80,13 @@ class OIDCClient:
         state = state or secrets.token_urlsafe(32)
         verifier, challenge = _pkce_pair()
         expiry = time.time() + self._pkce_ttl
-        self._pkce_verifiers[state] = (verifier, expiry)
+        if os.environ.get("CUGA_DELEGATION_CONFIG"):
+            from . import delegated_sessions, keycloak_exchange
+
+            await keycloak_exchange.issuer_config(self)
+            await delegated_sessions.save("pkce", state, verifier, expiry)
+        else:
+            self._pkce_verifiers[state] = (verifier, expiry)
         params = {
             "response_type": "code",
             "client_id": self.client_id,
@@ -105,22 +111,16 @@ class OIDCClient:
         jwks_uri = discovery.get("jwks_uri", "")
         issuer = discovery.get("issuer")
 
-        self._prune_expired_pkce_verifiers()
-        entry = self._pkce_verifiers.pop(state, None)
-        if entry is None:
-            logger.warning(
-                "exchange_code: PKCE verifier missing or expired for state={} (state not in self._pkce_verifiers); rejecting callback",
-                state[:8] + "…" if len(state) > 8 else state,
-            )
-            raise ValueError(
-                "PKCE verifier missing or expired for this authorization flow; state may be invalid, reused, or expired"
-            )
-        code_verifier, expiry = entry
-        if time.time() > expiry:
-            logger.warning(
-                "exchange_code: PKCE verifier expired for state={}; rejecting callback",
-                state[:8] + "…" if len(state) > 8 else state,
-            )
+        if os.environ.get("CUGA_DELEGATION_CONFIG"):
+            from . import delegated_sessions, keycloak_exchange
+
+            await keycloak_exchange.issuer_config(self)
+            code_verifier = await delegated_sessions.load("pkce", state, consume=True)
+        else:
+            self._prune_expired_pkce_verifiers()
+            entry = self._pkce_verifiers.pop(state, None)
+            code_verifier = entry[0] if entry and entry[1] >= time.time() else None
+        if not code_verifier:
             raise ValueError(
                 "PKCE verifier missing or expired for this authorization flow; state may be invalid, reused, or expired"
             )
@@ -142,10 +142,9 @@ class OIDCClient:
             )
             if not resp.is_success:
                 logger.error(
-                    "Token exchange failed: {} {} — body: {}",
+                    "Token exchange failed: {} {}",
                     resp.status_code,
                     resp.reason_phrase,
-                    resp.text,
                 )
             resp.raise_for_status()
             data = resp.json()

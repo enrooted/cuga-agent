@@ -40,7 +40,7 @@ spec:
             - name: {{ $callbackKey }}
               value: {{ default (printf "http://%s.%s.svc.cluster.local:%v" (include "cuga.fullname" .) .Release.Namespace .Values.service.port) (get (.Values.env | default dict) $callbackKey) | quote }}
             {{- $secret := .Values.existingSecret }}
-            {{- $sensitiveKeys := list "GROQ_API_KEY" "OIDC_CLIENT_SECRET" "OIDC_CLIENT_ID" "OIDC_DISCOVERY_URL" "OIDC_REDIRECT_URI" "DYNACONF_STORAGE__POSTGRES_URL" "VAULT_TOKEN" }}
+            {{- $sensitiveKeys := list "GROQ_API_KEY" "OIDC_CLIENT_SECRET" "OIDC_CLIENT_ID" "OIDC_DISCOVERY_URL" "OIDC_REDIRECT_URI" "DYNACONF_STORAGE__POSTGRES_URL" "VAULT_TOKEN" "CUGA_SECRET_KEY" "CUGA_REGISTRY_BINDING_KEY" "OPENAI_API_KEY" }}
             {{- range $key, $value := .Values.env }}
             {{- if ne $key $callbackKey }}
             - name: {{ $key }}
@@ -83,14 +83,28 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.persistence.dbs.enabled }}
+          {{- if or .Values.persistence.dbs.enabled .Values.delegationSecret }}
           volumeMounts:
+            {{- if .Values.delegationSecret }}
+            - name: delegation-profile
+              mountPath: /run/secrets
+              readOnly: true
+            {{- end }}
+            {{- if .Values.persistence.dbs.enabled }}
             - name: dbs
               mountPath: /data/dbs
+            {{- end }}
           {{- end }}
-      {{- if .Values.persistence.dbs.enabled }}
+      {{- if or .Values.persistence.dbs.enabled .Values.delegationSecret }}
       volumes:
+        {{- if .Values.delegationSecret }}
+        - name: delegation-profile
+          secret:
+            secretName: {{ .Values.delegationSecret }}
+        {{- end }}
+        {{- if .Values.persistence.dbs.enabled }}
         - name: dbs
           persistentVolumeClaim:
             claimName: {{ include "cuga.fullname" . }}-dbs
+        {{- end }}
       {{- end }}

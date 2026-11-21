@@ -1,0 +1,6 @@
+delegation_profiles:
+  enrooted:
+    resource_url: https://evidence.demo.test:8445/mcp
+    audience: handbook-mcp
+    scopes: [evidence:read]
+    ca_bundle: /run/secrets/handbook-ca

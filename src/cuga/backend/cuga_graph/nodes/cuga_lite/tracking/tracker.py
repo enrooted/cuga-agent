@@ -227,6 +227,10 @@ class ToolCallTracker:
             param_names: The tool's declared parameter names, when known
                 (only used to tell whether the tool paginates, see #750)
         """
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            return
         if not ToolCallTracker.is_enabled():
             return
 

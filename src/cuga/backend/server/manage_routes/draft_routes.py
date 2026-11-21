@@ -63,6 +63,9 @@ async def save_manage_config_draft(request: Request, agent_id: Optional[str] = N
         data = await request.json()
         config = data.get("config", data)
         incoming = dict(config) if isinstance(config, dict) else {}
+        from cuga.backend.server.auth.keycloak_exchange import prepare_registrations
+
+        await prepare_registrations(incoming.get("tools"), request)
         policy_errors = {}
         apply_shared_draft = is_default_agent(agent_id)
 
@@ -254,6 +257,9 @@ async def patch_draft_tools(request: Request, agent_id: Optional[str] = None):
         data = await request.json()
         tools = data.get("tools", data)
         tools_list = tools if isinstance(tools, list) else []
+        from cuga.backend.server.auth.keycloak_exchange import prepare_registrations
+
+        await prepare_registrations(tools_list, request)
         full_draft = await load_and_patch_draft(agent_id, "tools", tools_list)
         state = getattr(request.app.state, "draft_app_state", None)
         apply_shared_draft = is_default_agent(agent_id)

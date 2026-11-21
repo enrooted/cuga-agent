@@ -74,6 +74,8 @@ class ServiceConfig(BaseModel):
     )
     # MCP gateway instance: {"instance_url", "instance_id", "run_as"}. The url is then the
     # gateway's /mcp/ endpoint and the auth an 'account_iam_apikey'.
+    delegation_profile: Optional[str] = None
+    delegated_tools: Optional[List[Dict[str, Any]]] = None
     gateway: Optional[Dict[str, Any]] = None
 
 
@@ -248,7 +250,15 @@ def _create_service_config(service_name: str, config: dict, is_mcp_server: bool 
     # Create ServiceConfig with optional auth
     auth_cfg = config.get('auth')
     auth = None
-    if auth_cfg:
+    from cuga.backend.tools_env.registry import delegation
+
+    try:
+        selected = delegation.registration(config)
+    except ValueError as exc:
+        raise GatewayConfigError(str(exc)) from exc
+    if selected and not config.get("delegated_tools"):
+        raise GatewayConfigError("Discover the evidence tools with an authenticated management session first")
+    if auth_cfg and not selected:
         auth = Auth(type=auth_cfg['type'], value=auth_cfg.get('value'), key=auth_cfg.get('key'))
 
     # Handle 'environment' field - support both 'env' and 'environment' keys
@@ -335,6 +345,8 @@ def _create_service_config(service_name: str, config: dict, is_mcp_server: bool 
         ready_values=config.get('ready_values'),
         readiness_timeout_seconds=config.get('readiness_timeout_seconds'),
         tools=config.get('tools'),
+        delegation_profile=selected[0] if selected else None,
+        delegated_tools=config.get("delegated_tools") if selected else None,
         gateway=gateway,
     )
 

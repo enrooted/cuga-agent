@@ -349,13 +349,22 @@ async def call_mcp_function(
     - **args**: A dictionary containing the arguments required by the function.
     - **agent_id**: (Optional) Agent ID to use in database mode
     """
-    print(f"Received request to call function: {request.function_name} with args: {request.args}")
     try:
         # Get the appropriate registry for the agent
         if database_mode and agent_id:
             mcp_mgr, reg = await _get_or_create_registry(agent_id)
         else:
             mcp_mgr, reg = mcp_manager, registry
+
+        from cuga.backend.tools_env.registry import delegation
+
+        config = _serving_server_config(mcp_mgr, request.function_name)
+        envelope = http_request.headers.get(delegation.HEADER) if http_request else None
+        if getattr(config, "delegation_profile", None):
+            return await delegation.dispatch(mcp_mgr, config, request, agent_id, envelope)
+        named_config = (getattr(mcp_mgr, "schema_urls", None) or {}).get(request.app_name)
+        if envelope or isinstance(getattr(named_config, "delegation_profile", None), str):
+            return JSONResponse({"error": "Evidence registration changed"}, status_code=403)
 
         apis = await reg.show_apis_for_app(request.app_name)
         api_info = apis.get(request.function_name, {})

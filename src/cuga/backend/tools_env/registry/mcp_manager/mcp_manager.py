@@ -785,16 +785,16 @@ class MCPManager:
         self._clear_mcp_server_registration(name)
 
         try:
-            stored = mcp_gateway.stored_tools(config)
+            stored = config.delegated_tools if config.delegation_profile else mcp_gateway.stored_tools(config)
             if stored is not None:
                 # MCP gateway, signed-in user mode: no credential at start; calls carry each
                 # user's instance token (see _call_transport).
                 tools = [
                     SimpleNamespace(
                         name=t["name"],
-                        description=t["description"],
+                        description=t.get("description") or "",
                         input_schema=t["inputSchema"],
-                        output_schema=t["outputSchema"],
+                        output_schema=t.get("outputSchema") or {},
                     )
                     for t in stored
                 ]
@@ -1192,6 +1192,8 @@ class MCPManager:
         from cuga.backend.tools_env.registry import mcp_gateway
 
         config = self.schema_urls.get(server_name)
+        if getattr(config, "delegation_profile", None):
+            raise ValueError("Delegated tools require an authenticated registry dispatch")
         instance_id = mcp_gateway.user_mode_instance(config)
         if not instance_id:
             return self.mcp_transports[server_name]
