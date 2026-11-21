@@ -2727,7 +2727,15 @@ async def event_stream(
         # client by the /extension/agent_query handler, so the text of the
         # exception would reach the caller the same way a response body would.
         _ref = log_error_ref(e, context="Agent event stream failed")
-        yield StreamEvent(name="Error", data=f"Agent request failed (ref {_ref})").format()
+        message = "Agent request failed"
+        from cuga.backend.evidence_privacy import private_turn
+
+        if private_turn.get():
+            from openai import RateLimitError
+
+            if isinstance(e, RateLimitError):
+                message = "The chat model is rate limited. Try again later"
+        yield StreamEvent(name="Error", data=f"{message} (ref {_ref})").format()
     finally:
         # Approval pauses and disconnected clients can end a request without an
         # Answer. Retain this request's prompt/events for the resumed transcript;
@@ -2766,6 +2774,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if os.environ.get("CUGA_DELEGATION_CONFIG"):
+    from cuga.backend.tools_env.registry.delegation import StripDelegatedHeader
+
+    app.add_middleware(StripDelegatedHeader)
 
 app.include_router(manage_routes.router)
 app.include_router(secrets_routes.router)
@@ -2894,6 +2907,13 @@ async def ui_config():
             "evolve_memory_enabled": await EvolveIntegration.is_configured(),
         }
     )
+
+
+async def authenticated_chat_turn(request: Request, user=Depends(require_chat_access)):
+    from cuga.backend.server.auth.keycloak_exchange import bind_turn
+
+    async with bind_turn(request):
+        yield user
 
 
 @app.get("/auth/login")
@@ -3059,6 +3079,34 @@ async def auth_callback(request: Request):
     session_max_age = getattr(auth, "session_max_age", 3600) if auth else 3600
     response = JSONResponse({"ok": True, "redirect": "/manage"})
     secure = getattr(auth, "require_https", False) if auth else False
+    direct_mode = bool(os.environ.get("CUGA_DELEGATION_CONFIG"))
+    if direct_mode:
+        from cuga.backend.server.auth import delegated_sessions, keycloak_exchange
+
+        if not secure or should_use_iam_proxy:
+            raise HTTPException(503, "Delegation requires HTTPS and direct OIDC sign-in")
+        try:
+            discovery = await keycloak_exchange.issuer_config(client)
+            validator = client._get_validator(discovery["jwks_uri"], discovery["issuer"])
+            access = await asyncio.to_thread(
+                validator.validate_and_decode, token_response.access_token, audience=client.client_id
+            )
+            if (
+                access.get("sub") != _user_info.sub
+                or access.get("typ") != "Bearer"
+                or access.get("azp") != client.client_id
+                or not access.get("sid")
+                or not access.get("exp")
+            ):
+                raise ValueError("Invalid session claims")
+            login_user = (
+                validator.to_user_info(access) if token == token_response.access_token else _user_info
+            )
+            token = await delegated_sessions.create(
+                token_response.access_token, access, login_user, session_max_age
+            )
+        except Exception as exc:
+            raise HTTPException(401, "Unable to establish an evidence session") from exc
     response.set_cookie(
         key=cookie_name,
         value=token,
@@ -3071,7 +3119,9 @@ async def auth_callback(request: Request):
     # the signed-in user. Skipped when no encryption key is configured.
     from cuga.backend.server.auth import gateway_tokens
 
-    idp_cookie = gateway_tokens.encode_idp_cookie(token_response.access_token or "", token)
+    idp_cookie = (
+        None if direct_mode else gateway_tokens.encode_idp_cookie(token_response.access_token or "", token)
+    )
     if idp_cookie:
         response.set_cookie(
             key=gateway_tokens.IDP_COOKIE_NAME,
@@ -3087,12 +3137,19 @@ async def auth_callback(request: Request):
 
 
 @app.post("/auth/logout")
-async def auth_logout():
+async def auth_logout(request: Request):
     from cuga.backend.server.auth.oidc_client import get_oidc_client
 
     auth = getattr(settings, "auth", None)
     cookie_name = getattr(auth, "session_cookie_name", "cuga_session") if auth else "cuga_session"
 
+    if os.environ.get("CUGA_DELEGATION_CONFIG") and (handle := request.cookies.get(cookie_name)):
+        from cuga.backend.server.auth import delegated_sessions
+
+        from cuga.backend.server.auth.dependencies import check_delegated_origin
+
+        check_delegated_origin(request, get_oidc_client())
+        await delegated_sessions.load("session", handle, consume=True)
     end_session_url: Optional[str] = None
     try:
         client = get_oidc_client()
@@ -3164,7 +3221,7 @@ if getattr(settings.advanced_features, "use_extension", False):
 
 
 async def extension_agent_query(
-    request: Request, current_user: Optional[UserInfo] = Depends(require_chat_access)
+    request: Request, current_user: Optional[UserInfo] = Depends(authenticated_chat_turn)
 ):
     from cuga.backend.cuga_graph.nodes.human_in_the_loop.followup_model import ActionResponse
 
@@ -3409,7 +3466,7 @@ async def _resolve_stream_agent(
 @app.post("/stream")
 async def stream(
     request: Request,
-    current_user: Optional[UserInfo] = Depends(require_chat_access),
+    current_user: Optional[UserInfo] = Depends(authenticated_chat_turn),
 ):
     """Endpoint to start the agent stream. Use draft agent when X-Use-Draft is set."""
     from cuga.backend.cuga_graph.nodes.human_in_the_loop.followup_model import ActionResponse
