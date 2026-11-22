@@ -1,5 +1,6 @@
 """Exercise the public, offline launcher entry point on all three manifests."""
 
+import json
 import os
 import platform
 from pathlib import Path
@@ -13,7 +14,8 @@ import yaml
 @pytest.mark.unit
 @pytest.mark.skipif(os.name != "posix", reason="The Podman launcher targets Linux and macOS")
 @pytest.mark.parametrize("scenario", ["basic", "keycloak", "enterprise-rag"])
-def test_demo_preview(tmp_path, scenario):
+@pytest.mark.parametrize("build", [False, True])
+def test_demo_preview(tmp_path, scenario, build):
     script = Path(__file__).resolve().parents[2] / "deployment/enrooted/demo.sh"
     args = [
         script,
@@ -28,9 +30,13 @@ def test_demo_preview(tmp_path, scenario):
         "--verify-ssl",
         "false",
     ]
+    if build:
+        args += ["--build", "--ui-port", "9444"]
     if scenario == "keycloak":
         args += ["--ui-origin", "https://localhost:9444", "--keycloak-port", "9543"]
     if scenario == "enterprise-rag":
+        if build:
+            args += ["--ui-origin", "https://localhost"]
         args += [
             "--issuer",
             "https://issuer.test/realms/my-realm",
@@ -65,7 +71,17 @@ def test_demo_preview(tmp_path, scenario):
     containers = {c["name"]: c for c in pod["spec"]["containers"]}
     tag = "demo-mac" if platform.machine().lower() in ("aarch64", "arm64") else "demo"
     for name in ("api", "ui"):
-        assert containers[name]["image"] == f"quay.io/enrooted/cuga-{name}:{tag}"
+        if build:
+            prefix = settings["DYNACONF_SERVICE__INSTANCE_ID"]
+            assert containers[name]["image"] == f"localhost/enrooted/cuga-{name}:{prefix}"
+            assert containers[name]["imagePullPolicy"] == "Never"
+        else:
+            assert containers[name]["image"] == f"quay.io/enrooted/cuga-{name}:{tag}"
+            assert containers[name]["imagePullPolicy"] == "Always"
+    if build:
+        assert containers["ui"]["ports"][0]["hostPort"] == 9444
+        if scenario != "basic":
+            assert settings["OIDC_REDIRECT_URI"] == "https://localhost:9444/manage"
     for c in containers.values():
         assert all(port["hostIP"] == "127.0.0.1" for port in c.get("ports", []))
     assert ("keycloak" in containers) == (scenario == "keycloak")
@@ -89,6 +105,11 @@ def test_demo_preview(tmp_path, scenario):
         assert containers["ui"]["ports"][0]["hostPort"] == 9444
     else:
         assert settings["DYNACONF_AUTH__ENABLED"] == "false"
+        if build:
+            assert settings["DYNACONF_SERVER_PORTS__DEMO"] == "9444"
+            nginx = next(d["data"]["default.conf"] for d in docs if d["metadata"]["name"].endswith("-nginx"))
+            assert "proxy_pass http://127.0.0.1:9444;" in nginx
+            assert f"listen {containers['ui']['ports'][0]['containerPort']};" in nginx
     subprocess.run([script, scenario, "--state-dir", tmp_path, "--cleanup"], check=True, env=env)
     assert not preview.exists()
 
@@ -119,6 +140,101 @@ def test_arm64_preview_keeps_explicit_image_override(tmp_path):
     images = {c["name"]: c["image"] for c in pod["spec"]["containers"]}
     assert images["api"] == "quay.io/enrooted/cuga-api:demo-mac"
     assert images["ui"] == "localhost/custom:dev"
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(os.name != "posix", reason="The Podman launcher targets Linux and macOS")
+def test_source_deploy_builds_both_images_before_play(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    demo = [root / "deployment/enrooted/demo.sh", "basic", "--state-dir", tmp_path]
+    calls = tmp_path / "calls"
+    stub = tmp_path / "podman"
+    stub.write_text(
+        f"#!{sys.executable}\n"
+        "import json, os, sys\n"
+        "args = sys.argv[1:]\n"
+        "with open(os.environ['TEST_CALLS'], 'a') as log: print(json.dumps(args), file=log)\n"
+        "if args[0] == 'info': print('arm64')\n"
+        "if args[:2] == ['image', 'exists']: sys.exit(0)\n"
+        "if args[1:2] == ['exists']: sys.exit(1)\n"
+        "if args[0] == 'build' and 'cuga-ui:' in args[args.index('-t') + 1] and os.getenv('FAIL_BUILD'): sys.exit(1)\n"
+    )
+    stub.chmod(0o755)
+    env = dict(
+        os.environ,
+        PATH=str(tmp_path) + os.pathsep + os.environ["PATH"],
+        DEMO_PYTHON=sys.executable,
+        TEST_CALLS=str(calls),
+    )
+    args = demo + [
+        "--build",
+        "--platform",
+        "linux/arm64",
+        "--ui-port",
+        "8080",
+        "--vllm-uri",
+        "http://localhost:9000/v1",
+    ]
+    failed = subprocess.run(args, cwd=tmp_path, env=dict(env, FAIL_BUILD="1"))
+    assert failed.returncode != 0
+    manifest = tmp_path / "basic/manifest.yaml"
+    assert not manifest.exists()
+    assert all(json.loads(line)[0] != "kube" for line in calls.read_text().splitlines())
+    calls.unlink()
+    subprocess.run(args, check=True, cwd=tmp_path, env=env)
+    docs = yaml.safe_load_all(manifest.read_text())
+    pod = next(d for d in docs if d["kind"] == "Pod")
+    images = {c["name"]: c["image"] for c in pod["spec"]["containers"]}
+    commands = [json.loads(line) for line in calls.read_text().splitlines()]
+    assert [cmd[0] for cmd in commands] == ["info", "build", "build", "network", "kube", "kube"]
+    for cmd, name, file in zip(
+        commands[1:3],
+        ("api", "ui"),
+        ("deployment/enrooted/Containerfile.api", "apps/enrooted-ui/Containerfile"),
+    ):
+        assert cmd[cmd.index("--platform") + 1] == "linux/arm64"
+        assert cmd[cmd.index("-f") + 1] == str(root / file)
+        assert cmd[cmd.index("-t") + 1] == images[name]
+        assert cmd[-1] == str(root)
+    assert commands[2][commands[2].index("--ignorefile") + 1] == str(
+        root / "apps/enrooted-ui/Containerfile.containerignore"
+    )
+    assert commands[-1][-1] == str(manifest)
+    subprocess.run(demo + ["--cleanup"], check=True, env=env)
+    untags = [cmd for cmd in map(json.loads, calls.read_text().splitlines()) if cmd[0] == "untag"]
+    assert untags == [["untag", images[name], images[name]] for name in ("api", "ui")]
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(os.name != "posix", reason="The Podman launcher targets Linux and macOS")
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--ui-port", "0"],
+        ["--ui-port", "65536"],
+        ["--ui-port", "9443", "--ui-origin", "https://localhost:9444"],
+        ["--ui-port", "8543"],
+        ["--build", "--api-image", "localhost/custom:dev"],
+        ["--build", "--pull-policy", "Always"],
+    ],
+)
+def test_demo_rejects_conflicting_options(tmp_path, options):
+    script = Path(__file__).resolve().parents[2] / "deployment/enrooted/demo.sh"
+    result = subprocess.run(
+        [
+            script,
+            "keycloak",
+            "--render-only",
+            "--state-dir",
+            tmp_path,
+            "--vllm-uri",
+            "http://localhost:9000/v1",
+            *options,
+        ],
+        env=dict(os.environ, DEMO_PYTHON=sys.executable),
+    )
+    assert result.returncode == 2
+    assert not (tmp_path / "keycloak/preview.yaml").exists()
 
 
 @pytest.mark.unit

@@ -31,7 +31,19 @@ The earlier handbook example used employee handbooks as its test corpus. The ent
    ```
 
    Replace the example host before deploying. TLS verification defaults to `--verify-ssl true`. Pass `--vllm-ca /path/to/model-ca.pem` for a private model CA or `--verify-ssl false` for a lab model. The switch configures the CUGA model client. Identity and MCP connections verify TLS independently.
-4. The launcher selects `:demo` on an amd64 Podman engine and `:demo-mac` on arm64, including Apple Silicon. Each runs natively. An offline preview uses the workstation architecture. Pass `--platform` to select another target explicitly.
+4. The launcher selects `:demo` on an amd64 Podman engine and `:demo-mac` on arm64, including Apple Silicon. An offline preview uses the workstation architecture. Pass `--platform` to select another target explicitly.
+
+### Build and deploy your checkout
+
+Add `--build` to any scenario to build the API and UI from your current checkout, including uncommitted edits. For example, from `deployment/enrooted`:
+
+```sh
+./demo.sh basic --build --ui-port 9080 --vllm-uri "$VLLM_URI" --model "$MODEL"
+```
+
+Open `http://localhost:9080/chat`. Both application images build for the Podman engine's architecture and stay in its local image store. The build can download base images, dependencies and model weights, and Podman can pull PostgreSQL or Keycloak. Each deployment gets its own local image tags. Run `./demo.sh basic --cleanup` to remove the deployment and those tags before rebuilding. Cleanup deletes the demo data volumes.
+
+`--ui-port` also works with published images. The launcher prints the Chat and Manage URLs. For the signed-in scenarios it uses the selected port in the public callback. If you also supply a port in `--ui-origin`, the two values must match. For the basic demo, choose a free port of 1024 or higher outside the pod's internal service ports (5432, 7870, 8001 and 8201).
 
 ## 1. Basic CUGA
 
@@ -39,7 +51,7 @@ The earlier handbook example used employee handbooks as its test corpus. The ent
 ./demo.sh basic --vllm-uri "$VLLM_URI" --model "$MODEL"
 ```
 
-Open `http://localhost:7860/chat` and ask CUGA to summarize meeting notes. In Manage, the installed skill is `meeting-summary`. This demo uses a private pod network and the standard local UI port so the backend can apply its local management rules. Use the Keycloak demo to inspect a user's stored Evolve entities.
+Open `http://localhost:7860/chat` and ask CUGA to summarize meeting notes. In Manage, the installed skill is `meeting-summary`. Use the Keycloak demo to inspect a user's stored Evolve entities.
 
 ## 2. CUGA with bundled Keycloak
 
@@ -48,7 +60,7 @@ Open `http://localhost:7860/chat` and ask CUGA to summarize meeting notes. In Ma
 cat .demo/keycloak/owner-password
 ```
 
-Open `https://localhost:8444/chat` and sign in as `owner` with the generated password. The launcher generates a localhost certificate valid for 30 days. Trust `.demo/keycloak/localhost.pem` in your test browser for the UI and Keycloak, or supply a trusted localhost certificate with `--cert` and `--key`. Keycloak listens on `https://localhost:8543`. To change the ports, pass `--ui-origin https://localhost:9444` and `--keycloak-port 9543` as needed. The realm import registers the exact public callback at `<ui-origin>/manage`.
+Open `https://localhost:8444/chat` and sign in as `owner` with the generated password. The launcher generates a localhost certificate valid for 30 days. Trust `.demo/keycloak/localhost.pem` in your test browser for the UI and Keycloak, or supply a trusted localhost certificate with `--cert` and `--key`. Keycloak listens on `https://localhost:8543`. To change the ports, pass `--ui-port 9444` and `--keycloak-port 9543` as needed. The realm import registers the exact public callback at `<ui-origin>/manage`.
 
 Send a chat message, toggle the personal memory setting, and reopen the conversation. The demo has its own user, database, volumes and network. It can run independently of Enrooted Context.
 

@@ -79,8 +79,8 @@ async def test_podman_demo(tmp_path, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", os.environ["CUGA_TEST_CHAT_KEY"])
     demo = ["deployment/enrooted/demo.sh", "keycloak", "--state-dir", str(tmp_path)]
     opts = [
-        "--ui-origin",
-        origin,
+        "--ui-port",
+        str(ui_port),
         "--keycloak-port",
         str(issuer_port),
         "--vllm-uri",
