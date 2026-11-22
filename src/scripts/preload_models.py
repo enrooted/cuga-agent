@@ -7,6 +7,8 @@ Models are cached to their default locations and will be available offline.
 Set HF_HUB_OFFLINE=1 at runtime to prevent any accidental network access.
 """
 
+from functools import partial
+import multiprocessing
 import os
 import sys
 from pathlib import Path
@@ -57,23 +59,36 @@ def docling_airgap_layout_repo_ids() -> frozenset[str]:
     )
 
 
-def preload_fastembed() -> None:
+FASTEMBED_MODELS = (
+    "intfloat/multilingual-e5-small",  # default knowledge embedding model
+    "BAAI/bge-small-en-v1.5",  # policies, tool shortlisting and Evolve
+)
+
+
+def run_isolated(step) -> None:
+    """Release native model and downloader allocations when this build step exits."""
+    worker = multiprocessing.get_context("spawn").Process(target=step)
+    worker.start()
+    worker.join()
+    if worker.exitcode != 0:
+        raise RuntimeError(f"Model worker exited with status {worker.exitcode}")
+
+
+def preload_fastembed(models: tuple[str, ...] = FASTEMBED_MODELS) -> None:
     print("→ Preloading fastembed models...")
     from fastembed import TextEmbedding
 
     from cuga.backend.knowledge.fastembed_models import register
 
     cache_dir = os.environ.get("FASTEMBED_CACHE_PATH")
-    models = [
-        "intfloat/multilingual-e5-small",  # default knowledge embedding model
-        "BAAI/bge-small-en-v1.5",  # policies, tool shortlisting and Evolve
-    ]
     for model_name in models:
         register(model_name)
         print(f"  Downloading {model_name}...")
-        model = TextEmbedding(model_name, cache_dir=cache_dir)
+        model = TextEmbedding(model_name, cache_dir=cache_dir, threads=1)
         # Run one inference pass to ensure ONNX runtime initializes
         list(model.embed(["warmup"]))
+        # Release this ONNX session before constructing the next one.
+        del model
         print(f"  ✓ {model_name}")
 
 
@@ -111,7 +126,7 @@ def preload_fastembed_tokenizer() -> None:
     from fastembed.text.onnx_embedding import OnnxTextEmbedding  # type: ignore[import]
 
     cache_dir = os.environ.get("FASTEMBED_CACHE_PATH")
-    model = OnnxTextEmbedding(model_name="BAAI/bge-small-en-v1.5", cache_dir=cache_dir)
+    model = OnnxTextEmbedding(model_name="BAAI/bge-small-en-v1.5", cache_dir=cache_dir, threads=1)
     _ = model.tokenizer
     print("  ✓ tokenizer ready")
 
@@ -163,7 +178,7 @@ def preload_tiktoken() -> None:
         tiktoken.get_encoding(name).encode("airgap warmup")
 
 
-def run_preloads() -> None:
+def run_preloads(*, isolated: bool = False) -> None:
     """Run every preload step, routing failures through ``handle_preload_error``.
 
     Non-strict (default): a missing optional dependency (docling absent in
@@ -172,7 +187,7 @@ def run_preloads() -> None:
     the full image): the same failure raises and fails the build.
     """
     for component, fn in (
-        ("fastembed", preload_fastembed),
+        *((name, partial(preload_fastembed, (name,))) for name in FASTEMBED_MODELS),
         ("fastembed tokenizer", preload_fastembed_tokenizer),
         ("docling", preload_docling),
         ("evolve", preload_evolve),
@@ -180,13 +195,16 @@ def run_preloads() -> None:
         ("tiktoken", preload_tiktoken),
     ):
         try:
-            fn()
+            if isolated:
+                run_isolated(fn)
+            else:
+                fn()
         except Exception as e:
             handle_preload_error(component, e)
 
 
 if __name__ == "__main__":
     print("Preloading models for airgapped operation...\n")
-    run_preloads()
+    run_preloads(isolated=strict_preload_enabled())
     print("\nDone. Set HF_HUB_OFFLINE=1 at runtime to enforce airgap.")
     sys.exit(0)

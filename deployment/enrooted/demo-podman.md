@@ -138,6 +138,17 @@ export CUGA_TEST_CHAT_MODEL="$MODEL"
 
 Set `CUGA_TEST_CHAT_CA` to a private model CA if needed. For a lab model, `CUGA_TEST_CHAT_SKIP_VERIFY=1` turns off TLS verification for the model connection during the test.
 
+### If the Mac build exits with status 137
+
+Check the Linux VM's memory and kernel log before retrying:
+
+```sh
+podman machine ssh "free -h; sudo journalctl -k -b --grep='Out of memory|Killed process|oom-kill' --no-pager -n 8"
+podman stats --no-stream
+```
+
+An out-of-memory entry naming Python in a Buildah cgroup confirms that the kernel killed the build. The API build warms one model at a time and checks the bundled assets offline. If the VM is still short of memory, temporarily stop an idle workload you recognize or allocate more memory to the build VM. Rerun `./deployment/enrooted/publish-images.sh` to reuse completed layers.
+
 ## Image scan
 
 On 2026-11-21, Grype 0.117.0 using its 2026-11-19 database reported the following package–advisory matches on the workstation’s amd64 images. Multiple packages can match a single advisory.
