@@ -2,6 +2,10 @@
 
 The signed-in employee's Keycloak session authorizes each evidence call. CUGA exchanges the employee's access token for the MCP audience. FastMCP performs the second exchange for the Enrooted API. Search, read and expansion are authorized by Enrooted on every call.
 
+## Enrooted UI with PostgreSQL
+
+Use the [Enrooted Podman demo](demo-podman.md) for the standalone UI, API-only backend, PostgreSQL with pgvector, embedded Evolve and agent skills. Choose basic CUGA, bundled Keycloak, or enterprise RAG with an existing Enrooted Context MCP and Keycloak installation.
+
 ## Configure the handbook demo
 
 1. Start the identity realm, handbook corpus and MCP service using sections 1–5 of the [Context demo](../../../enrooted-context/demo/cuga/README.md). Use a disposable Podman user or VM for that full workspace runbook, which uses fixed resource names. The automated connector test below can run alongside an existing workspace.
@@ -28,6 +32,14 @@ The signed-in employee's Keycloak session authorizes each evidence call. CUGA ex
 ### Helm deployment
 
 Supply the connector image and merge [helm-values.yaml](helm-values.yaml) into the release values. Create the referenced profile Secret with keys `connector.yaml` and `handbook-ca`. Create the credentials Secret with `CUGA_SECRET_KEY`, `CUGA_REGISTRY_BINDING_KEY`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URI`, `OIDC_DISCOVERY_URL` and `DYNACONF_STORAGE__POSTGRES_URL`. Set `OPENAI_BASE_URL` and `MODEL_NAME` to the approved model endpoint and served ID. Add `OPENAI_API_KEY` to the credentials Secret (a nonsecret placeholder is sufficient for a keyless model). The chart exposes the UI/backend port. Keep the registry private within the pod. A separate registry needs verified HTTPS, the same binding key and operator profile, and a private workload connection. The public CUGA backend strips `X-Cuga-Delegated-Call` from incoming requests. Give model tools no access to the session database or deployment secrets.
+
+## Serve only the CUGA API
+
+Set `DYNACONF_UI__ENABLED=false` in the backend container and restart it. With Helm, set `env.DYNACONF_UI__ENABLED` to the string `"false"`. The default is `true` for deployments using the bundled Chat and Manage pages.
+
+The public backend serves `GET /health`, `GET /openapi.json`, `POST /stream` and the management APIs. The Chat and Manage pages, static assets, flow viewer, Swagger UI and ReDoc return HTTP 404. Helm probes use `/health` in either mode.
+
+For OIDC, the bundled `/manage` page normally finishes the login. An API client using delegated evidence needs to start at `GET /auth/login`, receive the authorization redirect at its registered callback, and POST the returned `code` and `state` to `/auth/callback` with the original CUGA state cookie. Keep the resulting session cookie for `POST /stream`. A standalone bearer token can authenticate supported API calls, but direct evidence exchange requires the signed-in CUGA session. For a browser client, serve its callback at the configured origin and route its CUGA requests through the same origin.
 
 ## Repeat the isolated connector test
 

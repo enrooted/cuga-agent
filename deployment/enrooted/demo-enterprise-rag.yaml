@@ -1,0 +1,171 @@
+# Render and deploy with ./demo.sh enterprise-rag (see demo-podman.md).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-enterprise-rag-demo-settings
+data:
+  # Browser origin and Keycloak confidential client
+  OIDC_CLIENT_ID: cuga-demo
+  OIDC_REDIRECT_URI: https://chat.replaceme.example.com:8445/manage
+  OIDC_DISCOVERY_URL: https://sso.replaceme.example.com/realms/enrooted/.well-known/openid-configuration
+  DYNACONF_AUTH__ENABLED: "true"
+  DYNACONF_AUTH__REQUIRE_HTTPS: "true"
+  DYNACONF_AUTH__OIDC_CA_BUNDLE: /run/enrooted/ca.pem
+  DYNACONF_UI__ENABLED: "false"
+
+  # OpenAI-compatible, tool-capable chat model
+  AGENT_SETTING_CONFIG: settings.openai.toml
+  OPENAI_BASE_URL: https://vllm.replaceme.example.com/v1
+  MODEL_NAME: Qwen3.8-27B-NVFP4
+  OPENAI_SSL_VERIFY: "true"
+  DYNACONF_ADVANCED_FEATURES__CUGA_LITE_EXECUTION_MODE: function_calling
+  DYNACONF_ADVANCED_FEATURES__CUGA_LITE_FC_PROMPT_FRAGMENTS: '["evidence_first"]'
+  DYNACONF_ADVANCED_FEATURES__TRACKER_ENABLED: "false"
+  DYNACONF_ADVANCED_FEATURES__LANGFUSE_TRACING: "false"
+  DYNACONF_OBSERVABILITY__OPENLIT: "false"
+  OTEL_SDK_DISABLED: "true"
+
+  # Persistent CUGA records, knowledge vectors and conversation checkpoints
+  DYNACONF_STORAGE__MODE: prod
+  DYNACONF_STORAGE__CHECKPOINTER: durable
+  DYNACONF_STORAGE__EMBEDDING__PROVIDER: local
+  CUGA_DBS_DIR: /data/dbs
+  DYNACONF_KNOWLEDGE__PERSIST_DIR: /data/knowledge
+
+  # Bundled Evolve uses the same Qwen model and a dedicated database.
+  DYNACONF_SERVICE__INSTANCE_ID: cuga-enterprise-rag-demo
+  DYNACONF_EVOLVE__ENABLED: "true"
+  DYNACONF_EVOLVE__MODE: direct
+  DYNACONF_EVOLVE__URL: http://127.0.0.1:8201/sse
+  CUGA_EMBEDDED_EVOLVE: "true"
+  EVOLVE_BACKEND: postgres
+  # Evolve also keeps namespace metadata locally, even with PostgreSQL vectors.
+  EVOLVE_SQLITE_PATH: /data/dbs/evolve/entities.sqlite.db
+  EVOLVE_PG_HOST: 127.0.0.1
+  EVOLVE_PG_PORT: "5432"
+  EVOLVE_PG_USER: cuga
+  EVOLVE_PG_DBNAME: evolve
+
+  # Operator-installed agent skills and the Enrooted MCP profile
+  DYNACONF_SKILLS__ENABLED: "true"
+  DYNACONF_SKILLS__ROOT: cuga
+  CUGA_FOLDER: /data
+  CUGA_DELEGATION_CONFIG: /etc/enrooted/connector.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-enterprise-rag-demo-connector
+data:
+  connector.yaml: |
+    delegation_profiles:
+      enrooted:
+        resource_url: https://mcp.replaceme.example.com/mcp
+        audience: enrooted-context-mcp
+        scopes: [evidence:read]
+        ca_bundle: /run/enrooted/ca.pem
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-enterprise-rag-demo-nginx
+data:
+  tls.conf: |
+    listen 8444 ssl;
+    ssl_certificate     /run/enrooted/tls.crt;
+    ssl_certificate_key /run/enrooted/tls.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-enterprise-rag-demo-db-init
+data:
+  10-databases.sql: |
+    \getenv app_password CUGA_DB_PASSWORD
+    CREATE ROLE cuga LOGIN PASSWORD :'app_password';
+    CREATE DATABASE cuga OWNER cuga;
+    CREATE DATABASE evolve OWNER cuga;
+    \connect cuga
+    CREATE EXTENSION IF NOT EXISTS vector;
+    \connect evolve
+    CREATE EXTENSION IF NOT EXISTS vector;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-enterprise-rag-demo-skill
+data:
+  SKILL.md: |
+    ---
+    name: enterprise-evidence
+    description: Answer enterprise questions using authorized Enrooted evidence.
+    ---
+    Search enterprise content with search_evidence, then read the relevant passages
+    with read_evidence. Cite the returned handles exactly. If the service
+    returns no accessible evidence, tell the user the answer is unavailable.
+---
+# Podman maps PVCs to named volumes. The API runs as UID 1001.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cuga-enterprise-rag-demo-postgres
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 10Gi}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cuga-enterprise-rag-demo-data
+  annotations: {volume.podman.io/uid: "1001", volume.podman.io/gid: "0"}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 10Gi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuga-enterprise-rag-demo-pod
+spec:
+  restartPolicy: Always
+  containers:
+    - name: postgres
+      image: docker.io/pgvector/pgvector:pg16
+      args: [postgres, -c, listen_addresses=127.0.0.1]
+      envFrom:
+        - secretRef: {name: cuga-enterprise-rag-demo-db-credentials}
+      volumeMounts:
+        - {name: pgdata, mountPath: /var/lib/postgresql/data}
+        - {name: db-init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
+
+    - name: api
+      image: quay.io/enrooted/cuga-api:demo
+      imagePullPolicy: Always
+      envFrom:
+        - configMapRef: {name: cuga-enterprise-rag-demo-settings}
+        - secretRef: {name: cuga-enterprise-rag-demo-api-credentials}
+      volumeMounts:
+        - {name: data, mountPath: /data}
+        - {name: skill, mountPath: /data/skills/enterprise-evidence, readOnly: true}
+        - {name: trust, mountPath: /run/enrooted, readOnly: true}
+        - {name: connector, mountPath: /etc/enrooted, readOnly: true}
+
+    - name: ui
+      image: quay.io/enrooted/cuga-ui:demo
+      imagePullPolicy: Always
+      ports:
+        - {name: https, containerPort: 8444, hostPort: 8445, hostIP: 127.0.0.1}
+      volumeMounts:
+        - {name: https, mountPath: /etc/nginx/enrooted, readOnly: true}
+        - {name: tls, mountPath: /run/enrooted, readOnly: true}
+
+  volumes:
+    - {name: pgdata, persistentVolumeClaim: {claimName: cuga-enterprise-rag-demo-postgres}}
+    - {name: data, persistentVolumeClaim: {claimName: cuga-enterprise-rag-demo-data}}
+    - {name: db-init, configMap: {name: cuga-enterprise-rag-demo-db-init}}
+    - {name: connector, configMap: {name: cuga-enterprise-rag-demo-connector}}
+    - {name: https, configMap: {name: cuga-enterprise-rag-demo-nginx}}
+    - {name: trust, secret: {secretName: cuga-enterprise-rag-demo-trust}}
+    - {name: tls, secret: {secretName: cuga-enterprise-rag-demo-tls}}
+    - {name: skill, configMap: {name: cuga-enterprise-rag-demo-skill}}

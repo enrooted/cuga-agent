@@ -1,0 +1,19 @@
+# Build from the fork root to include its licence and notices.
+ARG NODEJS_IMAGE=registry.access.redhat.com/hi/nodejs:26-builder
+ARG NGINX_IMAGE=registry.access.redhat.com/hi/nginx:1.30
+
+FROM ${NODEJS_IMAGE} AS build
+USER 0
+WORKDIR /build
+COPY apps/enrooted-ui/package*.json ./
+RUN npm ci --no-audit --no-fund
+COPY apps/enrooted-ui/ .
+RUN npm run build && chmod -R a+rX,go-w dist && mkdir -p /runtime/var/lib/nginx
+
+# The base starts nginx directly as UID 65532. No shell or Node at runtime.
+FROM ${NGINX_IMAGE}
+COPY LICENSE NOTICE /usr/share/licenses/enrooted-ui/
+COPY --from=build /runtime/ /
+COPY --from=build /build/dist/ /usr/share/nginx/html/
+COPY apps/enrooted-ui/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 7870

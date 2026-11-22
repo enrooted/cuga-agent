@@ -517,8 +517,17 @@ except ImportError:
     except ImportError:
         CallbackHandler = None
 
-# Import embedded assets with feature flag
+UI_ENABLED = settings.get("ui.enabled", True)
+
+# Embedded assets can also supply the extension for browser automation.
 USE_EMBEDDED_ASSETS = os.getenv("USE_EMBEDDED_ASSETS", "false").lower() in ("true", "1", "yes", "on")
+
+if (
+    not UI_ENABLED
+    and settings.advanced_features.mode == "api"
+    and not settings.advanced_features.use_extension
+):
+    USE_EMBEDDED_ASSETS = False
 
 if USE_EMBEDDED_ASSETS:
     try:
@@ -1474,13 +1483,9 @@ async def _app_lifespan(app: FastAPI):
     await draft_app_state.agent.build_graph()
 
     logger.info("Application finished starting up...")
-    url = f"http://localhost:{settings.server_ports.demo}/manage/cuga-default"
-    if settings.advanced_features.mode == "api" and os.getenv("CUGA_TEST_ENV", "false").lower() not in (
-        "true",
-        "1",
-        "yes",
-        "on",
-    ):
+    test_env = os.getenv("CUGA_TEST_ENV", "false").lower() in ("true", "1", "yes", "on")
+    if UI_ENABLED and settings.advanced_features.mode == "api" and not test_env:
+        url = f"http://localhost:{settings.server_ports.demo}/manage/cuga-default"
         try:
             if platform.system() == 'Darwin':  # macOS
                 subprocess.run(['open', url], check=False)
@@ -2751,7 +2756,11 @@ async def event_stream(
             )
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url="/docs" if UI_ENABLED else None,
+    redoc_url="/redoc" if UI_ENABLED else None,
+)
 app.state.app_state = app_state
 app.state.draft_app_state = draft_app_state
 
@@ -5801,7 +5810,6 @@ async def get_attachment_snapshot(request: Request) -> Optional[List[Dict[str, A
         raise HTTPException(status_code=422, detail=f"Invalid attachment metadata: {e.errors()}")
 
 
-@app.get("/flows/{full_path:path}")
 async def serve_flows(full_path: str, request: Request):
     """Serves files from the flows directory."""
     static_root = Path(app_state.STATIC_DIR_FLOWS)
@@ -5814,7 +5822,6 @@ async def serve_flows(full_path: str, request: Request):
     raise HTTPException(status_code=404, detail="Flow file not found.")
 
 
-@app.get("/{full_path:path}")
 async def serve_react(full_path: str, request: Request):
     """Serves the main React application and its static files."""
     if not app_state.STATIC_DIR_HTML:
@@ -5836,3 +5843,9 @@ async def serve_react(full_path: str, request: Request):
         return FileResponse(index_path)
 
     raise HTTPException(status_code=404, detail="Frontend files not found. Did you run the build process?")
+
+
+# Register the SPA fallback last so it can never shadow an API endpoint.
+if UI_ENABLED:
+    app.add_api_route("/flows/{full_path:path}", serve_flows, methods=["GET"])
+    app.add_api_route("/{full_path:path}", serve_react, methods=["GET"])

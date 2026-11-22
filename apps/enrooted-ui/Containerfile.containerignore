@@ -1,0 +1,9 @@
+*
+!LICENSE
+!NOTICE
+!apps/
+apps/*
+!apps/enrooted-ui/
+apps/enrooted-ui/node_modules/
+apps/enrooted-ui/dist/
+apps/enrooted-ui/e2e/
