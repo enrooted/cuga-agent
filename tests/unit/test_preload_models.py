@@ -14,6 +14,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.unit
+def test_failed_model_worker_fails_the_build():
+    from functools import partial
+
+    from scripts.preload_models import run_isolated
+
+    # An OOM-killed model worker never gets a chance to raise a Python exception.
+    with pytest.raises(RuntimeError, match="status 137"):
+        run_isolated(partial(sys.exit, 137))
+
+
+@pytest.mark.unit
 def test_airgap_verification_rejects_stanza(monkeypatch: pytest.MonkeyPatch) -> None:
     from scripts import verify_airgap
 
