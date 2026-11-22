@@ -119,11 +119,12 @@ def _apply_demo_skills_env() -> None:
         os.environ["DYNACONF_ADVANCED_FEATURES__OPENSANDBOX_SANDBOX"] = "true"
 
 
-def _apply_local_demo_workspace_env() -> None:
+def _apply_local_demo_workspace_env(*, preserve_skills: bool = False) -> None:
     """Demos that use ./cuga_workspace with runtime filesystem tools — not OpenSandbox /tmp paths from settings.toml."""
     os.environ["DYNACONF_ADVANCED_FEATURES__ENABLE_SHELL_TOOL"] = "false"
     os.environ["DYNACONF_ADVANCED_FEATURES__OPENSANDBOX_SANDBOX"] = "false"
-    os.environ["DYNACONF_SKILLS__ENABLED"] = "false"
+    if not preserve_skills:
+        os.environ["DYNACONF_SKILLS__ENABLED"] = "false"
 
 
 def _find_pyproject_root() -> Optional[Path]:
@@ -1356,7 +1357,7 @@ def start(
             os.environ["DYNACONF_POLICY__FILESYSTEM_SYNC"] = "false"
             managed_path = ensure_managed_mcp_file_exists(get_managed_mcp_path())
             os.environ["MCP_SERVERS_FILE"] = "none"
-            _apply_local_demo_workspace_env()
+            _apply_local_demo_workspace_env(preserve_skills=True)
             logger.info(f"Manager mode: policy filesystem sync disabled, MCP_SERVERS_FILE={managed_path}")
             setup_demo_manage_config(
                 "manager",

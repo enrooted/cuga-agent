@@ -147,3 +147,6 @@ deployment/certs/*.crt
 # customer corpora under ``.cuga/knowledge_*/files/``) into the image.
 **/.cuga/
 .cuga/
+
+# Local Podman demo manifests and credentials
+deployment/enrooted/.demo/

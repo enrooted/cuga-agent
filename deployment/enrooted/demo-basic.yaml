@@ -1,0 +1,144 @@
+# Render and deploy with ./demo.sh basic (see demo-podman.md).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-basic-demo-settings
+data:
+  # Local workstation access
+  DYNACONF_AUTH__ENABLED: "false"
+  DYNACONF_UI__ENABLED: "false"
+
+  # OpenAI-compatible, tool-capable chat model
+  AGENT_SETTING_CONFIG: settings.openai.toml
+  OPENAI_BASE_URL: https://vllm.replaceme.example.com/v1
+  MODEL_NAME: Qwen3.8-27B-NVFP4
+  OPENAI_SSL_VERIFY: "true"
+  DYNACONF_ADVANCED_FEATURES__CUGA_LITE_EXECUTION_MODE: function_calling
+  DYNACONF_ADVANCED_FEATURES__TRACKER_ENABLED: "false"
+  DYNACONF_ADVANCED_FEATURES__LANGFUSE_TRACING: "false"
+  DYNACONF_OBSERVABILITY__OPENLIT: "false"
+  OTEL_SDK_DISABLED: "true"
+
+  # Persistent CUGA records, knowledge vectors and conversation checkpoints
+  DYNACONF_STORAGE__MODE: prod
+  DYNACONF_STORAGE__CHECKPOINTER: durable
+  DYNACONF_STORAGE__EMBEDDING__PROVIDER: local
+  CUGA_DBS_DIR: /data/dbs
+  DYNACONF_KNOWLEDGE__PERSIST_DIR: /data/knowledge
+
+  # Bundled Evolve uses the same Qwen model and a dedicated database.
+  DYNACONF_SERVICE__INSTANCE_ID: cuga-basic-demo
+  DYNACONF_EVOLVE__ENABLED: "true"
+  DYNACONF_EVOLVE__MODE: direct
+  DYNACONF_EVOLVE__URL: http://127.0.0.1:8201/sse
+  CUGA_EMBEDDED_EVOLVE: "true"
+  EVOLVE_BACKEND: postgres
+  # Evolve also keeps namespace metadata locally, even with PostgreSQL vectors.
+  EVOLVE_SQLITE_PATH: /data/dbs/evolve/entities.sqlite.db
+  EVOLVE_PG_HOST: 127.0.0.1
+  EVOLVE_PG_PORT: "5432"
+  EVOLVE_PG_USER: cuga
+  EVOLVE_PG_DBNAME: evolve
+
+  # Operator-installed agent skills
+  DYNACONF_SKILLS__ENABLED: "true"
+  DYNACONF_SKILLS__ROOT: cuga
+  CUGA_FOLDER: /data
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-basic-demo-nginx
+data:
+  local.conf: |
+    listen 8080;
+    if ($host !~ "^(localhost|127[.]0[.]0[.]1)$") { return 403; }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-basic-demo-db-init
+data:
+  10-databases.sql: |
+    \getenv app_password CUGA_DB_PASSWORD
+    CREATE ROLE cuga LOGIN PASSWORD :'app_password';
+    CREATE DATABASE cuga OWNER cuga;
+    CREATE DATABASE evolve OWNER cuga;
+    \connect cuga
+    CREATE EXTENSION IF NOT EXISTS vector;
+    \connect evolve
+    CREATE EXTENSION IF NOT EXISTS vector;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cuga-basic-demo-skill
+data:
+  SKILL.md: |
+    ---
+    name: meeting-summary
+    description: Turn supplied meeting notes into a concise summary and action list.
+    ---
+    Summarize the decisions in the user's notes. List action items with owners
+    and due dates where supplied. Ask about missing details before assigning them.
+---
+# Podman maps PVCs to named volumes. The API runs as UID 1001.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cuga-basic-demo-postgres
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 10Gi}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cuga-basic-demo-data
+  annotations: {volume.podman.io/uid: "1001", volume.podman.io/gid: "0"}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 10Gi}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuga-basic-demo-pod
+spec:
+  restartPolicy: Always
+  containers:
+    - name: postgres
+      image: docker.io/pgvector/pgvector:pg16
+      args: [postgres, -c, listen_addresses=127.0.0.1]
+      envFrom:
+        - secretRef: {name: cuga-basic-demo-db-credentials}
+      volumeMounts:
+        - {name: pgdata, mountPath: /var/lib/postgresql/data}
+        - {name: db-init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
+
+    - name: api
+      image: quay.io/enrooted/cuga-api:demo
+      imagePullPolicy: Always
+      envFrom:
+        - configMapRef: {name: cuga-basic-demo-settings}
+        - secretRef: {name: cuga-basic-demo-api-credentials}
+      volumeMounts:
+        - {name: data, mountPath: /data}
+        - {name: skill, mountPath: /data/skills/meeting-summary, readOnly: true}
+        - {name: trust, mountPath: /run/enrooted, readOnly: true}
+
+    - name: ui
+      image: quay.io/enrooted/cuga-ui:demo
+      imagePullPolicy: Always
+      ports:
+        - {name: http, containerPort: 8080, hostPort: 7860, hostIP: 127.0.0.1}
+      volumeMounts:
+        - {name: listener, mountPath: /etc/nginx/enrooted, readOnly: true}
+
+  volumes:
+    - {name: pgdata, persistentVolumeClaim: {claimName: cuga-basic-demo-postgres}}
+    - {name: data, persistentVolumeClaim: {claimName: cuga-basic-demo-data}}
+    - {name: db-init, configMap: {name: cuga-basic-demo-db-init}}
+    - {name: listener, configMap: {name: cuga-basic-demo-nginx}}
+    - {name: trust, secret: {secretName: cuga-basic-demo-trust}}
+    - {name: skill, configMap: {name: cuga-basic-demo-skill}}
