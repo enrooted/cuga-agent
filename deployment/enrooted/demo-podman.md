@@ -51,7 +51,7 @@ Open `http://localhost:9080/chat`. Both application images build for the Podman 
 ./demo.sh basic --vllm-uri "$VLLM_URI" --model "$MODEL"
 ```
 
-Open `http://localhost:7860/chat` and ask CUGA to summarize meeting notes. In Manage, the installed skill is `meeting-summary`. Use the Keycloak demo to inspect a user's stored Evolve entities.
+Open `http://localhost:7860/chat` and ask CUGA to summarize meeting notes. In Manage, the installed skill is `meeting-summary`. All three scenarios set `DYNACONF_SUPERVISOR__REGISTRY_ENABLED`, so Manage offers **Create agent**, agent deletion and supervisors. Without it Manage shows only the default agent. Use the Keycloak demo to inspect a user's stored Evolve entities.
 
 ## 2. CUGA with bundled Keycloak
 

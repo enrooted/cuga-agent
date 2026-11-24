@@ -45,6 +45,9 @@ data:
   EVOLVE_PG_USER: cuga
   EVOLVE_PG_DBNAME: evolve
 
+  # Manage can create and delete agents and compose supervisors.
+  DYNACONF_SUPERVISOR__REGISTRY_ENABLED: "true"
+
   # Operator-installed agent skills
   DYNACONF_SKILLS__ENABLED: "true"
   DYNACONF_SKILLS__ROOT: cuga
