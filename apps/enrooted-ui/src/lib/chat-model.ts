@@ -8,6 +8,7 @@
  * (Copyright IBM Corp., Apache-2.0). Only the rendering target changed:
  * Carbon "reasoning steps" / "cards" become plain data the React UI renders.
  */
+import i18n from "@/i18n"
 import { injectCitations, type MessageSource } from "@/lib/citations"
 
 // ── model ──────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ export function uuid(): string {
 // ── SSE parsing (multi-line data per spec) ─────────────────────────────────
 export async function* parseCugaStream(response: Response): AsyncGenerator<CugaStreamEvent> {
   const reader = response.body?.getReader()
-  if (!reader) throw new Error("No response body")
+  if (!reader) throw new Error(i18n.t("chat:stream.noBody"))
   const decoder = new TextDecoder()
   let buffer = ""
   try {
@@ -126,7 +127,7 @@ export function parseReasoningStepContent(data: string, title: string): Step {
       content = "```python\n" + parsed.code + "\n```"
       if (parsed.summary) content = `${parsed.summary}\n\n${content}`
     } else if (parsed.execution_output) {
-      content = "**Execution Output:**\n```\n" + parsed.execution_output + "\n```"
+      content = i18n.t("chat:step.executionOutputHeading") + "\n```\n" + parsed.execution_output + "\n```"
       if (parsed.summary) content = `${parsed.summary}\n\n${content}`
     } else {
       content = "```json\n" + JSON.stringify(parsed, null, 2) + "\n```"
@@ -208,10 +209,10 @@ export function parseAnswerEventData(data: string, accumulatedText = ""): Parsed
         response_content:
           policyData.metadata?.response_content ||
           policyData.content ||
-          (isPlaybook ? "" : "This action is not allowed."),
-        policy_reasoning: policyData.metadata?.policy_reasoning || "Policy triggered",
+          (isPlaybook ? "" : i18n.t("chat:policy.notAllowed")),
+        policy_reasoning: policyData.metadata?.policy_reasoning || i18n.t("chat:policy.triggered"),
         policy_type: policyData.policy_type || policyData.metadata?.policy_type || "unknown",
-        policy_name: policyData.policy_name || policyData.metadata?.policy_name || "Policy",
+        policy_name: policyData.policy_name || policyData.metadata?.policy_name || i18n.t("chat:policy.fallbackName"),
         is_playbook: isPlaybook,
       }
       result.policyData = policyData
@@ -222,17 +223,17 @@ export function parseAnswerEventData(data: string, accumulatedText = ""): Parsed
       const info = result.policyInfo
       if (isPlaybook) {
         result.answerText =
-          (accumulatedText || "Following the playbook to guide you through this process.") +
-          "\n\n> ###### 📖 *Playbook Information*\n>\n" +
-          `> *Playbook Name:* **${info.policy_name}**\n>\n` +
-          `> *Reasoning:* ${info.policy_reasoning}`
+          (accumulatedText || i18n.t("chat:policy.playbookIntro")) +
+          `\n\n> ###### 📖 *${i18n.t("chat:policy.playbookInfo")}*\n>\n` +
+          `> *${i18n.t("chat:policy.playbookName")}* **${info.policy_name}**\n>\n` +
+          `> *${i18n.t("chat:policy.reasoning")}* ${info.policy_reasoning}`
       } else {
         result.answerText =
           info.response_content +
-          "\n\n> ###### 🛡️ *Policy Information*\n>\n" +
-          `> *Policy Name:* **${info.policy_name}**\n>\n` +
-          `> *Policy Type:* \`${info.policy_type}\`\n>\n` +
-          `> *Reasoning:* ${info.policy_reasoning}`
+          `\n\n> ###### 🛡️ *${i18n.t("chat:policy.policyInfo")}*\n>\n` +
+          `> *${i18n.t("chat:policy.policyName")}* **${info.policy_name}**\n>\n` +
+          `> *${i18n.t("chat:policy.policyType")}* \`${info.policy_type}\`\n>\n` +
+          `> *${i18n.t("chat:policy.reasoning")}* ${info.policy_reasoning}`
       }
     } else {
       result.answerText =
@@ -247,7 +248,7 @@ export function parseAnswerEventData(data: string, accumulatedText = ""): Parsed
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildToolApprovalCard(policyInfo: PolicyInfo, policyData: any, threadId: string): ActionCard {
   const approvalMsg =
-    policyData.metadata?.approval_message || "This tool requires your approval before execution."
+    policyData.metadata?.approval_message || i18n.t("chat:approval.defaultMessage")
   const tools: string[] = policyData.metadata?.required_tools || []
   const apps: string[] = policyData.metadata?.required_apps || []
   const codePreview: string[] = policyData.metadata?.code_preview || []
@@ -255,36 +256,36 @@ export function buildToolApprovalCard(policyInfo: PolicyInfo, policyData: any, t
   if (tools.length > 0) {
     parts.push(
       tools.includes("*")
-        ? "**Tools requiring approval:** All tools"
-        : `**Tools requiring approval:** ${tools.join(", ")}`
+        ? i18n.t("chat:approval.allTools")
+        : i18n.t("chat:approval.tools", { tools: tools.join(", ") })
     )
   }
-  if (apps.length > 0) parts.push(`**Apps requiring approval:** ${apps.join(", ")}`)
+  if (apps.length > 0) parts.push(i18n.t("chat:approval.apps", { apps: apps.join(", ") }))
   if (codePreview.length > 0) {
-    parts.push("**Code Preview:**", "```python\n" + codePreview.join("\n") + "\n```")
+    parts.push(i18n.t("chat:approval.codePreview"), "```python\n" + codePreview.join("\n") + "\n```")
   }
   return {
     parts,
     buttons: [
-      { label: "Approve & Execute", variant: "primary", approved: true, customEvent: "tool_approval_response", threadId },
-      { label: "Deny", variant: "danger", approved: false, customEvent: "tool_approval_response", threadId },
+      { label: i18n.t("chat:approval.approve"), variant: "primary", approved: true, customEvent: "tool_approval_response", threadId },
+      { label: i18n.t("chat:approval.deny"), variant: "danger", approved: false, customEvent: "tool_approval_response", threadId },
     ],
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildSuggestHumanActionCard(actionData: any, threadId: string): ActionCard {
-  const parts = [`### ${actionData.action_name || "Action Required"}`]
+  const parts = [`### ${actionData.action_name || i18n.t("chat:approval.actionRequired")}`]
   if (actionData.description) parts.push(actionData.description)
   const tool = actionData.additional_data?.tool
   if (tool) {
-    if (tool.required_tools?.length > 0) parts.push(`**Required Tools:** ${tool.required_tools.join(", ")}`)
+    if (tool.required_tools?.length > 0) parts.push(i18n.t("chat:approval.requiredTools", { tools: tool.required_tools.join(", ") }))
     if (tool.code_preview?.length > 0) {
-      parts.push("**Code Preview:**", "```python\n" + tool.code_preview.join("\n") + "\n```")
+      parts.push(i18n.t("chat:approval.codePreview"), "```python\n" + tool.code_preview.join("\n") + "\n```")
     }
-    if (tool.policy_name) parts.push(`**Policy:** ${tool.policy_name}`)
-    if (tool.agent_names?.length > 0) parts.push(`**Agents to be executed:** ${tool.agent_names.join(", ")}`)
-    if (tool.task_descriptions) parts.push(`**Tasks:**\n${tool.task_descriptions}`)
+    if (tool.policy_name) parts.push(i18n.t("chat:approval.policy", { name: tool.policy_name }))
+    if (tool.agent_names?.length > 0) parts.push(i18n.t("chat:approval.agents", { agents: tool.agent_names.join(", ") }))
+    if (tool.task_descriptions) parts.push(`${i18n.t("chat:approval.tasks")}\n${tool.task_descriptions}`)
   }
   const common = {
     customEvent: "suggest_human_action" as const,
@@ -302,7 +303,7 @@ export function buildSuggestHumanActionCard(actionData: any, threadId: string): 
     })
   }
   if (actionData.type === "confirmation") {
-    buttons.push({ ...common, label: "Cancel", variant: "secondary", approved: false })
+    buttons.push({ ...common, label: i18n.t("common:action.cancel"), variant: "secondary", approved: false })
   }
   return { parts, buttons }
 }
@@ -310,13 +311,16 @@ export function buildSuggestHumanActionCard(actionData: any, threadId: string): 
 // ── sub-agent accumulation (shared by live + history) ──────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function subAgentIteration(data: any, raw: string): { title: string; content: string } | null {
-  if (data.type === "start") return { title: "Task", content: data.task || "" }
+  if (data.type === "start") return { title: i18n.t("chat:step.task"), content: data.task || "" }
   if (data.type === "result") {
-    return { title: "Result", content: "**Execution Output:**\n```\n" + (data.answer || "") + "\n```" }
+    return {
+      title: i18n.t("chat:step.result"),
+      content: i18n.t("chat:step.executionOutputHeading") + "\n```\n" + (data.answer || "") + "\n```",
+    }
   }
   if (data.code || data.execution_output) {
     return {
-      title: data.code ? "Code" : "Execution Output",
+      title: data.code ? i18n.t("chat:step.code") : i18n.t("chat:step.executionOutput"),
       content: parseReasoningStepContent(raw, "").content,
     }
   }
@@ -330,10 +334,10 @@ const nestIterations = (iterations: Array<{ title: string; content: string }>) =
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const subAgentLabel = (d: any) => {
-  const agentName = d.agent_name || "sub-agent"
+  const name = d.agent_name || i18n.t("chat:step.subAgentFallback")
   return d.spawn_id
-    ? `Sub-Agent: ${agentName} (${String(d.spawn_id).slice(0, 12)})`
-    : `Sub-Agent: ${agentName}`
+    ? i18n.t("chat:step.subAgentWithId", { name, id: String(d.spawn_id).slice(0, 12) })
+    : i18n.t("chat:step.subAgent", { name })
 }
 
 // ── live turn (customSendMessage.ts) ───────────────────────────────────────
@@ -488,11 +492,11 @@ export class LiveTurn {
         return { kind: "final" }
       }
       case "Error":
-        this.finalize(`Error: ${event.data}`)
+        this.finalize(i18n.t("chat:stream.error", { message: event.data }))
         return { kind: "final" }
       case "Complete":
       case "Done":
-        this.finalize(this.accumulatedText || "Task completed.")
+        this.finalize(this.accumulatedText || i18n.t("chat:stream.taskCompleted"))
         return { kind: "final" }
       default:
         return this.defaultStep(event)
@@ -509,18 +513,15 @@ export class LiveTurn {
 
   /** Stream closed without a terminal event. */
   endOfStream() {
-    this.finalize(this.accumulatedText || "Response completed.")
+    this.finalize(this.accumulatedText || i18n.t("chat:stream.responseCompleted"))
   }
 
   cancelled() {
-    this.finalize("Request was cancelled.")
+    this.finalize(i18n.t("chat:stream.cancelled"))
   }
 
   failed(message: string) {
-    this.finalize(
-      `Error: ${message}. Backend URL: ${window.location.origin}. ` +
-        "Check that the backend is running and reachable (e.g. CORS, firewall, proxy)."
-    )
+    this.finalize(i18n.t("chat:stream.failed", { message, url: window.location.origin }))
   }
 }
 

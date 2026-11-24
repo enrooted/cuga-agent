@@ -1,4 +1,5 @@
 import { DownloadIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -15,6 +16,7 @@ export interface FilePreview {
 
 /** Workspace / knowledge file preview (Carbon UI: ComposedModal + Markdown). */
 export function FilePreviewDialog({ preview, onClose }: { preview: FilePreview | null; onClose: () => void }) {
+  const { t } = useTranslation("chat")
   return (
     <Dialog open={!!preview} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-4xl">
@@ -33,9 +35,9 @@ export function FilePreviewDialog({ preview, onClose }: { preview: FilePreview |
         <DialogFooter>
           <Button variant="outline" onClick={() => preview?.onDownload()}>
             <DownloadIcon data-icon="inline-start" />
-            Download
+            {t("preview.download")}
           </Button>
-          <DialogClose render={<Button />}>Close</DialogClose>
+          <DialogClose render={<Button />}>{t("common:action.close")}</DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

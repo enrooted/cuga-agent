@@ -1,0 +1,447 @@
+{
+  "status": {
+    "current": "Current",
+    "retained": "Retained",
+    "needsAttention": "Needs attention",
+    "protected": "Protected",
+    "incomplete": "Incomplete",
+    "failed": "Failed",
+    "running": "Running",
+    "cancelled": "Cancelled",
+    "interrupted": "Interrupted",
+    "unavailable": "Unavailable",
+    "statusUnavailable": "Status unavailable",
+    "disabled": "Disabled",
+    "enabled": "Enabled",
+    "enabledHealthy": "Enabled and healthy",
+    "completed": "Completed"
+  },
+  "type": {
+    "conversationMemory": "Conversation memory",
+    "preference": "Preference"
+  },
+  "errors": {
+    "requestFailed": "Memory request failed",
+    "invalidResponse": "The memory backend returned an invalid response. Check that the backend is up to date."
+  },
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago"
+  },
+  "record": {
+    "typedTitle": "{{type}} memory",
+    "ownerUnavailable": "Owner unavailable",
+    "sourceConversations_one": "{{count}} source conversation",
+    "sourceConversations_other": "{{count}} source conversations",
+    "conversationReference": "Conversation {{reference}}",
+    "noSourceConversation": "No available source conversation",
+    "savedDateUnavailable": "Saved date unavailable",
+    "notUsedYet": "Not used yet",
+    "conversation": "Conversation",
+    "dateUnavailable": "Date unavailable",
+    "legalHold": "Legal hold",
+    "flaggedByPolicy": "Flagged by the published retention policy",
+    "available": "Available",
+    "retentionCompleted": "Retention completed.",
+    "schedulingUnavailable": "Scheduling unavailable"
+  },
+  "protection": {
+    "saveTitle": "Protection before saving",
+    "saveDescription": "Checks and protects memories before they are saved.",
+    "sendTitle": "Protection before sending",
+    "sendDescription": "Checks messages and tool inputs before they are sent to the AI model."
+  },
+  "rule": {
+    "deleteAfterSourceDeleted": "Delete memories {{days}} days after their last supporting conversation is deleted.",
+    "deleteOldIfSourceDeleted": "Delete memories that are at least {{days}} days old if their original conversation has been deleted.",
+    "deleteWhenSourcesDeleted": "Delete memories after all their supporting conversations have been deleted.",
+    "target": {
+      "conversation": "conversation memories",
+      "guidelines": "guidelines",
+      "typed": "{{type}} memories",
+      "all": "all memories"
+    },
+    "delete": {
+      "always": "Delete {{target}}",
+      "afterDays": "Delete {{target}} after {{days}} days",
+      "unused": "Delete {{target}} after {{days}} days without use"
+    },
+    "flag": {
+      "always": "Flag {{target}}",
+      "afterDays": "Flag {{target}} after {{days}} days",
+      "unused": "Flag {{target}} after {{days}} days without use"
+    },
+    "other": {
+      "always": "{{action}} {{target}}",
+      "afterDays": "{{action}} {{target}} after {{days}} days",
+      "unused": "{{action}} {{target}} after {{days}} days without use"
+    }
+  },
+  "statusDetail": {
+    "unusedTyped": "Flagged because this {{type}} memory has not been used for {{days}} days.",
+    "unusedMatching": "Flagged because this matching memory has not been used for {{days}} days.",
+    "ageTyped": "Flagged because this {{type}} memory is more than {{days}} days old.",
+    "ageMatching": "Flagged because this matching memory is more than {{days}} days old.",
+    "matchedRule": "Flagged because it matched the {{rule}} retention rule."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "range": "{{first}}–{{last}} of {{total}} items",
+    "pageOf": "Page {{page}} of {{totalPages}}",
+    "page": "Page {{page}}",
+    "previous": "Previous page",
+    "next": "Next page"
+  },
+  "detailPanel": {
+    "close": "Close details"
+  },
+  "preferences": {
+    "loadFailed": "Memory settings could not be loaded.",
+    "saveFailed": "Memory settings could not be saved.",
+    "loading": "Loading memory settings…",
+    "saving": "Saving memory settings…",
+    "on": "On",
+    "off": "Off",
+    "service": {
+      "label": "Memory for this service",
+      "note": "Enable memory features for this service."
+    },
+    "user": {
+      "label": "Memory for me",
+      "note": "Allow agents to save and use memories for your conversations across this service.",
+      "noteServiceOff": "Memory is disabled for this service. Your preference is saved."
+    },
+    "episodic": {
+      "label": "Episodic memory",
+      "note": "Learn from past conversations to improve future responses."
+    }
+  },
+  "usage": {
+    "used_one": "Used {{count}} time",
+    "used_other": "Used {{count}} times",
+    "notUsedYet": "Not used yet"
+  },
+  "detail": {
+    "eyebrow": "Selected memory",
+    "sourceConversation": "Conversation {{number}}",
+    "sourceUnavailable": "Source conversation unavailable",
+    "sourceSuperseded": "Earlier information",
+    "sourceSupporting": "Supports this memory",
+    "remembered": "Remembered information",
+    "owner": "Owner",
+    "type": "Type",
+    "category": "Category",
+    "source": "Source",
+    "saved": "Saved",
+    "useFrequency": "Use frequency",
+    "lastUsed": "Last used",
+    "status": "Status",
+    "related": "Related",
+    "relatedCount_one": "{{count}} related memory",
+    "relatedCount_other": "{{count}} related memories",
+    "recentUse": "Recent use",
+    "version": "Version {{revision}}",
+    "deletionUnavailable": "Deletion unavailable",
+    "legalHold": "This memory is protected by a legal hold.",
+    "contentHidden": "Content hidden",
+    "contentHiddenBody": "Stored content is not available in the administrator view.",
+    "deleting": "Deleting...",
+    "forget": "Forget",
+    "empty": "Select a memory to view its details."
+  },
+  "settings": {
+    "beforeSaving": "Before saving",
+    "beforeSending": "Before sending",
+    "plugin": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enabledStatusUnavailable": "Enabled · Status unavailable",
+      "none": "No protection plugins reported."
+    },
+    "protection": {
+      "saveTitle": "Sensitive information before saving",
+      "sendTitle": "Sensitive information before sending",
+      "saveDescription": "Checks every memory before it is stored and stops saves rejected by configured protection plugins.",
+      "sendDescription": "Checks messages and tool inputs before they are sent to the AI model.",
+      "continuous": "Continuous"
+    },
+    "retention": {
+      "intro": "Manage memory retention for everyone using this service.",
+      "running": "Running retention…",
+      "runNow": "Run retention now",
+      "policyRules": "Policy rules",
+      "noRules": "No rules are configured for this policy.",
+      "unavailable": "Retention is unavailable.",
+      "latestRun": "Latest run",
+      "noneRecorded": "None recorded",
+      "activityHint": "View marked memories and completed outcomes in Activity.",
+      "defaultDescription": "Evaluates this published retention policy on demand.",
+      "publishedRules_one": "{{count}} published rule",
+      "publishedRules_other": "{{count}} published rules"
+    },
+    "categories": {
+      "label": "Settings categories",
+      "general": "General",
+      "filters": "Filters"
+    },
+    "filters": {
+      "intro": "Control what enters memory and what reaches the AI model.",
+      "scope": "Everyone using this service · Managed by the service operator",
+      "note": "This page reports the active configuration. Filter changes are managed by your service operator."
+    }
+  },
+  "message": {
+    "inventoryUnavailable": "Memory inventory is unavailable",
+    "referencedUnavailable_one": "{{count}} referenced memory is no longer available",
+    "referencedUnavailable_other": "{{count}} referenced memories are no longer available",
+    "retentionStatusUnavailable": "Retention status is unavailable",
+    "retentionPoliciesUnavailable": "Retention policies are unavailable",
+    "retentionHistoryUnavailable": "Retention history is unavailable",
+    "protectionStatusUnavailable": "Protection status is unavailable",
+    "adminInventoryUnavailable": "Administrator memory inventory is unavailable",
+    "loadFailed": "Memories could not be loaded",
+    "loadMoreFailed": "More memories could not be loaded",
+    "legalHold": "This memory is protected by a legal hold",
+    "deleted": "Memory deleted",
+    "deleteFailed": "Memory could not be deleted",
+    "runningRetention": "Running retention...",
+    "retentionFinished": "Retention finished. Review marked memories and committed outcomes in Activity.",
+    "retentionFailed": "Retention could not be completed"
+  },
+  "confirm": {
+    "forget": {
+      "title": "Forget memory",
+      "body": "Forget this memory? Its source conversation will remain available.",
+      "action": "Forget"
+    },
+    "retention": {
+      "title": "Run retention",
+      "body": "Run retention for everyone using this service? Eligible memories will be marked and deleted; current legal holds will be respected.",
+      "action": "Run retention"
+    }
+  },
+  "list": {
+    "title": "What the agent remembers",
+    "hint": "Select a memory to inspect its source and controls.",
+    "focusUsed": "Showing {{count}} used in the response. Show all",
+    "focusSaved": "Showing {{count}} saved in the response. Show all",
+    "loading": "Loading memories…",
+    "empty": "No memories match these filters.",
+    "perPage": "Memories per page:",
+    "label": "Your memories",
+    "detailLabel": "Memory details",
+    "referencedCount": "{{count}} referenced memories",
+    "pageCount": "{{shown}} on this page · {{total}} total"
+  },
+  "header": {
+    "eyebrow": "Memory",
+    "userSubtitle": "Your view of this agent's memory",
+    "administration": "Administration",
+    "adminTitle": "Memory administration",
+    "adminSubtitle": "Administrator controls",
+    "yourMemory": "Your memory"
+  },
+  "serviceOff": {
+    "title": "Memory is off for this service.",
+    "body": "You can view existing data and delete your memories. Agents cannot save or use memories."
+  },
+  "toolbar": {
+    "search": "Search this page",
+    "type": "Type",
+    "allTypes": "All types",
+    "sort": "Sort this page",
+    "sortOptions": {
+      "recentlySaved": "Recently saved",
+      "recentlyUsed": "Recently used",
+      "mostUsed": "Most used",
+      "leastUsed": "Least used",
+      "oldest": "Oldest",
+      "name": "Name"
+    }
+  },
+  "admin": {
+    "tabs": {
+      "settings": "Settings",
+      "memory": "Memory",
+      "activity": "Activity"
+    },
+    "memoryAbout": "Memory about",
+    "allOwners": "All owners",
+    "status": "Status",
+    "allStates": "All states",
+    "showing": "Showing {{shown}} of {{total}}",
+    "listLabel": "Admin memory list",
+    "detailLabel": "Admin memory details",
+    "loadMore": "Load more",
+    "loadingRuns": "Loading runs…",
+    "noRuns": "No retention runs recorded yet."
+  },
+  "run": {
+    "viewAvailable": "View memories that are still available.",
+    "notViewable": "These memories are not available to view. See audit details for recorded outcomes.",
+    "memoryId": "Memory {{id}}",
+    "unknownMemory": "Unknown memory",
+    "title": "Retention audit",
+    "deletionRecorded": "Memory deletion recorded",
+    "activityRecorded": "Retention activity recorded",
+    "outcomeLabel": "Recorded retention outcome",
+    "deletedHidden": "Deleted memory titles and contents are not displayed in this history.",
+    "partial": "The audit shows the outcomes recorded so far.",
+    "warning": "Warning",
+    "error": "Error",
+    "policy": "Policy",
+    "unavailable": "Unavailable",
+    "requestedBy": "Requested by",
+    "notRecorded": "Not recorded",
+    "started": "Started",
+    "finished": "Finished",
+    "result": "Result",
+    "flaggedForReview": "Flagged for review",
+    "skipped": "Skipped",
+    "auditDetails": "Administrative audit details",
+    "auditNote": "Technical references connect recorded actions. They do not retrieve deleted memory content.",
+    "runId": "Run ID",
+    "policyId": "Policy ID",
+    "actionsCaption": "Recorded actions for this run",
+    "col": {
+      "outcome": "Outcome",
+      "entityReference": "Entity reference",
+      "reason": "Reason"
+    },
+    "outcome": {
+      "flagged": "Flagged",
+      "deleted": "Deleted",
+      "skipped": "Skipped"
+    }
+  },
+  "activity": {
+    "candidateStatus": {
+      "held": "Legal hold",
+      "review": "Needs review",
+      "pending": "Awaiting deletion"
+    },
+    "outcome": {
+      "deleted": "Deleted",
+      "held": "On legal hold",
+      "flagged": "Flagged for review",
+      "marked": "Marked for deletion"
+    },
+    "loadFailed": "Retention activity could not be loaded.",
+    "unavailablePolicy": "Unavailable policy",
+    "label": "Retention activity",
+    "loading": "Loading retention activity…",
+    "viewsLabel": "Retention activity views",
+    "awaiting": "Awaiting action",
+    "history": "History",
+    "awaitingIntro": "Memories kept for review or waiting for deletion.",
+    "memoryCount_one": "{{count}} memory",
+    "memoryCount_other": "{{count}} memories",
+    "controlsLabel": "Pending memory controls",
+    "search": "Search pending memories",
+    "tableRegionLabel": "Pending memories table",
+    "tableLabel": "Memories awaiting action",
+    "col": {
+      "memory": "Memory",
+      "status": "Status",
+      "policy": "Policy",
+      "reference": "Reference",
+      "outcome": "Outcome",
+      "requestedBy": "Requested by",
+      "time": "Time"
+    },
+    "memoryId": "Memory {{id}}",
+    "detailsUnavailable": "Details unavailable",
+    "empty": {
+      "loading": "Loading pending memories…",
+      "failed": "Pending memories could not be loaded.",
+      "noMatch": "No memories match your search.",
+      "none": "No memories are awaiting action."
+    },
+    "rowsPerPage": "Rows per page:",
+    "recentOutcomes": "Recent outcomes",
+    "recentIntro": "Recent retention actions.",
+    "noActions": "No retention actions recorded yet.",
+    "outcomeSummary_one": "{{count}} memory · {{policy}}",
+    "outcomeSummary_other": "{{count}} memories · {{policy}}",
+    "runsLabel": "Retention runs",
+    "runs": "Runs",
+    "runsIntro": "Open a run to see its results.",
+    "auditDetails": "Audit details",
+    "auditLimit": "Showing up to 1,000 recent candidates and actions for this service.",
+    "currentMarks": "Current marks",
+    "blockedByLegalHold": "Deletion blocked by legal hold",
+    "committedActions": "Committed actions",
+    "notRecorded": "Not recorded"
+  },
+  "schedules": {
+    "label": "Retention schedules",
+    "title": "Schedules",
+    "refresh": "Refresh schedules",
+    "add": "Add schedule",
+    "edit": "Edit schedule",
+    "updating": "Updating schedules…",
+    "loading": "Loading schedules…",
+    "loadFailed": "Schedules could not be loaded.",
+    "operationFailed": "Schedule operation failed. Refresh before retrying.",
+    "empty": "No schedules configured for this policy.",
+    "stopped": "Stopped",
+    "active": "Active",
+    "startHint": "Start this schedule to enable future runs.",
+    "nextRun": "Next run: {{time}}",
+    "nextRunUnavailable": "Next run unavailable",
+    "agentScope": "Agent scope: {{agent}}. Saving here applies it to everyone using this service.",
+    "dryRun": "This schedule is configured for dry runs. Saving here enables applied retention.",
+    "start": "Start",
+    "stop": "Stop",
+    "everyDayAt": "Every day at {{time}}",
+    "everyWeekdayAt": {
+      "sunday": "Every Sunday at {{time}}",
+      "monday": "Every Monday at {{time}}",
+      "tuesday": "Every Tuesday at {{time}}",
+      "wednesday": "Every Wednesday at {{time}}",
+      "thursday": "Every Thursday at {{time}}",
+      "friday": "Every Friday at {{time}}",
+      "saturday": "Every Saturday at {{time}}"
+    },
+    "days": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    },
+    "deleteDialog": {
+      "title": "Delete schedule",
+      "body": "Delete schedule “{{id}}”? Its policy and run history will remain.",
+      "action": "Delete schedule"
+    },
+    "field": {
+      "id": "Schedule ID",
+      "frequency": "Frequency",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "custom": "Custom cron",
+      "time": "Time",
+      "day": "Day",
+      "cron": "Cron expression",
+      "timeZone": "Time zone (IANA)",
+      "advanced": "Advanced timing",
+      "concurrency": "If a previous run is still active",
+      "concurrencyForbid": "Skip the new run",
+      "concurrencyAllow": "Allow overlap",
+      "concurrencyReplace": "Replace previous run",
+      "deadline": "Start deadline (seconds, optional)"
+    },
+    "preview": {
+      "action": "Preview next runs",
+      "title": "Next five matching times",
+      "note": "Preview only. Nothing has been saved.",
+      "noteStopped": "Preview only. Nothing has been saved. This schedule is stopped."
+    },
+    "createdStopped": "New schedules are created stopped. Start the schedule when ready.",
+    "saveChanges": "Save changes"
+  }
+}

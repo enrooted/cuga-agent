@@ -6,6 +6,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 
 import { AlertDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/knowledge-api"
 import {
   TAB_INDEX,
@@ -122,6 +124,7 @@ export function KnowledgePanel({
   onPresetApplied,
 }: KnowledgePanelProps) {
   void _onAdaptationServerError
+  const { t } = useTranslation("knowledge")
   // Seeded from the prop on first render (the modal is unmounted on close, so
   // the prop is always fresh on the next mount), then the user owns navigation.
   const [tab, setTab] = React.useState<KnowledgeTabName>(TAB_ORDER[TAB_INDEX[initialTab ?? "documents"]])
@@ -164,7 +167,7 @@ export function KnowledgePanel({
     try {
       const res = await api.listKnowledgeDocuments()
       if (request !== documentsRequest.current) return
-      if (!res.ok) throw new Error(`Failed to load documents (${res.status})`)
+      if (!res.ok) throw new Error(i18n.t("knowledge:panel.loadFailedStatus", { status: res.status }))
       const data = asRecord((await res.json()) as unknown)
       const docs = Array.isArray(data?.documents) ? (data.documents as KnowledgeDocument[]) : []
       if (request !== documentsRequest.current) return
@@ -173,7 +176,7 @@ export function KnowledgePanel({
     } catch (e) {
       console.error("Failed to load documents:", e)
       if (request === documentsRequest.current) {
-        setDocumentsError(e instanceof Error ? e.message : "Failed to load documents")
+        setDocumentsError(e instanceof Error ? e.message : i18n.t("knowledge:panel.loadFailed"))
       }
     } finally {
       if (request === documentsRequest.current) setDocumentsLoading(false)
@@ -287,23 +290,27 @@ export function KnowledgePanel({
     if (!agentLevelEnabled) {
       onToast?.(
         "warning",
-        "Agent knowledge is disabled",
-        "Enable agent-level knowledge in Settings to manage permanent documents."
+        t("panel.agentDisabled.title"),
+        t("panel.agentDisabled.manage")
       )
       return
     }
     try {
       const res = await api.deleteKnowledgeDocument(filename)
       if (res.ok) {
-        onToast?.("success", "Document deleted", filename)
+        onToast?.("success", t("panel.delete.done"), filename)
         setDeleteConfirm(null)
         void loadDocuments()
       } else {
-        const err = asRecord(await readJson(res)) ?? { detail: "Delete failed" }
-        onToast?.("error", "Delete failed", asString(err.detail) || asString(err.error) || "Unknown error")
+        const err = asRecord(await readJson(res)) ?? { detail: t("panel.delete.failed") }
+        onToast?.(
+          "error",
+          t("panel.delete.failed"),
+          asString(err.detail) || asString(err.error) || t("shared.unknownError")
+        )
       }
     } catch (e) {
-      onToast?.("error", "Delete failed", (e instanceof Error && e.message) || "Network error")
+      onToast?.("error", t("panel.delete.failed"), (e instanceof Error && e.message) || t("shared.networkError"))
     }
   }
 
@@ -315,9 +322,9 @@ export function KnowledgePanel({
     <Dialog open onOpenChange={(open) => !open && onClose()} disablePointerDismissal>
       <DialogContent className="flex max-h-[min(90vh,56rem)] flex-col gap-0 p-0 sm:max-w-5xl">
         <DialogHeader className="border-b px-5 py-4">
-          <DialogTitle>Knowledge Base</DialogTitle>
+          <DialogTitle>{t("panel.title")}</DialogTitle>
           <DialogDescription className="sr-only">
-            Documents, search test, knowledge harness and settings of this agent&apos;s knowledge base.
+            {t("panel.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -327,11 +334,11 @@ export function KnowledgePanel({
           className="flex min-h-0 flex-1 flex-col gap-0"
         >
           <div className="border-b px-5 py-2">
-            <TabsList aria-label="Knowledge sections">
-              <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
-              <TabsTrigger value="search">Search Test</TabsTrigger>
-              <TabsTrigger value="behavior">Knowledge harness</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsList aria-label={t("panel.tabsLabel")}>
+              <TabsTrigger value="documents">{t("panel.tab.documents", { total: documents.length })}</TabsTrigger>
+              <TabsTrigger value="search">{t("panel.tab.search")}</TabsTrigger>
+              <TabsTrigger value="behavior">{t("panel.tab.behavior")}</TabsTrigger>
+              <TabsTrigger value="settings">{t("panel.tab.settings")}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -381,7 +388,7 @@ export function KnowledgePanel({
                   serverError={adaptationServerError ?? null}
                 />
               ) : (
-                <SettingsUnavailable page="Manage" />
+                <SettingsUnavailable page="manage" />
               )}
             </TabsContent>
 
@@ -409,7 +416,7 @@ export function KnowledgePanel({
                   onToast={onToast}
                 />
               ) : (
-                <SettingsUnavailable page="Settings" />
+                <SettingsUnavailable page="settings" />
               )}
             </TabsContent>
           </div>
@@ -417,16 +424,16 @@ export function KnowledgePanel({
 
         <DialogFooter className="m-0 rounded-b-xl px-5 py-3">
           <Button type="button" variant="outline" onClick={onClose}>
-            Close
+            {t("common:action.close")}
           </Button>
         </DialogFooter>
 
         {/* Delete confirmation */}
         <AlertDialog
           open={deleteConfirm !== null}
-          title="Delete document?"
-          description={`Are you sure you want to delete "${deleteConfirm ?? ""}"? This action cannot be undone.`}
-          confirmLabel="Delete"
+          title={t("panel.delete.title")}
+          description={t("panel.delete.description", { name: deleteConfirm ?? "" })}
+          confirmLabel={t("common:action.delete")}
           onConfirm={() => {
             if (deleteConfirm) void handleDelete(deleteConfirm)
           }}

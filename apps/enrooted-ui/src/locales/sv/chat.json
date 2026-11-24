@@ -1,0 +1,279 @@
+{
+  "page": {
+    "skipToContent": "Hoppa till huvudinnehållet",
+    "retry": "Försök igen",
+    "newChat": "Ny chatt",
+    "navigation": "Navigering",
+    "navigationDescription": "Agent, vyer och dina konversationer",
+    "agentDetails": "Agentdetaljer",
+    "agentDetailsDescription": "Verktyg, filer, kunskap och färdigheter",
+    "openNavigation": "Öppna navigeringen",
+    "openAgentPanel": "Öppna agentpanelen",
+    "closeAgentPanel": "Stäng agentpanelen",
+    "banner": {
+      "unavailable": "Konversationens sparade tillstånd kan inte läsas in. Du kan fortfarande läsa den, men du behöver starta en ny konversation för att fortsätta.",
+      "external": "Den här konversationen startades utanför webbgränssnittet (API eller tillägg) och kan inte fortsättas här. Starta en ny konversation för att gå vidare.",
+      "legacy": "Den här konversationen skapades innan det gick att fortsätta konversationer. Starta en ny konversation för att gå vidare."
+    },
+    "removeAll": {
+      "title": "Ta bort alla konversationer",
+      "description": "Vill du ta bort alla konversationer? Det går inte att ångra."
+    }
+  },
+  "agent": {
+    "defaultDescription": "En allmän assistent med konfigurerade verktyg och åtkomst till arbetsytan.",
+    "unknownApp": "Okänd app",
+    "noDescription": "Beskrivning saknas"
+  },
+  "error": {
+    "unknown": "Okänt fel",
+    "restoreChat": "Chatten kunde inte återställas (HTTP {{status}})",
+    "createChat": "Chatten kunde inte skapas (HTTP {{status}})"
+  },
+  "toast": {
+    "threadsLoadError": "Konversationerna kunde inte läsas in",
+    "threadsLoadErrorBody": "Nätverksfel när konversationerna lästes in",
+    "draftCleanup": "Utkastet rensades inte helt",
+    "draftCleanupBody": "Utkastets kunskapssamling kunde inte tas bort.",
+    "toolsLoadWarning": "Verktygen kunde inte läsas in",
+    "toolsLoadWarningBody": "Verktygslistan kunde inte läsas in ({{status}} {{statusText}})",
+    "configLoadError": "Konfigurationen kunde inte läsas in",
+    "configLoadErrorBody": "Nätverksfel när agentens konfiguration lästes in",
+    "workspaceRefreshFailed": "Arbetsytan kunde inte uppdateras",
+    "uploadUnavailable": "Uppladdning är inte tillgänglig",
+    "uploadUnavailableBody": "Starta en chatt innan du laddar upp filer.",
+    "uploadComplete": "Uppladdningen är klar",
+    "uploadCompleteBody_one": "{{count}} fil laddades upp till workspace/uploads/",
+    "uploadCompleteBody_other": "{{count}} filer laddades upp till workspace/uploads/",
+    "uploadFailed": "Uppladdningen misslyckades",
+    "downloadFailed": "Nedladdningen misslyckades",
+    "previewNotAvailable": "Förhandsvisning saknas",
+    "previewNotAvailableBody": "Bara text- och markdown-filer kan förhandsvisas.",
+    "fileLoadFailed": "Filen kunde inte läsas in",
+    "fileLoadError": "Fel när filen lästes in",
+    "previewUnavailable": "Förhandsvisningen är inte tillgänglig",
+    "previewUnavailableBody": "Bilagan kunde inte läsas in.",
+    "error": "Fel",
+    "removeSomeFailed": "{{failed}} av {{total}} konversationer kunde inte tas bort.",
+    "removeFailed": "Konversationerna kunde inte tas bort.",
+    "conversationUnavailable": "Konversationen är inte tillgänglig",
+    "conversationUnavailableBody": "Den här konversationen finns inte längre.",
+    "responseRunning": "Ett svar pågår fortfarande",
+    "responseRunningBody": "Ett annat svar pågår fortfarande i den här konversationen. Försök igen om en stund.",
+    "couldNotSend": "Kunde inte skicka",
+    "couldNotSendBody": "Meddelandet kunde inte skickas. Försök igen om en stund.",
+    "pendingCancelled": "Ett väntande godkännande avbröts eftersom agentens konfiguration ändrades.",
+    "configChanged": "Agentens konfiguration har uppdaterats sedan ditt senaste meddelande. Svaren använder nu den senaste versionen."
+  },
+  "view": {
+    "readOnly": "Skrivskyddad",
+    "restart": "Starta om konversationen",
+    "loadingHistory": "Läser in konversationshistoriken…",
+    "recentConversations": "Senaste konversationerna",
+    "recent": "Senaste",
+    "dropFiles": "Släpp filer här för att bifoga dem till konversationen",
+    "commandsLoadFailed": "Kommandona kunde inte läsas in"
+  },
+  "home": {
+    "greeting": "Hej, vad kan jag hjälpa dig med i dag?",
+    "starter": "Hej, vad kan du hjälpa mig med?"
+  },
+  "composer": {
+    "placeholder": "Skriv något…",
+    "placeholderReadOnly": "Konversationen är skrivskyddad – starta en ny konversation för att chatta",
+    "message": "Meddelande",
+    "slashCommands": "Snedstreckskommandon",
+    "loadingCommands": "Läser in kommandon…",
+    "noMatchingCommands": "Inga matchande kommandon",
+    "skill": "färdighet",
+    "attachFiles": "Bifoga filer",
+    "hint": "Enter skickar · Skift+Enter ger ny rad",
+    "hintWithCommands": "Enter skickar · Skift+Enter ger ny rad · / för kommandon",
+    "stop": "Stoppa svaret",
+    "send": "Skicka meddelandet",
+    "manage": "Hantera",
+    "retryUpload": "Försök ladda upp {{name}} igen",
+    "removeFile": "Ta bort filen {{name}}",
+    "dismiss": "Avfärda {{name}}"
+  },
+  "message": {
+    "thinking": "Tänker…",
+    "showDetails": "Visa detaljer",
+    "hideDetails": "Dölj detaljer",
+    "steps_one": "{{count}} steg",
+    "steps_other": "{{count}} steg",
+    "youChose": "Du valde ”{{label}}”",
+    "memoryUsed_one": "{{count}} minne användes",
+    "memoryUsed_other": "{{count}} minnen användes",
+    "memorySaved_one": "{{count}} minne sparades",
+    "memorySaved_other": "{{count}} minnen sparades"
+  },
+  "sources": {
+    "answerSources": "Svarets källor",
+    "title": "Källor",
+    "more": "+{{count}} till",
+    "cited_one": "{{count}} källa · citeras i det här svaret",
+    "cited_other": "{{count}} källor · citeras i det här svaret",
+    "empty": "Det här svaret citerade inga källor från kunskapsbasen.",
+    "showLess": "Visa mindre ↑",
+    "showMore": "Visa mer ↓",
+    "foundFor": "Hittades för: ”{{query}}”",
+    "relevance": "sökrelevans",
+    "documentGone": "Dokumentet finns inte längre i kunskapsbasen",
+    "openDocument": "Öppna dokumentet",
+    "source": "Källa {{n}}",
+    "preview": "”{{text}}…”",
+    "clickToView": "Klicka för att visa källan",
+    "scopeSession": "Den här konversationen",
+    "scopeAgent": "Agentens kunskap",
+    "page": "s. {{page}}"
+  },
+  "preview": {
+    "download": "Ladda ned"
+  },
+  "panel": {
+    "configVersion": "Konfiguration v{{version}}",
+    "sections": "Avsnitt i agentdetaljerna",
+    "loadingDetails": "Läser in agentdetaljer…",
+    "tab": {
+      "agents": "Agenter",
+      "tools": "Verktyg",
+      "files": "Filer",
+      "knowledge": "Kunskap",
+      "skills": "Färdigheter"
+    },
+    "section": {
+      "configuration": {
+        "title": "Verktyg",
+        "subtitle": "Appar och verktyg som agenten har tillgång till"
+      },
+      "supervised": {
+        "title": "Underställda agenter",
+        "subtitle": "Publicerade agenter som uppgifter kan delegeras till"
+      },
+      "workspace": {
+        "title": "Arbetsyta",
+        "subtitle": "Filer som finns i den aktuella arbetsytan"
+      },
+      "knowledge": {
+        "title": "Kunskap",
+        "subtitle": "Agentens och konversationens dokument för sökning"
+      },
+      "skills": {
+        "title": "Färdigheter",
+        "subtitle": "Installerade automatiseringsflöden"
+      }
+    },
+    "tools": {
+      "empty": "Inga verktyg",
+      "emptyHint": "Anslut verktyg till agenten under Hantera.",
+      "count_one": "{{count}} verktyg",
+      "count_other": "{{count}} verktyg"
+    },
+    "roster": {
+      "empty": "Inga agenter är kopplade till den här supervisorn.",
+      "label": "Underställda agenter",
+      "unknownAgent": "Okänd agent",
+      "externalA2a": "Extern A2A",
+      "agent": "Agent",
+      "unavailable": "Agenten är inte tillgänglig. Uppdatera supervisorns konfiguration.",
+      "chatWith": "Chatta med {{name}}"
+    },
+    "workspace": {
+      "download": "Ladda ned {{name}}",
+      "upload": "Ladda upp JSON-filer",
+      "refresh": "Uppdatera arbetsytan",
+      "loading": "Läser in arbetsytans filer…",
+      "empty": "Inga filer i arbetsytan.",
+      "emptyHint": "Ladda upp JSON-filer – de hamnar under workspace/uploads/",
+      "tree": "Arbetsyta",
+      "drop": "Släpp JSON-filer här för att ladda upp dem"
+    },
+    "knowledge": {
+      "notAvailable": "Kunskap är inte tillgänglig för {{agent}}.",
+      "notAvailableHint": "Öppna Hantera och ändra kunskapsinställningarna där om du vill slå på den igen eller uppdatera dokument.",
+      "scopesOff": "Kunskapsnivåerna är avstängda för {{agent}}.",
+      "scopesOffHint": "Slå på kunskap på agent- eller sessionsnivå under Hantera för att göra dokumenten tillgängliga här igen.",
+      "loadFailed": "Dokumenten kunde inte läsas in",
+      "loadFailedStatus": "Dokumenten kunde inte läsas in ({{status}})",
+      "agentTitle": "Agentens kunskap",
+      "loadingAgent": "Läser in agentens dokument…",
+      "noAgentDocs": "Inga agentdokument",
+      "docMeta_one": "{{count}} textbit · {{time}}",
+      "docMeta_other": "{{count}} textbitar · {{time}}",
+      "managedInSettings": "Hanteras i inställningarna",
+      "sessionTitle": "Den här konversationen",
+      "sessionHint": "Finns bara i den här chattsessionen",
+      "citations": "Källhänvisningar i den här chatten",
+      "citationsHint": "Visa numrerade källor under svaren",
+      "savingCitations": "Sparar inställningen för källhänvisningar…",
+      "removingDocument": "Tar bort dokumentet…",
+      "loadingSession": "Läser in konversationens dokument…",
+      "noSessionDocs": "Inga sessionsdokument",
+      "removeDocument": "Ta bort dokumentet {{name}}",
+      "dropzone": "Dra och släpp filer här eller klicka för att ladda upp",
+      "dropzoneUnavailable": "Sessionsfiler är tillfälligt otillgängliga",
+      "uploading": "Laddar upp…"
+    },
+    "skills": {
+      "loading": "Läser in färdigheter…",
+      "empty": "Inga färdigheter installerade",
+      "emptyHint": "Färdigheter visas här när de har konfigurerats",
+      "showLess": "Visa mindre",
+      "showMore": "Visa mer",
+      "requirements": "Krav"
+    }
+  },
+  "attachments": {
+    "ingestionFailed": "Inläsningen misslyckades",
+    "sessionUnavailable": "Sessionsbilagor är inte tillgängliga.",
+    "uploadFailed": "Uppladdningen misslyckades",
+    "deleteFailed": "Det gick inte att ta bort"
+  },
+  "stream": {
+    "noBody": "Svaret saknar innehåll",
+    "httpError": "HTTP-fel. Status: {{status}}, meddelande: {{message}}",
+    "connectFailed": "Kunde inte ansluta till CUGA-servern",
+    "error": "Fel: {{message}}",
+    "taskCompleted": "Uppgiften är klar.",
+    "responseCompleted": "Svaret är klart.",
+    "cancelled": "Begäran avbröts.",
+    "failed": "Fel: {{message}}. Serverns URL: {{url}}. Kontrollera att servern är igång och går att nå (t.ex. CORS, brandvägg, proxy)."
+  },
+  "step": {
+    "executionOutputHeading": "**Körningens utdata:**",
+    "task": "Uppgift",
+    "result": "Resultat",
+    "code": "Kod",
+    "executionOutput": "Körningens utdata",
+    "subAgent": "Underagent: {{name}}",
+    "subAgentWithId": "Underagent: {{name}} ({{id}})",
+    "subAgentFallback": "underagent"
+  },
+  "policy": {
+    "notAllowed": "Den här åtgärden är inte tillåten.",
+    "triggered": "En policy utlöstes",
+    "fallbackName": "Policy",
+    "playbookIntro": "Jag följer playbooken för att vägleda dig genom processen.",
+    "playbookInfo": "Information om playbooken",
+    "playbookName": "Playbookens namn:",
+    "policyInfo": "Information om policyn",
+    "policyName": "Policyns namn:",
+    "policyType": "Policytyp:",
+    "reasoning": "Motivering:"
+  },
+  "approval": {
+    "defaultMessage": "Det här verktyget kräver ditt godkännande innan det körs.",
+    "allTools": "**Verktyg som kräver godkännande:** Alla verktyg",
+    "tools": "**Verktyg som kräver godkännande:** {{tools}}",
+    "apps": "**Appar som kräver godkännande:** {{apps}}",
+    "codePreview": "**Förhandsvisning av koden:**",
+    "approve": "Godkänn och kör",
+    "deny": "Neka",
+    "actionRequired": "Åtgärd krävs",
+    "requiredTools": "**Verktyg som krävs:** {{tools}}",
+    "policy": "**Policy:** {{name}}",
+    "agents": "**Agenter som ska köras:** {{agents}}",
+    "tasks": "**Uppgifter:**"
+  }
+}

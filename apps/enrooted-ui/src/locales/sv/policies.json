@@ -1,0 +1,305 @@
+{
+  "config": {
+    "title": "Policyinställningar",
+    "description": "Agentens avsiktsskydd, playbooks, verktygsguider, verktygsgodkännanden och svarsformateringar.",
+    "loading": "Läser in policyer…",
+    "loadFailedTitle": "Det gick inte att läsa in policyerna",
+    "loadFailedBody": "Det går inte att spara just nu, så att de lagrade policyerna inte skrivs över med en tom lista.",
+    "globalTitle": "Policyer för hela agenten",
+    "globalBody_one": "Slår på eller av alla policyer på en gång ({{count}} policy konfigurerad)",
+    "globalBody_other": "Slår på eller av alla policyer på en gång ({{count}} policyer konfigurerade)",
+    "export": "Exportera",
+    "import": "Importera",
+    "enableSystem": "Aktivera policyer",
+    "enabled": "På",
+    "disabled": "Av",
+    "policyTypes": "Policytyper",
+    "emptyTitle": "Här finns inget än",
+    "saving": "Sparar…",
+    "saveChanges": "Spara ändringar",
+    "saved": "Sparat!",
+    "saveError": "Fel!"
+  },
+  "sections": {
+    "intentGuard": {
+      "tab": "Avsiktsskydd ({{total}})",
+      "heading": "Avsiktsskydd",
+      "add": "Lägg till avsiktsskydd",
+      "empty": "Inga avsiktsskydd har konfigurerats. Klicka på ”Lägg till avsiktsskydd” för att skapa ett.",
+      "namePlaceholder": "Policyns namn"
+    },
+    "playbook": {
+      "tab": "Playbooks ({{total}})",
+      "heading": "Playbooks",
+      "add": "Lägg till playbook",
+      "empty": "Inga playbooks har konfigurerats. Klicka på ”Lägg till playbook” för att skapa en.",
+      "namePlaceholder": "Playbookens namn"
+    },
+    "toolGuide": {
+      "tab": "Verktygsguider ({{total}})",
+      "heading": "Verktygsguider",
+      "add": "Lägg till verktygsguide",
+      "empty": "Inga verktygsguider har konfigurerats. Klicka på ”Lägg till verktygsguide” för att skapa en.",
+      "namePlaceholder": "Policyns namn"
+    },
+    "toolApproval": {
+      "tab": "Verktygsgodkännanden ({{total}})",
+      "heading": "Verktygsgodkännanden",
+      "add": "Lägg till verktygsgodkännande",
+      "empty": "Inga verktygsgodkännanden har konfigurerats. Klicka på ”Lägg till verktygsgodkännande” för att skapa ett.",
+      "namePlaceholder": "Policyns namn"
+    },
+    "outputFormatter": {
+      "tab": "Svarsformatering ({{total}})",
+      "heading": "Svarsformateringar",
+      "add": "Lägg till svarsformatering",
+      "empty": "Inga svarsformateringar har konfigurerats. Klicka på ”Lägg till svarsformatering” för att skapa en.",
+      "namePlaceholder": "Policyns namn"
+    }
+  },
+  "defaults": {
+    "intentGuard": {
+      "name": "Nytt avsiktsskydd",
+      "description": "Blockerar eller ändrar vissa avsikter hos användaren",
+      "response": "Den här åtgärden är inte tillåten."
+    },
+    "playbook": {
+      "name": "Ny playbook",
+      "description": "Vägledning steg för steg genom en uppgift",
+      "markdown": "# Uppgiftsguide\n\n## Steg:\n\n1. Första steget\n2. Andra steget\n3. Tredje steget",
+      "stepInstruction": "Första steget",
+      "stepOutcome": "Steg 1 klart"
+    },
+    "toolGuide": {
+      "name": "Ny verktygsguide",
+      "description": "Lägger till mer kontext i verktygens beskrivningar",
+      "content": "## Ytterligare riktlinjer\n\n- Följ god praxis\n- Tänk på säkerhetsaspekterna"
+    },
+    "toolApproval": {
+      "name": "Nytt verktygsgodkännande",
+      "description": "Kräver godkännande innan vissa verktyg körs",
+      "message": "Det här verktyget kräver ditt godkännande innan det körs."
+    },
+    "outputFormatter": {
+      "name": "Ny svarsformatering",
+      "description": "Formaterar agentens slutliga svar",
+      "config": "Formatera svaret tydligt och strukturerat, med rubriker och punktlistor."
+    }
+  },
+  "guardAction": {
+    "generating": "Genererar…",
+    "guardsOff": "Skydd har genererats men är avstängda",
+    "view": "Visa verktygsskydd",
+    "policyDisabled": "Policyn är avstängd",
+    "policiesDisabled": "Policyer är avstängda",
+    "selectTools": "Välj specifika målverktyg för att generera ett skydd",
+    "generate": "Generera verktygsskydd"
+  },
+  "toast": {
+    "errorTitle": "Fel",
+    "exportFailed": "Det gick inte att exportera policyerna. Se konsolen för detaljer.",
+    "readFailed": "Det gick inte att läsa filen",
+    "invalidImportTitle": "Ogiltig import",
+    "invalidImportBody": "Filen ska vara en JSON-fil med en lista ”policies”.",
+    "importAbortedTitle": "Importen avbröts",
+    "loadExistingFailed": "Det gick inte att läsa in den befintliga konfigurationen",
+    "importedTitle": "Policyerna har importerats",
+    "importedBody_one": "{{count}} policy importerades och sparades",
+    "importedBody_other": "{{count}} policyer importerades och sparades",
+    "importFailedTitle": "Importen misslyckades",
+    "saveImportedFailed": "Det gick inte att spara de importerade policyerna",
+    "invalidFile": "Ogiltig JSON eller fel filformat",
+    "saveAbortedTitle": "Sparandet avbröts",
+    "saveFailedTitle": "Det gick inte att spara",
+    "saveFailed": "Det gick inte att spara policyerna",
+    "networkError": "Ett nätverksfel inträffade",
+    "savedTitle": "Policyerna har sparats",
+    "savedBody_one": "{{count}} policy sparades",
+    "savedBody_other": "{{count}} policyer sparades",
+    "cannotGenerateTitle": "Det går inte att generera skydd",
+    "notToolGuide": "Policyn hittades inte eller är ingen verktygsguide",
+    "saveRequiredTitle": "Spara först",
+    "saveRequiredBody": "Spara verktygsguiden innan du genererar ett skydd.",
+    "selectTools": "Välj specifika målverktyg för att generera ett skydd.",
+    "generationFailedTitle": "Genereringen misslyckades",
+    "generationFailed": "Det gick inte att generera verktygsskyddet",
+    "generatedTitle": "Skyddet har genererats",
+    "generatedUnsyncedTitle": "Skyddet har genererats (synkronisering återstår)",
+    "generatedBody": "Verktygsskydd skapades för: {{tools}}",
+    "generatedUnsyncedBody": "{{tools}} genererades i policylagringen, men konfigurationen kunde inte synkroniseras. {{detail}}",
+    "refreshAndSave": "Uppdatera och spara innan du publicerar.",
+    "partialTitle": "Delvis klart",
+    "partialBody": "Genererades för {{succeeded}}. Misslyckades: {{failed}}",
+    "partialUnsyncedBody": "Genererades för {{succeeded}}. Misslyckades: {{failed}}. Konfigurationen kunde inte synkroniseras: {{detail}}",
+    "refreshBeforePublishing": "uppdatera innan du publicerar",
+    "generationFailedFor": "Det gick inte att generera skydd för: {{tools}}"
+  },
+  "card": {
+    "enable": "Aktivera policyn",
+    "name": "Policyns namn",
+    "collapse": "Fäll ihop",
+    "expand": "Fäll ut"
+  },
+  "chat": {
+    "policyId": "Policy-ID:",
+    "matchConfidenceLabel": "Matchningssäkerhet:",
+    "matchConfidence": "Matchningssäkerhet",
+    "blockedTitle": "Begäran stoppades av en policy",
+    "blockedBadge": "Säkerhetspolicy",
+    "policyName": "Policy:",
+    "reasoning": "Motivering",
+    "playbookTitle": "En playbook används",
+    "playbookBadge": "Guidat arbetsflöde",
+    "playbookFallback": "Jag guidar dig genom det här steg för steg.",
+    "playbookName": "Playbook:",
+    "workflowSteps": "Steg i arbetsflödet ({{total}})",
+    "expected": "Förväntat resultat:",
+    "tools": "Verktyg:",
+    "guidance": "Vägledning"
+  },
+  "editor": {
+    "common": {
+      "description": "Beskrivning",
+      "priority": "Prioritet",
+      "triggerKeywordsOptional": "Nyckelord som utlöser policyn (valfritt)",
+      "triggerKeywords": "Nyckelord som utlöser policyn",
+      "keywordPlaceholder": "Skriv ett nyckelord och tryck på Enter eller komma",
+      "keywordMatching": "Nyckelordsmatchning",
+      "addNlTrigger": "Lägg till utlösare i naturligt språk",
+      "nlTriggers": "Utlösare i naturligt språk",
+      "nlTriggerPlaceholder": "Skriv en utlösare i naturligt språk och tryck på Enter",
+      "removeNlTrigger": "Ta bort utlösaren i naturligt språk",
+      "loadingTools": "Läser in verktyg…",
+      "loadingApps": "Läser in appar…",
+      "selectAppsOptional": "Välj appar (valfritt)",
+      "allToolsWildcard": "Alla verktyg (*)"
+    },
+    "summary": {
+      "keywords_one": "{{count}} nyckelord",
+      "keywords_other": "{{count}} nyckelord",
+      "steps_one": "{{count}} steg",
+      "steps_other": "{{count}} steg",
+      "aiTrigger": "AI-utlösare",
+      "priority": "Prioritet: {{priority}}",
+      "allTools": "Alla verktyg",
+      "tools_one": "{{count}} verktyg",
+      "tools_other": "{{count}} verktyg",
+      "apps_one": "{{count}} app",
+      "apps_other": "{{count}} appar",
+      "noTools": "Inga verktyg valda",
+      "guardsDisabled": "Skydd avstängda",
+      "guarded": "Skyddad"
+    },
+    "intentGuard": {
+      "descriptionPlaceholder": "Vad policyn gör…",
+      "keywordsHelp": "Skriv nyckelord och tryck på Enter eller komma för att lägga till. Klicka på × för att ta bort.",
+      "operatorHelp": "Välj om alla nyckelord eller ett av dem ska utlösa policyn",
+      "nlHelp": "Skriv utlösare i naturligt språk och tryck på Enter för att lägga till. AI matchar liknande avsikter.",
+      "responseMessage": "Svarsmeddelande",
+      "priorityHelp": "Policyer med högre prioritet kontrolleras först",
+      "allowOverride": "Tillåt åsidosättning",
+      "allowOverrideHelp": "Användaren kan kringgå policyn"
+    },
+    "playbook": {
+      "descriptionPlaceholder": "Vad den här playbooken guidar användaren igenom…",
+      "triggerType": "Typ av utlösare",
+      "triggerKeyword": "Nyckelord (exakt matchning)",
+      "triggerNaturalLanguage": "Naturligt språk (AI-matchning)",
+      "keywordsHelp": "Skriv nyckelord och tryck på Enter eller komma för att lägga till.",
+      "operatorHelp": "Välj om alla nyckelord eller ett av dem ska utlösa playbooken",
+      "nlPlaceholder": "Skriv en utlösare och tryck på Enter",
+      "nlHelp": "Skriv utlösare i naturligt språk och tryck på Enter för att lägga till. AI matchar liknande förfrågningar från användaren.",
+      "markdownContent": "Innehåll i Markdown",
+      "markdownPlaceholder": "# Uppgiftsguide\n\n## Steg:\n\n1. Första steget\n2. Andra steget",
+      "markdownHelp": "Vägledning i Markdown som visas för agenten",
+      "priorityHelp": "Playbooks med högre prioritet kontrolleras först"
+    },
+    "toolGuide": {
+      "targetTools": "Målverktyg",
+      "targetToolsPlaceholder": "Välj verktyg att komplettera",
+      "targetToolsHelp": "Välj specifika verktyg att komplettera, eller använd * för alla verktyg",
+      "targetApps": "Målappar (valfritt)",
+      "targetAppsHelp": "Filtrera på appnamn om du vill",
+      "guideContent": "Guidens innehåll (Markdown)",
+      "guidePlaceholder": "## Ytterligare riktlinjer\n\n- Följ god praxis\n- Tänk på säkerheten",
+      "guideHelp": "Markdown som läggs till i verktygens beskrivningar",
+      "prepend": "Lägg innehållet först (före den befintliga beskrivningen)",
+      "priorityHelp": "Guider med högre prioritet tillämpas först"
+    },
+    "toolApproval": {
+      "requiredTools": "Verktyg som kräver godkännande",
+      "requiredToolsPlaceholder": "Välj verktyg som kräver godkännande",
+      "requiredToolsHelp": "Verktyg som måste godkännas innan de körs",
+      "requiredApps": "Appar som kräver godkännande (valfritt)",
+      "requiredAppsHelp": "Kräv godkännande för alla verktyg från vissa appar om du vill",
+      "approvalMessage": "Godkännandemeddelande (valfritt)",
+      "approvalMessageHelp": "Eget meddelande som visas när godkännande begärs",
+      "showCodePreview": "Visa förhandsgranskning av koden i godkännandebegäran",
+      "autoApprove": "Godkänn automatiskt efter (sekunder, valfritt)",
+      "autoApprovePlaceholder": "Lämna tomt för att inte godkänna automatiskt",
+      "autoApproveHelp": "Godkänner automatiskt efter N sekunder (lämna tomt för att stänga av)",
+      "priorityHelp": "Godkännandepolicyer med högre prioritet kontrolleras först"
+    },
+    "outputFormatter": {
+      "keywordsHelp": "Nyckelord som matchas mot innehållet i agentens senaste meddelande. Lämna tomt för att alltid formatera.",
+      "operatorHelp": "Välj om alla nyckelord eller ett av dem ska utlösa formateringen",
+      "nlHelp": "Skriv utlösare i naturligt språk och tryck på Enter för att lägga till. AI matchar liknande svar.",
+      "formatType": "Formattyp",
+      "priorityHelp": "Formateringar med högre prioritet kontrolleras först",
+      "type": {
+        "direct": "Direkt svar (utan LLM)",
+        "markdown": "Instruktioner i Markdown (LLM)",
+        "jsonSchema": "JSON-schema (LLM)"
+      },
+      "format": {
+        "direct": {
+          "summary": "Direkt",
+          "typeHelp": "Ersätter svaret direkt med den angivna texten (utan LLM-bearbetning)",
+          "configLabel": "Text för direkt svar",
+          "configPlaceholder": "Du har inte behörighet att se dessa känsliga uppgifter",
+          "configHelp": "Exakt den här texten ersätter agentens svar när utlösarna matchar (utan LLM-bearbetning)"
+        },
+        "markdown": {
+          "summary": "Markdown (LLM)",
+          "typeHelp": "Låter en LLM formatera om svaret enligt instruktioner i Markdown",
+          "configLabel": "Formateringsinstruktioner (Markdown)",
+          "configHelp": "Instruktioner i Markdown för hur agentens svar ska formateras (bearbetas av en LLM)"
+        },
+        "jsonSchema": {
+          "summary": "JSON (LLM)",
+          "typeHelp": "Låter en LLM extrahera och formatera svaret som JSON enligt schemat",
+          "configLabel": "JSON-schema",
+          "configHelp": "JSON-schema som det formaterade svaret måste följa (bearbetas av en LLM)"
+        }
+      }
+    }
+  },
+  "fields": {
+    "rangeBetween": "Ange ett tal mellan {{min}} och {{max}}.",
+    "rangeMin": "Ange ett tal som är minst {{min}}.",
+    "invalidNumber": "Ange ett giltigt tal.",
+    "matchAll": "Matcha ALLA nyckelord (OCH)",
+    "matchAny": "Matcha NÅGOT nyckelord (ELLER)",
+    "similarityThreshold": "Tröskel för likhet:",
+    "removeItem": "Ta bort {{name}}",
+    "tagPlaceholder": "Skriv och tryck på Enter…",
+    "selectedCount_one": "{{count}} vald",
+    "selectedCount_other": "{{count}} valda",
+    "filterPlaceholder": "Filtrera…",
+    "filterLabel": "Filtrera: {{label}}",
+    "nothingAvailable": "Inget tillgängligt.",
+    "noMatches": "Inga träffar.",
+    "clearSelection": "Rensa urvalet",
+    "selectedLabel": "Valda: {{label}}"
+  },
+  "guardDialog": {
+    "title": "Verktygsskydd – {{name}}",
+    "description": "Genererade exempel och policykod för varje målverktyg.",
+    "enforcement": "Tillämpa skydden",
+    "tabs": "Verktygsskydd",
+    "none": "Inga.",
+    "violating": "Exempel som bryter mot policyn",
+    "compliance": "Exempel som följer policyn",
+    "policyCode": "Policykod"
+  }
+}

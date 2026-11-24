@@ -7,6 +7,7 @@
  */
 
 import { PlusIcon, ShieldCheckIcon, ShieldOffIcon, Trash2Icon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ import type {
 
 import {
   CheckboxField,
-  KEYWORD_OPERATOR_OPTIONS,
+  keywordOperatorOptions,
   MultiSelectField,
   NumberField,
   SelectField,
@@ -46,7 +47,7 @@ interface ToolEditorProps<T> extends EditorProps<T> {
 }
 
 // ── shared trigger helpers ─────────────────────────────────────────────────
-export const keywordTriggerOf = (triggers: PolicyTrigger[]) => triggers.find((t) => t.type === "keyword")
+export const keywordTriggerOf = (triggers: PolicyTrigger[]) => triggers.find((trigger) => trigger.type === "keyword")
 
 export const keywordsOf = (triggers: PolicyTrigger[]): string[] => {
   const trigger = keywordTriggerOf(triggers)
@@ -55,8 +56,6 @@ export const keywordsOf = (triggers: PolicyTrigger[]): string[] => {
 
 const valuesOf = (trigger: PolicyTrigger | undefined): string[] =>
   trigger ? (Array.isArray(trigger.value) ? trigger.value : trigger.value ? [trigger.value] : []) : []
-
-const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`
 
 const toolItems = (tools: ToolInfo[]) => tools.map((tool) => ({ id: tool.name, text: `${tool.name} (${tool.app})` }))
 const appItems = (apps: AppInfo[]) => apps.map((app) => ({ id: app.name, text: `${app.name} (${app.type})` }))
@@ -82,15 +81,16 @@ function OptionalKeywords({
   disabled: boolean
   onTriggersChange: (triggers: PolicyTrigger[]) => void
 }) {
+  const { t } = useTranslation("policies")
   const keywordTrigger = keywordTriggerOf(triggers)
   const keywords = keywordsOf(triggers)
   return (
     <>
       <TagInput
-        labelText="Trigger Keywords (Optional)"
+        labelText={t("editor.common.triggerKeywordsOptional")}
         values={keywords}
         onChange={(newKeywords) => {
-          const updated = triggers.filter((t) => t.type !== "keyword")
+          const updated = triggers.filter((trigger) => trigger.type !== "keyword")
           if (newKeywords.length > 0) {
             updated.push({
               type: "keyword",
@@ -102,17 +102,17 @@ function OptionalKeywords({
           }
           onTriggersChange(updated)
         }}
-        placeholder="Type keyword and press Enter or comma"
+        placeholder={t("editor.common.keywordPlaceholder")}
         disabled={disabled}
         helperText={helperText}
       />
       {keywords.length > 1 && (
         <SelectField
           id={`keyword-operator-${idSuffix}`}
-          label="Keyword Matching"
+          label={t("editor.common.keywordMatching")}
           value={keywordTrigger?.operator || "and"}
-          options={KEYWORD_OPERATOR_OPTIONS}
-          onChange={(operator) => onTriggersChange(triggers.map((t) => (t.type === "keyword" ? { ...t, operator } : t)))}
+          options={keywordOperatorOptions(t)}
+          onChange={(operator) => onTriggersChange(triggers.map((trigger) => (trigger.type === "keyword" ? { ...trigger, operator } : trigger)))}
           disabled={disabled}
           helperText={operatorHelperText}
         />
@@ -137,7 +137,8 @@ function OptionalNaturalLanguageTrigger({
   disabled: boolean
   onTriggersChange: (triggers: PolicyTrigger[]) => void
 }) {
-  const nlTrigger = triggers.find((t) => t.type === "natural_language")
+  const { t } = useTranslation("policies")
+  const nlTrigger = triggers.find((trigger) => trigger.type === "natural_language")
   if (!nlTrigger) {
     return (
       <div>
@@ -150,7 +151,7 @@ function OptionalNaturalLanguageTrigger({
           disabled={disabled}
         >
           <PlusIcon data-icon="inline-start" />
-          Add Natural Language Trigger
+          {t("editor.common.addNlTrigger")}
         </Button>
       </div>
     )
@@ -158,12 +159,12 @@ function OptionalNaturalLanguageTrigger({
   return (
     <>
       <TagInput
-        labelText="Natural Language Triggers"
+        labelText={t("editor.common.nlTriggers")}
         values={valuesOf(nlTrigger)}
         onChange={(value) =>
-          onTriggersChange(triggers.map((t) => (t.type === "natural_language" ? { ...t, value } : t)))
+          onTriggersChange(triggers.map((trigger) => (trigger.type === "natural_language" ? { ...trigger, value } : trigger)))
         }
-        placeholder="Type natural language trigger and press Enter"
+        placeholder={t("editor.common.nlTriggerPlaceholder")}
         disabled={disabled}
         helperText={helperText}
       />
@@ -171,7 +172,7 @@ function OptionalNaturalLanguageTrigger({
         id={`threshold-${idSuffix}`}
         threshold={nlTrigger.threshold}
         onChange={(threshold) =>
-          onTriggersChange(triggers.map((t) => (t.type === "natural_language" ? { ...t, threshold } : t)))
+          onTriggersChange(triggers.map((trigger) => (trigger.type === "natural_language" ? { ...trigger, threshold } : trigger)))
         }
         disabled={disabled}
       />
@@ -179,11 +180,11 @@ function OptionalNaturalLanguageTrigger({
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onTriggersChange(triggers.filter((t) => t.type !== "natural_language"))}
+          onClick={() => onTriggersChange(triggers.filter((trigger) => trigger.type !== "natural_language"))}
           disabled={disabled}
         >
           <Trash2Icon data-icon="inline-start" />
-          Remove Natural Language Trigger
+          {t("editor.common.removeNlTrigger")}
         </Button>
       </div>
     </>
@@ -192,25 +193,27 @@ function OptionalNaturalLanguageTrigger({
 
 // ── intent guard ───────────────────────────────────────────────────────────
 export function IntentGuardSummary({ policy }: { policy: IntentGuardPolicy }) {
+  const { t } = useTranslation("policies")
   const keywords = keywordsOf(policy.triggers)
   return (
     <>
-      {keywords.length > 0 && <span>{plural(keywords.length, "keyword")}</span>}
-      {policy.triggers.some((t) => t.type === "natural_language") && <span>AI trigger</span>}
-      <span>Priority: {policy.priority}</span>
+      {keywords.length > 0 && <span>{t("editor.summary.keywords", { count: keywords.length })}</span>}
+      {policy.triggers.some((trigger) => trigger.type === "natural_language") && <span>{t("editor.summary.aiTrigger")}</span>}
+      <span>{t("editor.summary.priority", { priority: policy.priority })}</span>
     </>
   )
 }
 
 export function IntentGuardEditor({ policy, disabled, onUpdate }: EditorProps<IntentGuardPolicy>) {
+  const { t } = useTranslation("policies")
   return (
     <>
       <TextAreaField
         id={`description-${policy.id}`}
-        label="Description"
+        label={t("editor.common.description")}
         value={policy.description}
         onChange={(description) => onUpdate({ description })}
-        placeholder="What this policy does..."
+        placeholder={t("editor.intentGuard.descriptionPlaceholder")}
         rows={2}
         disabled={disabled}
       />
@@ -218,8 +221,8 @@ export function IntentGuardEditor({ policy, disabled, onUpdate }: EditorProps<In
         idSuffix={policy.id}
         triggers={policy.triggers}
         target="intent"
-        helperText="Type keywords and press Enter or comma to add. Click × to remove."
-        operatorHelperText="Choose whether all keywords or any keyword should trigger this policy"
+        helperText={t("editor.intentGuard.keywordsHelp")}
+        operatorHelperText={t("editor.intentGuard.operatorHelp")}
         disabled={disabled}
         onTriggersChange={(triggers) => onUpdate({ triggers })}
       />
@@ -227,38 +230,38 @@ export function IntentGuardEditor({ policy, disabled, onUpdate }: EditorProps<In
         idSuffix={policy.id}
         triggers={policy.triggers}
         target="intent"
-        helperText="Type natural language triggers and press Enter to add. AI will match similar intents."
+        helperText={t("editor.intentGuard.nlHelp")}
         disabled={disabled}
         onTriggersChange={(triggers) => onUpdate({ triggers })}
       />
       <TextAreaField
         id={`response-${policy.id}`}
-        label="Response Message"
+        label={t("editor.intentGuard.responseMessage")}
         value={policy.response?.content ?? ""}
         onChange={(content) => onUpdate({ response: { ...policy.response, content } })}
-        placeholder="This action is not allowed."
+        placeholder={t("defaults.intentGuard.response")}
         rows={3}
         disabled={disabled}
       />
       <div className="flex flex-wrap items-start gap-x-8 gap-y-5">
         <NumberField
           id={`priority-${policy.id}`}
-          label="Priority"
+          label={t("editor.common.priority")}
           value={policy.priority}
           emptyValue={0}
           onChange={(value) => onUpdate({ priority: value ?? 0 })}
           min={0}
           max={100}
           disabled={disabled}
-          helperText="Higher priority policies are checked first"
+          helperText={t("editor.intentGuard.priorityHelp")}
         />
         <div className="sm:pt-7">
           <CheckboxField
-            label="Allow Override"
+            label={t("editor.intentGuard.allowOverride")}
             checked={policy.allow_override}
             onChange={(allow_override) => onUpdate({ allow_override })}
             disabled={disabled}
-            helperText="User can bypass this policy"
+            helperText={t("editor.intentGuard.allowOverrideHelp")}
           />
         </div>
       </div>
@@ -268,23 +271,28 @@ export function IntentGuardEditor({ policy, disabled, onUpdate }: EditorProps<In
 
 // ── playbook ───────────────────────────────────────────────────────────────
 export function PlaybookSummary({ policy }: { policy: PlaybookPolicy }) {
+  const { t } = useTranslation("policies")
   const keywords = keywordsOf(policy.triggers)
   return (
     <>
-      <span>{plural((policy.steps ?? []).length, "step")}</span>
+      <span>{t("editor.summary.steps", { count: (policy.steps ?? []).length })}</span>
       {policy.triggers.length > 0 && (
-        <span>{policy.triggers[0].type === "natural_language" ? "AI trigger" : plural(keywords.length, "keyword")}</span>
+        <span>
+          {policy.triggers[0].type === "natural_language"
+            ? t("editor.summary.aiTrigger")
+            : t("editor.summary.keywords", { count: keywords.length })}
+        </span>
       )}
     </>
   )
 }
 
-const PLAYBOOK_TRIGGER_OPTIONS = [
-  { value: "keyword", text: "Keywords (Exact Match)" },
-  { value: "natural_language", text: "Natural Language (AI Match)" },
-] as const
-
 export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<PlaybookPolicy>) {
+  const { t } = useTranslation("policies")
+  const triggerOptions = [
+    { value: "keyword", text: t("editor.playbook.triggerKeyword") },
+    { value: "natural_language", text: t("editor.playbook.triggerNaturalLanguage") },
+  ] as const
   const first: PolicyTrigger | undefined = policy.triggers[0]
   const keywordTrigger = keywordTriggerOf(policy.triggers)
   const keywords = keywordsOf(policy.triggers)
@@ -292,18 +300,18 @@ export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<Playb
     <>
       <TextAreaField
         id={`description-playbook-${policy.id}`}
-        label="Description"
+        label={t("editor.common.description")}
         value={policy.description}
         onChange={(description) => onUpdate({ description })}
-        placeholder="What this playbook guides the user through..."
+        placeholder={t("editor.playbook.descriptionPlaceholder")}
         rows={2}
         disabled={disabled}
       />
       <SelectField
         id={`trigger-type-playbook-${policy.id}`}
-        label="Trigger Type"
+        label={t("editor.playbook.triggerType")}
         value={first?.type === "natural_language" ? "natural_language" : "keyword"}
-        options={PLAYBOOK_TRIGGER_OPTIONS}
+        options={triggerOptions}
         onChange={(triggerType) =>
           onUpdate({
             triggers:
@@ -318,26 +326,26 @@ export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<Playb
       {first?.type === "keyword" && (
         <>
           <TagInput
-            labelText="Trigger Keywords"
+            labelText={t("editor.common.triggerKeywords")}
             values={keywords}
             onChange={(value) =>
-              onUpdate({ triggers: policy.triggers.map((t) => (t.type === "keyword" ? { ...t, value } : t)) })
+              onUpdate({ triggers: policy.triggers.map((trigger) => (trigger.type === "keyword" ? { ...trigger, value } : trigger)) })
             }
-            placeholder="Type keyword and press Enter or comma"
+            placeholder={t("editor.common.keywordPlaceholder")}
             disabled={disabled}
-            helperText="Type keywords and press Enter or comma to add."
+            helperText={t("editor.playbook.keywordsHelp")}
           />
           {keywords.length > 1 && (
             <SelectField
               id={`keyword-operator-playbook-${policy.id}`}
-              label="Keyword Matching"
+              label={t("editor.common.keywordMatching")}
               value={keywordTrigger?.operator || "and"}
-              options={KEYWORD_OPERATOR_OPTIONS}
+              options={keywordOperatorOptions(t)}
               onChange={(operator) =>
-                onUpdate({ triggers: policy.triggers.map((t) => (t.type === "keyword" ? { ...t, operator } : t)) })
+                onUpdate({ triggers: policy.triggers.map((trigger) => (trigger.type === "keyword" ? { ...trigger, operator } : trigger)) })
               }
               disabled={disabled}
-              helperText="Choose whether all keywords or any keyword should trigger this playbook"
+              helperText={t("editor.playbook.operatorHelp")}
             />
           )}
         </>
@@ -346,20 +354,20 @@ export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<Playb
       {first?.type === "natural_language" && (
         <>
           <TagInput
-            labelText="Natural Language Triggers"
+            labelText={t("editor.common.nlTriggers")}
             values={valuesOf(first)}
             onChange={(value) =>
-              onUpdate({ triggers: policy.triggers.map((t, idx) => (idx === 0 ? { ...t, value } : t)) })
+              onUpdate({ triggers: policy.triggers.map((trigger, idx) => (idx === 0 ? { ...trigger, value } : trigger)) })
             }
-            placeholder="Type trigger and press Enter"
+            placeholder={t("editor.playbook.nlPlaceholder")}
             disabled={disabled}
-            helperText="Type natural language triggers and press Enter to add. AI will match similar user requests."
+            helperText={t("editor.playbook.nlHelp")}
           />
           <ThresholdSlider
             id={`threshold-playbook-${policy.id}`}
             threshold={first.threshold}
             onChange={(threshold) =>
-              onUpdate({ triggers: policy.triggers.map((t, idx) => (idx === 0 ? { ...t, threshold } : t)) })
+              onUpdate({ triggers: policy.triggers.map((trigger, idx) => (idx === 0 ? { ...trigger, threshold } : trigger)) })
             }
             disabled={disabled}
           />
@@ -368,25 +376,25 @@ export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<Playb
 
       <TextAreaField
         id={`markdown-playbook-${policy.id}`}
-        label="Markdown Content"
+        label={t("editor.playbook.markdownContent")}
         value={policy.markdown_content}
         onChange={(markdown_content) => onUpdate({ markdown_content })}
-        placeholder={"# Task Guide\n\n## Steps:\n\n1. First step\n2. Second step"}
+        placeholder={t("editor.playbook.markdownPlaceholder")}
         rows={8}
         mono
         disabled={disabled}
-        helperText="Markdown-formatted guidance that will be shown to the agent"
+        helperText={t("editor.playbook.markdownHelp")}
       />
       <NumberField
         id={`priority-playbook-${policy.id}`}
-        label="Priority"
+        label={t("editor.common.priority")}
         value={policy.priority}
         emptyValue={0}
         onChange={(value) => onUpdate({ priority: value ?? 0 })}
         min={0}
         max={100}
         disabled={disabled}
-        helperText="Higher priority playbooks are checked first"
+        helperText={t("editor.playbook.priorityHelp")}
       />
     </>
   )
@@ -394,22 +402,27 @@ export function PlaybookEditor({ policy, disabled, onUpdate }: EditorProps<Playb
 
 // ── tool guide ─────────────────────────────────────────────────────────────
 export function ToolGuideSummary({ policy, guarded }: { policy: ToolGuidePolicy; guarded: boolean }) {
+  const { t } = useTranslation("policies")
   const targetTools = policy.target_tools ?? []
   return (
     <>
-      <span>{targetTools.includes("*") ? "All tools" : `${targetTools.length} tool(s)`}</span>
-      {policy.target_apps && policy.target_apps.length > 0 && <span>{policy.target_apps.length} app(s)</span>}
-      <span>Priority: {policy.priority}</span>
+      <span>
+        {targetTools.includes("*")
+          ? t("editor.summary.allTools")
+          : t("editor.summary.tools", { count: targetTools.length })}
+      </span>
+      {policy.target_apps && policy.target_apps.length > 0 && <span>{t("editor.summary.apps", { count: policy.target_apps.length })}</span>}
+      <span>{t("editor.summary.priority", { priority: policy.priority })}</span>
       {guarded &&
         (policy.guards_enabled === false ? (
           <Badge variant="outline">
             <ShieldOffIcon className="text-status-warn" aria-hidden="true" />
-            Guards disabled
+            {t("editor.summary.guardsDisabled")}
           </Badge>
         ) : (
           <Badge variant="outline">
             <ShieldCheckIcon className="text-status-ok" aria-hidden="true" />
-            Guarded
+            {t("editor.summary.guarded")}
           </Badge>
         ))}
     </>
@@ -424,11 +437,12 @@ export function ToolGuideEditor({
   availableApps,
   toolsLoading,
 }: ToolEditorProps<ToolGuidePolicy>) {
+  const { t } = useTranslation("policies")
   return (
     <>
       <TextAreaField
         id={`description-toolguide-${policy.id}`}
-        label="Description"
+        label={t("editor.common.description")}
         value={policy.description}
         onChange={(description) => onUpdate({ description })}
         rows={2}
@@ -436,52 +450,52 @@ export function ToolGuideEditor({
       />
       <MultiSelectField
         id={`target-tools-${policy.id}`}
-        label="Target Tools"
-        placeholder={toolsLoading ? "Loading tools..." : "Select tools to enrich"}
+        label={t("editor.toolGuide.targetTools")}
+        placeholder={toolsLoading ? t("editor.common.loadingTools") : t("editor.toolGuide.targetToolsPlaceholder")}
         items={toolItems(availableTools)}
         value={policy.target_tools ?? []}
         onChange={(target_tools) => onUpdate({ target_tools })}
         disabled={disabled || toolsLoading}
-        helperText="Select specific tools to enrich, or use * to enrich all tools"
-        wildcardLabel={toolsLoading ? undefined : "All tools (*)"}
+        helperText={t("editor.toolGuide.targetToolsHelp")}
+        wildcardLabel={toolsLoading ? undefined : t("editor.common.allToolsWildcard")}
       />
       <MultiSelectField
         id={`target-apps-${policy.id}`}
-        label="Target Apps (Optional)"
-        placeholder={toolsLoading ? "Loading apps..." : "Select apps (optional)"}
+        label={t("editor.toolGuide.targetApps")}
+        placeholder={toolsLoading ? t("editor.common.loadingApps") : t("editor.common.selectAppsOptional")}
         items={appItems(availableApps)}
         value={policy.target_apps ?? []}
         onChange={(ids) => onUpdate({ target_apps: ids.length > 0 ? ids : undefined })}
         disabled={disabled || toolsLoading}
-        helperText="Optionally filter by app name"
+        helperText={t("editor.toolGuide.targetAppsHelp")}
       />
       <TextAreaField
         id={`guide-content-${policy.id}`}
-        label="Guide Content (Markdown)"
+        label={t("editor.toolGuide.guideContent")}
         value={policy.guide_content}
         onChange={(guide_content) => onUpdate({ guide_content })}
-        placeholder={"## Additional Guidelines\n\n- Follow best practices\n- Consider security"}
+        placeholder={t("editor.toolGuide.guidePlaceholder")}
         rows={6}
         mono
         disabled={disabled}
-        helperText="Markdown content to add to tool descriptions"
+        helperText={t("editor.toolGuide.guideHelp")}
       />
       <CheckboxField
-        label="Prepend content (add before existing description)"
+        label={t("editor.toolGuide.prepend")}
         checked={policy.prepend}
         onChange={(prepend) => onUpdate({ prepend })}
         disabled={disabled}
       />
       <NumberField
         id={`priority-toolguide-${policy.id}`}
-        label="Priority"
+        label={t("editor.common.priority")}
         value={policy.priority}
         emptyValue={0}
         onChange={(value) => onUpdate({ priority: value ?? 0 })}
         min={0}
         max={100}
         disabled={disabled}
-        helperText="Higher priority guides are applied first"
+        helperText={t("editor.toolGuide.priorityHelp")}
       />
     </>
   )
@@ -489,18 +503,19 @@ export function ToolGuideEditor({
 
 // ── tool approval ──────────────────────────────────────────────────────────
 export function ToolApprovalSummary({ policy }: { policy: ToolApprovalPolicy }) {
+  const { t } = useTranslation("policies")
   const requiredTools = policy.required_tools ?? []
   return (
     <>
       <span>
         {requiredTools.length === 0
-          ? "No tools selected"
+          ? t("editor.summary.noTools")
           : requiredTools.includes("*")
-            ? "All tools"
-            : `${requiredTools.length} tool(s)`}
+            ? t("editor.summary.allTools")
+            : t("editor.summary.tools", { count: requiredTools.length })}
       </span>
-      {policy.required_apps && policy.required_apps.length > 0 && <span>{policy.required_apps.length} app(s)</span>}
-      <span>Priority: {policy.priority}</span>
+      {policy.required_apps && policy.required_apps.length > 0 && <span>{t("editor.summary.apps", { count: policy.required_apps.length })}</span>}
+      <span>{t("editor.summary.priority", { priority: policy.priority })}</span>
     </>
   )
 }
@@ -513,11 +528,12 @@ export function ToolApprovalEditor({
   availableApps,
   toolsLoading,
 }: ToolEditorProps<ToolApprovalPolicy>) {
+  const { t } = useTranslation("policies")
   return (
     <>
       <TextAreaField
         id={`description-toolapproval-${policy.id}`}
-        label="Description"
+        label={t("editor.common.description")}
         value={policy.description}
         onChange={(description) => onUpdate({ description })}
         rows={2}
@@ -525,125 +541,111 @@ export function ToolApprovalEditor({
       />
       <MultiSelectField
         id={`required-tools-${policy.id}`}
-        label="Required Tools"
-        placeholder={toolsLoading ? "Loading tools..." : "Select tools requiring approval"}
+        label={t("editor.toolApproval.requiredTools")}
+        placeholder={toolsLoading ? t("editor.common.loadingTools") : t("editor.toolApproval.requiredToolsPlaceholder")}
         items={toolItems(availableTools)}
         value={policy.required_tools ?? []}
         onChange={(required_tools) => onUpdate({ required_tools })}
         disabled={disabled || toolsLoading}
-        helperText="Tools that require approval before execution"
-        wildcardLabel={toolsLoading ? undefined : "All tools (*)"}
+        helperText={t("editor.toolApproval.requiredToolsHelp")}
+        wildcardLabel={toolsLoading ? undefined : t("editor.common.allToolsWildcard")}
       />
       <MultiSelectField
         id={`required-apps-${policy.id}`}
-        label="Required Apps (Optional)"
-        placeholder={toolsLoading ? "Loading apps..." : "Select apps (optional)"}
+        label={t("editor.toolApproval.requiredApps")}
+        placeholder={toolsLoading ? t("editor.common.loadingApps") : t("editor.common.selectAppsOptional")}
         items={appItems(availableApps)}
         value={policy.required_apps ?? []}
         onChange={(ids) => onUpdate({ required_apps: ids.length > 0 ? ids : undefined })}
         disabled={disabled || toolsLoading}
-        helperText="Optionally require approval for all tools from specific apps"
+        helperText={t("editor.toolApproval.requiredAppsHelp")}
       />
       <TextAreaField
         id={`approval-message-${policy.id}`}
-        label="Approval Message (optional)"
+        label={t("editor.toolApproval.approvalMessage")}
         value={policy.approval_message || ""}
         onChange={(message) => onUpdate({ approval_message: message || undefined })}
-        placeholder="This tool requires your approval before execution."
+        placeholder={t("defaults.toolApproval.message")}
         rows={3}
         disabled={disabled}
-        helperText="Custom message shown when requesting approval"
+        helperText={t("editor.toolApproval.approvalMessageHelp")}
       />
       <CheckboxField
-        label="Show code preview in approval request"
+        label={t("editor.toolApproval.showCodePreview")}
         checked={policy.show_code_preview}
         onChange={(show_code_preview) => onUpdate({ show_code_preview })}
         disabled={disabled}
       />
       <NumberField
         id={`auto-approve-${policy.id}`}
-        label="Auto-approve after (seconds, optional)"
+        label={t("editor.toolApproval.autoApprove")}
         value={policy.auto_approve_after || undefined}
         emptyValue={undefined}
         onChange={(value) => onUpdate({ auto_approve_after: value !== undefined && value > 0 ? value : undefined })}
         min={1}
-        placeholder="Leave empty for no auto-approve"
+        placeholder={t("editor.toolApproval.autoApprovePlaceholder")}
         disabled={disabled}
-        helperText="Automatically approve after N seconds (leave empty to disable)"
+        helperText={t("editor.toolApproval.autoApproveHelp")}
       />
       <NumberField
         id={`priority-toolapproval-${policy.id}`}
-        label="Priority"
+        label={t("editor.common.priority")}
         value={policy.priority}
         emptyValue={0}
         onChange={(value) => onUpdate({ priority: value ?? 0 })}
         min={0}
         max={100}
         disabled={disabled}
-        helperText="Higher priority approval policies are checked first"
+        helperText={t("editor.toolApproval.priorityHelp")}
       />
     </>
   )
 }
 
 // ── output formatter ───────────────────────────────────────────────────────
-const FORMAT_TYPE_OPTIONS = [
-  { value: "direct", text: "Direct Answer (No LLM)" },
-  { value: "markdown", text: "Markdown Instructions (LLM)" },
-  { value: "json_schema", text: "JSON Schema (LLM)" },
-] as const
+const JSON_SCHEMA_PLACEHOLDER =
+  '{\n  "type": "object",\n  "properties": {\n    "summary": {"type": "string"},\n    "details": {"type": "array"}\n  }\n}'
 
-const FORMAT_TEXT = {
-  direct: {
-    summary: "Direct",
-    typeHelp: "Directly replace the response with the provided string (no LLM processing)",
-    configLabel: "Direct Answer String",
-    configPlaceholder: "You are not allowed to view this sensitive data",
-    configHelp: "This exact string will replace the AI response when triggers match (no LLM processing)",
-    rows: 4,
-  },
-  markdown: {
-    summary: "Markdown (LLM)",
-    typeHelp: "Use LLM to reformat the response according to markdown instructions",
-    configLabel: "Formatting Instructions (Markdown)",
-    configPlaceholder: "Format the response in a clear, structured way with proper headings and bullet points.",
-    configHelp: "Markdown instructions for how to format the AI response (processed by LLM)",
-    rows: 8,
-  },
-  json_schema: {
-    summary: "JSON (LLM)",
-    typeHelp: "Use LLM to extract and format the response as JSON matching the schema",
-    configLabel: "JSON Schema",
-    configPlaceholder:
-      '{\n  "type": "object",\n  "properties": {\n    "summary": {"type": "string"},\n    "details": {"type": "array"}\n  }\n}',
-    configHelp: "JSON schema that the formatted response must match (processed by LLM)",
-    rows: 12,
-  },
-} as const
+const FORMAT_ROWS = { direct: 4, markdown: 8, jsonSchema: 12 } as const
 
 /** Any format type other than direct/markdown is treated as JSON schema, as in the original. */
-const formatText = (formatType: string) =>
-  formatType === "direct" ? FORMAT_TEXT.direct : formatType === "markdown" ? FORMAT_TEXT.markdown : FORMAT_TEXT.json_schema
+const formatKind = (formatType: string) =>
+  formatType === "direct" ? "direct" : formatType === "markdown" ? "markdown" : "jsonSchema"
 
 export function OutputFormatterSummary({ policy }: { policy: OutputFormatterPolicy }) {
+  const { t } = useTranslation("policies")
   const keywords = keywordsOf(policy.triggers)
   return (
     <>
-      <span>{formatText(policy.format_type).summary}</span>
-      {keywords.length > 0 && <span>{plural(keywords.length, "keyword")}</span>}
-      {policy.triggers.some((t) => t.type === "natural_language") && <span>AI trigger</span>}
-      <span>Priority: {policy.priority}</span>
+      <span>{t(`editor.outputFormatter.format.${formatKind(policy.format_type)}.summary`)}</span>
+      {keywords.length > 0 && <span>{t("editor.summary.keywords", { count: keywords.length })}</span>}
+      {policy.triggers.some((trigger) => trigger.type === "natural_language") && (
+        <span>{t("editor.summary.aiTrigger")}</span>
+      )}
+      <span>{t("editor.summary.priority", { priority: policy.priority })}</span>
     </>
   )
 }
 
 export function OutputFormatterEditor({ policy, disabled, onUpdate }: EditorProps<OutputFormatterPolicy>) {
-  const text = formatText(policy.format_type)
+  const { t } = useTranslation("policies")
+  const kind = formatKind(policy.format_type)
+  const formatTypeOptions = [
+    { value: "direct", text: t("editor.outputFormatter.type.direct") },
+    { value: "markdown", text: t("editor.outputFormatter.type.markdown") },
+    { value: "json_schema", text: t("editor.outputFormatter.type.jsonSchema") },
+  ] as const
+  const configPlaceholder =
+    kind === "direct"
+      ? t("editor.outputFormatter.format.direct.configPlaceholder")
+      : kind === "markdown"
+        ? t("defaults.outputFormatter.config")
+        : JSON_SCHEMA_PLACEHOLDER
   return (
     <>
       <TextAreaField
         id={`description-outputformatter-${policy.id}`}
-        label="Description"
+        label={t("editor.common.description")}
         value={policy.description}
         onChange={(description) => onUpdate({ description })}
         rows={2}
@@ -653,8 +655,8 @@ export function OutputFormatterEditor({ policy, disabled, onUpdate }: EditorProp
         idSuffix={`outputformatter-${policy.id}`}
         triggers={policy.triggers}
         target="agent_response"
-        helperText="Keywords to match against the last AI message content. Leave empty to always format."
-        operatorHelperText="Choose whether all keywords or any keyword should trigger this formatter"
+        helperText={t("editor.outputFormatter.keywordsHelp")}
+        operatorHelperText={t("editor.outputFormatter.operatorHelp")}
         disabled={disabled}
         onTriggersChange={(triggers) => onUpdate({ triggers })}
       />
@@ -662,40 +664,40 @@ export function OutputFormatterEditor({ policy, disabled, onUpdate }: EditorProp
         idSuffix={`output-${policy.id}`}
         triggers={policy.triggers}
         target="agent_response"
-        helperText="Type natural language triggers and press Enter to add. AI will match similar responses."
+        helperText={t("editor.outputFormatter.nlHelp")}
         disabled={disabled}
         onTriggersChange={(triggers) => onUpdate({ triggers })}
       />
       <SelectField
         id={`format-type-${policy.id}`}
-        label="Format Type"
+        label={t("editor.outputFormatter.formatType")}
         value={policy.format_type}
-        options={FORMAT_TYPE_OPTIONS}
+        options={formatTypeOptions}
         onChange={(format_type) => onUpdate({ format_type })}
         disabled={disabled}
-        helperText={text.typeHelp}
+        helperText={t(`editor.outputFormatter.format.${kind}.typeHelp`)}
       />
       <TextAreaField
         id={`format-config-${policy.id}`}
-        label={text.configLabel}
+        label={t(`editor.outputFormatter.format.${kind}.configLabel`)}
         value={policy.format_config}
         onChange={(format_config) => onUpdate({ format_config })}
-        placeholder={text.configPlaceholder}
-        rows={text.rows}
+        placeholder={configPlaceholder}
+        rows={FORMAT_ROWS[kind]}
         mono={policy.format_type === "json_schema"}
         disabled={disabled}
-        helperText={text.configHelp}
+        helperText={t(`editor.outputFormatter.format.${kind}.configHelp`)}
       />
       <NumberField
         id={`priority-outputformatter-${policy.id}`}
-        label="Priority"
+        label={t("editor.common.priority")}
         value={policy.priority}
         emptyValue={0}
         onChange={(value) => onUpdate({ priority: value ?? 0 })}
         min={0}
         max={100}
         disabled={disabled}
-        helperText="Higher priority formatters are checked first"
+        helperText={t("editor.outputFormatter.priorityHelp")}
       />
     </>
   )

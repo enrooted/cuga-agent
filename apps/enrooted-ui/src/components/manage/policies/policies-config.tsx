@@ -18,6 +18,7 @@ import {
   TriangleAlertIcon,
   UploadIcon,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -29,6 +30,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import i18n from "@/i18n"
 import * as policiesApi from "@/lib/manage/policies-api"
 import type {
   AppInfo,
@@ -137,54 +139,59 @@ function newPolicy(type: PolicyType): Policy {
     case "intent_guard":
       return {
         id: `guard_${stamp}`,
-        name: "New Intent Guard",
-        description: "Blocks or modifies specific user intents",
+        name: i18n.t("policies:defaults.intentGuard.name"),
+        description: i18n.t("policies:defaults.intentGuard.description"),
         policy_type: "intent_guard",
         enabled: true,
         triggers: [{ type: "keyword", value: [], target: "intent", case_sensitive: false, operator: "and" }],
-        response: { response_type: "natural_language", content: "This action is not allowed." },
+        response: { response_type: "natural_language", content: i18n.t("policies:defaults.intentGuard.response") },
         allow_override: false,
         priority: 50,
       }
     case "playbook":
       return {
         id: `playbook_${stamp}`,
-        name: "New Playbook",
-        description: "Step-by-step guidance for a task",
+        name: i18n.t("policies:defaults.playbook.name"),
+        description: i18n.t("policies:defaults.playbook.description"),
         policy_type: "playbook",
         enabled: true,
         triggers: [{ type: "keyword", value: [], target: "intent", case_sensitive: false, operator: "and" }],
-        markdown_content: "# Task Guide\n\n## Steps:\n\n1. First step\n2. Second step\n3. Third step",
+        markdown_content: i18n.t("policies:defaults.playbook.markdown"),
         steps: [
-          { step_number: 1, instruction: "First step", expected_outcome: "Step 1 complete", tools_allowed: [] },
+          {
+            step_number: 1,
+            instruction: i18n.t("policies:defaults.playbook.stepInstruction"),
+            expected_outcome: i18n.t("policies:defaults.playbook.stepOutcome"),
+            tools_allowed: [],
+          },
         ],
         priority: 50,
       }
     case "tool_guide":
       return {
         id: `tool_guide_${stamp}`,
-        name: "New Tool Guide",
-        description: "Add additional context to tool descriptions",
+        name: i18n.t("policies:defaults.toolGuide.name"),
+        description: i18n.t("policies:defaults.toolGuide.description"),
         policy_type: "tool_guide",
         enabled: true,
         triggers: [{ type: "always" }],
         target_tools: ["*"],
         target_apps: undefined,
-        guide_content: "## Additional Guidelines\n\n- Follow best practices\n- Consider security implications",
+        guide_content: i18n.t("policies:defaults.toolGuide.content"),
         prepend: false,
         priority: 50,
       }
     case "tool_approval":
       return {
         id: `tool_approval_${stamp}`,
-        name: "New Tool Approval",
-        description: "Require approval before executing specific tools",
+        name: i18n.t("policies:defaults.toolApproval.name"),
+        description: i18n.t("policies:defaults.toolApproval.description"),
         policy_type: "tool_approval",
         enabled: true,
         triggers: [],
         required_tools: [],
         required_apps: undefined,
-        approval_message: "This tool requires your approval before execution.",
+        approval_message: i18n.t("policies:defaults.toolApproval.message"),
         show_code_preview: true,
         auto_approve_after: undefined,
         priority: 50,
@@ -192,13 +199,13 @@ function newPolicy(type: PolicyType): Policy {
     case "output_formatter":
       return {
         id: `output_formatter_${stamp}`,
-        name: "New Output Formatter",
-        description: "Format the final AI message output",
+        name: i18n.t("policies:defaults.outputFormatter.name"),
+        description: i18n.t("policies:defaults.outputFormatter.description"),
         policy_type: "output_formatter",
         enabled: true,
         triggers: [{ type: "keyword", value: [], target: "agent_response", case_sensitive: false, operator: "and" }],
         format_type: "markdown",
-        format_config: "Format the response in a clear, structured way with proper headings and bullet points.",
+        format_config: i18n.t("policies:defaults.outputFormatter.config"),
         priority: 50,
       }
   }
@@ -206,57 +213,34 @@ function newPolicy(type: PolicyType): Policy {
 
 const SECTIONS: readonly {
   type: PolicyType
-  tab: string
-  heading: string
-  addLabel: string
-  empty: string
-  namePlaceholder: string
+  /** Translation group under `sections` (tab, heading, add, empty, namePlaceholder). */
+  key: "intentGuard" | "playbook" | "toolGuide" | "toolApproval" | "outputFormatter"
   /** Kept from the original so input ids stay distinct per policy type. */
   idPrefix: string
 }[] = [
   {
     type: "intent_guard",
-    tab: "Intent Guards",
-    heading: "Intent Guards",
-    addLabel: "Add Intent Guard",
-    empty: 'No intent guards configured. Click "Add Intent Guard" to create one.',
-    namePlaceholder: "Policy Name",
+    key: "intentGuard",
     idPrefix: "",
   },
   {
     type: "playbook",
-    tab: "Playbooks",
-    heading: "Playbooks",
-    addLabel: "Add Playbook",
-    empty: 'No playbooks configured. Click "Add Playbook" to create one.',
-    namePlaceholder: "Playbook Name",
+    key: "playbook",
     idPrefix: "playbook-",
   },
   {
     type: "tool_guide",
-    tab: "Tool Guide",
-    heading: "Tool Guide Policies",
-    addLabel: "Add Tool Guide",
-    empty: 'No tool guide policies configured. Click "Add Tool Guide" to create one.',
-    namePlaceholder: "Policy Name",
+    key: "toolGuide",
     idPrefix: "toolguide-",
   },
   {
     type: "tool_approval",
-    tab: "Tool Approval",
-    heading: "Tool Approval Policies",
-    addLabel: "Add Tool Approval",
-    empty: 'No tool approval policies configured. Click "Add Tool Approval" to create one.',
-    namePlaceholder: "Policy Name",
+    key: "toolApproval",
     idPrefix: "toolapproval-",
   },
   {
     type: "output_formatter",
-    tab: "Output Formatter",
-    heading: "Output Formatter Policies",
-    addLabel: "Add Output Formatter",
-    empty: 'No output formatter policies configured. Click "Add Output Formatter" to create one.',
-    namePlaceholder: "Policy Name",
+    key: "outputFormatter",
     idPrefix: "outputformatter-",
   },
 ]
@@ -277,11 +261,12 @@ function ToolGuardAction({
   onView: () => void
   onGenerate: () => void
 }) {
+  const { t } = useTranslation("policies")
   if (generating) {
     return (
       <span className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
         <Spinner />
-        Generating...
+        {t("guardAction.generating")}
       </span>
     )
   }
@@ -289,16 +274,16 @@ function ToolGuardAction({
   const guardsOff = guarded && policy.guards_enabled === false
   const concrete = hasConcreteTargetTools(policy)
   const label = guardsOff
-    ? "Guards generated but are disabled"
+    ? t("guardAction.guardsOff")
     : guarded
-      ? "View tool guards"
+      ? t("guardAction.view")
       : !policy.enabled
-        ? "Policy is disabled"
+        ? t("guardAction.policyDisabled")
         : !policiesEnabled
-          ? "Policies disabled"
+          ? t("guardAction.policiesDisabled")
           : !concrete
-            ? "Select specific target tools to generate a guard"
-            : "Generate tool guard"
+            ? t("guardAction.selectTools")
+            : t("guardAction.generate")
   const disabled = guarded ? false : anyGenerating || !policiesEnabled || !policy.enabled || !concrete
   return (
     <Tooltip>
@@ -327,6 +312,7 @@ function ToolGuardAction({
 
 // ── the editor ─────────────────────────────────────────────────────────────
 export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: PoliciesConfigProps) {
+  const { t } = useTranslation("policies")
   const importInputRef = React.useRef<HTMLInputElement>(null)
   const [config, setConfig] = React.useState<PoliciesConfigData>({ enablePolicies: true, policies: [] })
   // Latest config for async handlers (save runs after a blur that may still add a tag).
@@ -350,7 +336,7 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
   }
   React.useEffect(() => {
     const pending = timers.current
-    return () => pending.forEach((t) => window.clearTimeout(t))
+    return () => pending.forEach((timer) => window.clearTimeout(timer))
   }, [])
 
   const loadConfig = React.useCallback(async () => {
@@ -373,7 +359,8 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       setSavedToolGuideSnapshots(toolGuideSnapshots(policies))
     } catch (error) {
       console.error("[PoliciesConfig] Error loading config:", error)
-      setLoadError(error instanceof Error ? error.message : "Network error occurred")
+      // i18n.t, not the hook: a language switch must not reload the config and drop unsaved edits.
+      setLoadError(error instanceof Error ? error.message : i18n.t("policies:toast.networkError"))
     } finally {
       setIsLoading(false)
     }
@@ -422,7 +409,7 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error("[PoliciesConfig] Export error:", error)
-      notify({ kind: "error", title: "Error", subtitle: "Failed to export policies. Check console for details." })
+      notify({ kind: "error", title: t("toast.errorTitle"), subtitle: t("toast.exportFailed") })
     }
   }
 
@@ -433,13 +420,13 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
 
     try {
       const text = await file.text().catch(() => {
-        throw new Error("Failed to read file")
+        throw new Error(t("toast.readFailed"))
       })
       input.value = ""
 
       const importedData: unknown = JSON.parse(text)
       if (!isRecord(importedData) || !Array.isArray(importedData.policies)) {
-        notify({ kind: "error", title: "Invalid import", subtitle: 'Expected a JSON file with a "policies" array.' })
+        notify({ kind: "error", title: t("toast.invalidImportTitle"), subtitle: t("toast.invalidImportBody") })
         return
       }
 
@@ -456,15 +443,15 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       // An import is saved right away, like in the original.
       const { response, loadFailed } = await policiesApi.savePolicies(normalizedConfig, draftMode, agentId)
       if (loadFailed) {
-        notify({ kind: "error", title: "Import aborted", subtitle: "Failed to load existing configuration" })
+        notify({ kind: "error", title: t("toast.importAbortedTitle"), subtitle: t("toast.loadExistingFailed") })
         return
       }
       if (response.ok) {
         setSavedToolGuideSnapshots(toolGuideSnapshots(policies))
         notify({
           kind: "success",
-          title: "Policies imported",
-          subtitle: `${policies.length} ${policies.length === 1 ? "policy" : "policies"} imported and saved`,
+          title: t("toast.importedTitle"),
+          subtitle: t("toast.importedBody", { count: policies.length }),
         })
         onSave?.(normalizedConfig)
       } else {
@@ -472,8 +459,8 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
         const pick = (key: string) => (isRecord(data) && typeof data[key] === "string" && data[key] ? data[key] : "")
         notify({
           kind: "error",
-          title: "Import failed",
-          subtitle: pick("error") || pick("message") || "Failed to save imported policies",
+          title: t("toast.importFailedTitle"),
+          subtitle: pick("error") || pick("message") || t("toast.saveImportedFailed"),
         })
       }
     } catch (error) {
@@ -481,8 +468,8 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       input.value = ""
       notify({
         kind: "error",
-        title: "Import failed",
-        subtitle: error instanceof Error ? error.message : "Invalid JSON or file format",
+        title: t("toast.importFailedTitle"),
+        subtitle: error instanceof Error ? error.message : t("toast.invalidFile"),
       })
     }
   }
@@ -510,13 +497,13 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       const { response, loadFailed } = await policiesApi.savePolicies(normalizedConfig, draftMode, agentId)
       if (loadFailed) {
         // Nothing was written: without the existing config a save would wipe the other sections.
-        const message = await policiesApi.readErrorMessage(response, "Failed to load existing configuration")
+        const message = await policiesApi.readErrorMessage(response, t("toast.loadExistingFailed"))
         console.error("Failed to load existing config before save:", message)
-        failed("Save aborted", message)
+        failed(t("toast.saveAbortedTitle"), message)
         return
       }
       if (!response.ok) {
-        failed("Save failed", await policiesApi.readErrorMessage(response, "Failed to save policies"))
+        failed(t("toast.saveFailedTitle"), await policiesApi.readErrorMessage(response, t("toast.saveFailed")))
         return
       }
 
@@ -524,8 +511,8 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       setSaveStatus("success")
       notify({
         kind: "success",
-        title: "Policies saved successfully",
-        subtitle: `${count} ${count === 1 ? "policy" : "policies"} saved`,
+        title: t("toast.savedTitle"),
+        subtitle: t("toast.savedBody", { count }),
       })
       setSavedToolGuideSnapshots(toolGuideSnapshots(current.policies))
       onSave?.(normalizedConfig)
@@ -534,7 +521,7 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
         onClose()
       }, 1500)
     } catch (error) {
-      failed("Save failed", error instanceof Error ? error.message : "Network error occurred")
+      failed(t("toast.saveFailedTitle"), error instanceof Error ? error.message : t("toast.networkError"))
     }
   }
 
@@ -544,19 +531,19 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
 
     const policy = configRef.current.policies.find((p) => p.id === policyId)
     if (!policy || policy.policy_type !== "tool_guide") {
-      notify({ kind: "error", title: "Cannot generate guard", subtitle: "Policy not found or not a tool guide" })
+      notify({ kind: "error", title: t("toast.cannotGenerateTitle"), subtitle: t("toast.notToolGuide") })
       return
     }
     // The server generates from the saved policy, so unsaved edits must be saved first.
     if (savedToolGuideSnapshots[policy.id] !== toolGuideSnapshot(policy)) {
-      notify({ kind: "warning", title: "Save required", subtitle: "Save the tool guide before generating a guard." })
+      notify({ kind: "warning", title: t("toast.saveRequiredTitle"), subtitle: t("toast.saveRequiredBody") })
       return
     }
     if (!hasConcreteTargetTools(policy)) {
       notify({
         kind: "error",
-        title: "Cannot generate guard",
-        subtitle: "Select specific target tools to generate a guard.",
+        title: t("toast.cannotGenerateTitle"),
+        subtitle: t("toast.selectTools"),
       })
       return
     }
@@ -567,8 +554,8 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       if (!response.ok) {
         notify({
           kind: "error",
-          title: "Generation failed",
-          subtitle: await policiesApi.readErrorMessage(response, "Failed to generate tool guard", ["message"]),
+          title: t("toast.generationFailedTitle"),
+          subtitle: await policiesApi.readErrorMessage(response, t("toast.generationFailed"), ["message"]),
         })
         return
       }
@@ -596,31 +583,38 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
       if (successTools.length > 0 && failedTools.length === 0) {
         notify({
           kind: synced ? "success" : "warning",
-          title: synced ? "Guard generated" : "Guard generated (sync pending)",
+          title: synced ? t("toast.generatedTitle") : t("toast.generatedUnsyncedTitle"),
           subtitle: synced
-            ? `Tool guard created for: ${successTools.join(", ")}`
-            : `${successTools.join(", ")} generated in policy storage but config sync failed. ${result.sync_error ?? "Refresh and save before publishing."}`,
+            ? t("toast.generatedBody", { tools: successTools.join(", ") })
+            : t("toast.generatedUnsyncedBody", {
+                tools: successTools.join(", "),
+                detail: result.sync_error ?? t("toast.refreshAndSave"),
+              }),
         })
       } else if (successTools.length > 0 && failedTools.length > 0) {
         notify({
           kind: "warning",
-          title: "Partial success",
-          subtitle: `Generated for ${successTools.join(", ")}. Failed: ${failedTools.join(", ")}${
-            synced ? "" : `. Config sync failed: ${result.sync_error ?? "refresh before publishing"}`
-          }`,
+          title: t("toast.partialTitle"),
+          subtitle: synced
+            ? t("toast.partialBody", { succeeded: successTools.join(", "), failed: failedTools.join(", ") })
+            : t("toast.partialUnsyncedBody", {
+                succeeded: successTools.join(", "),
+                failed: failedTools.join(", "),
+                detail: result.sync_error ?? t("toast.refreshBeforePublishing"),
+              }),
         })
       } else {
         notify({
           kind: "error",
-          title: "Generation failed",
-          subtitle: `Failed to generate guards for: ${failedTools.join(", ")}`,
+          title: t("toast.generationFailedTitle"),
+          subtitle: t("toast.generationFailedFor", { tools: failedTools.join(", ") }),
         })
       }
     } catch (error) {
       notify({
         kind: "error",
-        title: "Generation failed",
-        subtitle: error instanceof Error ? error.message : "Network error occurred",
+        title: t("toast.generationFailedTitle"),
+        subtitle: error instanceof Error ? error.message : t("toast.networkError"),
       })
     } finally {
       setGeneratingToolGuardPolicyId(null)
@@ -650,7 +644,7 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
     const common = {
       domId: `${section.idPrefix}${policy.id}`,
       name: policy.name,
-      namePlaceholder: section.namePlaceholder,
+      namePlaceholder: t(`sections.${section.key}.namePlaceholder`),
       enabled: policy.enabled,
       expanded,
       disabled: locked,
@@ -735,15 +729,13 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
     <Dialog open onOpenChange={(open) => !open && closeModal()} disablePointerDismissal>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Policies Configuration</DialogTitle>
-          <DialogDescription className="sr-only">
-            Intent guards, playbooks, tool guides, tool approvals and output formatters of this agent.
-          </DialogDescription>
+          <DialogTitle>{t("config.title")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("config.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="-mx-4 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-2">
           {isLoading ? (
-            <div className="flex flex-col gap-4" role="status" aria-label="Loading policies…">
+            <div className="flex flex-col gap-4" role="status" aria-label={t("config.loading")}>
               <Skeleton className="h-16 w-full rounded-xl" />
               <Skeleton className="h-8 w-2/3" />
               {Array.from({ length: 3 }).map((_, i) => (
@@ -753,12 +745,12 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
           ) : loadError !== null ? (
             <Alert className="*:[svg]:text-status-warn">
               <TriangleAlertIcon />
-              <AlertTitle>Policies could not be loaded</AlertTitle>
+              <AlertTitle>{t("config.loadFailedTitle")}</AlertTitle>
               <AlertDescription>
                 <p>{loadError}</p>
-                <p>Saving is disabled so the stored policies are not overwritten with an empty list.</p>
+                <p>{t("config.loadFailedBody")}</p>
                 <Button variant="outline" size="sm" className="mt-2 w-fit" onClick={() => void loadConfig()}>
-                  Try again
+                  {t("common:action.retry")}
                 </Button>
               </AlertDescription>
             </Alert>
@@ -766,19 +758,19 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
             <>
               <section className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 rounded-xl border bg-card p-4">
                 <div className="flex min-w-0 flex-col gap-1">
-                  <h3 className="text-base font-semibold">Global Policy System</h3>
+                  <h3 className="text-base font-semibold">{t("config.globalTitle")}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Master switch for all policy enforcement ({config.policies.length} policies configured)
+                    {t("config.globalBody", { count: config.policies.length })}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-3">
                   <Button variant="outline" size="sm" onClick={exportPolicies} disabled={config.policies.length === 0}>
                     <DownloadIcon data-icon="inline-start" />
-                    Export
+                    {t("config.export")}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
                     <UploadIcon data-icon="inline-start" />
-                    Import
+                    {t("config.import")}
                   </Button>
                   <input
                     ref={importInputRef}
@@ -792,12 +784,12 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
                   <div className="flex items-center gap-2">
                     <Switch
                       id="enable-policies-toggle"
-                      aria-label="Enable Policy System"
+                      aria-label={t("config.enableSystem")}
                       checked={config.enablePolicies}
                       onCheckedChange={(checked) => setConfig((prev) => ({ ...prev, enablePolicies: checked }))}
                     />
                     <span className="w-16 text-sm text-muted-foreground" aria-hidden="true">
-                      {config.enablePolicies ? "Enabled" : "Disabled"}
+                      {config.enablePolicies ? t("config.enabled") : t("config.disabled")}
                     </span>
                   </div>
                 </div>
@@ -805,10 +797,12 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
 
               <Tabs defaultValue={SECTIONS[0].type}>
                 <div className="overflow-x-auto">
-                  <TabsList aria-label="Policy Types">
+                  <TabsList aria-label={t("config.policyTypes")}>
                     {SECTIONS.map((section) => (
                       <TabsTrigger key={section.type} value={section.type} className="px-2.5">
-                        {section.tab} ({config.policies.filter((p) => p.policy_type === section.type).length})
+                        {t(`sections.${section.key}.tab`, {
+                          total: config.policies.filter((p) => p.policy_type === section.type).length,
+                        })}
                       </TabsTrigger>
                     ))}
                   </TabsList>
@@ -818,17 +812,17 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
                   return (
                     <TabsContent key={section.type} value={section.type} className="flex flex-col gap-4 pt-3">
                       <div className="flex items-center justify-between gap-3">
-                        <h4 className="text-lg font-medium">{section.heading}</h4>
+                        <h4 className="text-lg font-medium">{t(`sections.${section.key}.heading`)}</h4>
                         <Button variant="outline" size="sm" onClick={() => addPolicy(section.type)} disabled={locked}>
                           <PlusIcon data-icon="inline-start" />
-                          {section.addLabel}
+                          {t(`sections.${section.key}.add`)}
                         </Button>
                       </div>
                       {policies.length === 0 ? (
                         <Empty className="rounded-xl border border-dashed">
                           <EmptyHeader>
-                            <EmptyTitle>Nothing here yet</EmptyTitle>
-                            <EmptyDescription>{section.empty}</EmptyDescription>
+                            <EmptyTitle>{t("config.emptyTitle")}</EmptyTitle>
+                            <EmptyDescription>{t(`sections.${section.key}.empty`)}</EmptyDescription>
                           </EmptyHeader>
                         </Empty>
                       ) : (
@@ -844,14 +838,14 @@ export function PoliciesConfig({ onClose, draftMode = false, onSave, agentId }: 
 
         <DialogFooter>
           <Button variant="outline" disabled={saving} onClick={onClose}>
-            Cancel
+            {t("common:action.cancel")}
           </Button>
           <Button onClick={() => void saveConfig()} disabled={isLoading || saving || loadError !== null}>
             {saving ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
-            {saving && "Saving..."}
-            {saveStatus === "idle" && "Save Changes"}
-            {saveStatus === "success" && "Saved!"}
-            {saveStatus === "error" && "Error!"}
+            {saving && t("config.saving")}
+            {saveStatus === "idle" && t("config.saveChanges")}
+            {saveStatus === "success" && t("config.saved")}
+            {saveStatus === "error" && t("config.saveError")}
           </Button>
         </DialogFooter>
 

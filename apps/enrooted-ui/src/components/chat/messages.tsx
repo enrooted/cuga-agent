@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { BrainIcon, FileTextIcon, ListChecksIcon } from "lucide-react"
 
 import { AgentMark } from "@/components/agent-mark"
@@ -24,6 +25,7 @@ import {
   TraceLine,
   TraceTitle,
 } from "@/components/ui/trace"
+import i18n from "@/i18n"
 import { Markdown } from "@/components/markdown"
 import { CommandText } from "@/components/chat/composer"
 import { MessageSources } from "@/components/chat/sources"
@@ -36,7 +38,7 @@ export interface AgentProfile {
 
 const formatTime = (iso: string) => {
   const d = new Date(iso.endsWith("Z") || /[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`)
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString(i18n.language, { hour: "numeric", minute: "2-digit" })
 }
 
 function StepItem({ step }: { step: Step }) {
@@ -62,6 +64,7 @@ function StepItem({ step }: { step: Step }) {
  * toggle (CUGA relabels Carbon's "Show reasoning"); same here.
  */
 function StepsTrace({ steps, running }: { steps: Step[]; running: boolean }) {
+  const { t } = useTranslation("chat")
   const [open, setOpen] = React.useState(false)
   if (steps.length === 0) return null
   const last = steps[steps.length - 1]
@@ -72,10 +75,8 @@ function StepsTrace({ steps, running }: { steps: Step[]; running: boolean }) {
           <TraceIcon>
             <BrainIcon />
           </TraceIcon>
-          <TraceTitle>{running ? last.title : open ? "Hide details" : "Show details"}</TraceTitle>
-          <TraceDescription>
-            {steps.length} step{steps.length === 1 ? "" : "s"}
-          </TraceDescription>
+          <TraceTitle>{running ? last.title : open ? t("message.hideDetails") : t("message.showDetails")}</TraceTitle>
+          <TraceDescription>{t("message.steps", { count: steps.length })}</TraceDescription>
         </TraceLine>
       </TraceCollapsibleTrigger>
       <TraceCollapsibleContent>
@@ -98,6 +99,7 @@ function ActionCardView({
   disabled: boolean
   onAction: (button: ActionButton) => void
 }) {
+  const { t } = useTranslation("chat")
   const card = message.card!
   return (
     <Card size="sm" className="w-full max-w-xl">
@@ -118,7 +120,7 @@ function ActionCardView({
               {b.label}
             </Button>
           ))}
-          {card.answered && <span className="text-xs text-muted-foreground">You chose “{card.answered}”</span>}
+          {card.answered && <span className="text-xs text-muted-foreground">{t("message.youChose", { label: card.answered })}</span>}
         </CardFooter>
       )}
     </Card>
@@ -140,6 +142,7 @@ export function AssistantMessageView({
   onOpenSources: (sources: MessageSource[], n: number | null) => void
   onOpenMemoryUsage?: (entityIds: string[], relationship: "used" | "saved") => void
 }) {
+  const { t } = useTranslation("chat")
   const running = message.status !== "done"
   const hasText = message.text.trim().length > 0
   return (
@@ -155,7 +158,7 @@ export function AssistantMessageView({
         </MessageHeader>
         {message.status === "pending" && (
           <TraceLine status="running" className="px-3">
-            <TraceTitle>Thinking…</TraceTitle>
+            <TraceTitle>{t("message.thinking")}</TraceTitle>
           </TraceLine>
         )}
         {message.steps.length > 0 && (
@@ -193,7 +196,7 @@ export function AssistantMessageView({
                 if (!d) return null
                 return (
                   <Button key={rel} variant="link" size="xs" onClick={() => onOpenMemoryUsage(d.entityIds, rel)}>
-                    {d.count} {d.count === 1 ? "memory" : "memories"} {rel}
+                    {t(rel === "used" ? "message.memoryUsed" : "message.memorySaved", { count: d.count })}
                   </Button>
                 )
               })}
@@ -215,6 +218,8 @@ export function UserMessageView({
   knownCommands: Set<string>
   onPreviewAttachment?: (a: AttachmentSnapshot) => void
 }) {
+  // Re-render when the language changes (the timestamp is formatted per language).
+  useTranslation("chat")
   return (
     <Message align="end">
       <MessageContent>

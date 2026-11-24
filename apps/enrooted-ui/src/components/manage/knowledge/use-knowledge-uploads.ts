@@ -7,6 +7,7 @@
  */
 import * as React from "react"
 
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/knowledge-api"
 import type { KnowledgeToast, UploadingFile } from "@/lib/manage/knowledge-types"
 import {
@@ -82,7 +83,7 @@ export function useKnowledgeUploads({
             removeActiveUpload(backendTaskId)
             safeSet((prev) =>
               prev.map((f) =>
-                f.taskId === backendTaskId ? { ...f, status: "error", error: "Task not found" } : f
+                f.taskId === backendTaskId ? { ...f, status: "error", error: i18n.t("knowledge:documents.uploadError.taskNotFound") } : f
               )
             )
             return
@@ -122,7 +123,7 @@ export function useKnowledgeUploads({
               f.taskId === backendTaskId
                 ? status === "cancelled"
                   ? { ...f, status: "cancelled", error: undefined }
-                  : { ...f, status: "error", error: error || "Ingestion failed" }
+                  : { ...f, status: "error", error: error || i18n.t("knowledge:documents.uploadError.ingestionFailed") }
                 : f
             )
           )
@@ -147,7 +148,7 @@ export function useKnowledgeUploads({
       safeSet((prev) =>
         prev.map((f) =>
           f.taskId === backendTaskId
-            ? { ...f, status: "error", error: "Timed out waiting for ingest" }
+            ? { ...f, status: "error", error: i18n.t("knowledge:documents.uploadError.timedOut") }
             : f
         )
       )
@@ -178,7 +179,7 @@ export function useKnowledgeUploads({
           const detail = asString(err ? err.detail : res.statusText)
           safeSet((prev) =>
             prev.map((f) =>
-              f.taskId === entryId ? { ...f, status: "error", error: detail || "Failed" } : f
+              f.taskId === entryId ? { ...f, status: "error", error: detail || i18n.t("knowledge:documents.uploadError.failed") } : f
             )
           )
           return
@@ -196,7 +197,7 @@ export function useKnowledgeUploads({
               f.taskId === entryId
                 ? ok
                   ? { ...f, backendName, status: "success", progress: 1 }
-                  : { ...f, backendName, status: "error", error: "Ingestion failed" }
+                  : { ...f, backendName, status: "error", error: i18n.t("knowledge:documents.uploadError.ingestionFailed") }
                 : f
             )
           )
@@ -235,7 +236,7 @@ export function useKnowledgeUploads({
           // clicked cancel (the cancel handler already wrote the state).
           return
         }
-        const message = e instanceof Error ? e.message : "Upload failed"
+        const message = e instanceof Error ? e.message : i18n.t("knowledge:documents.uploadError.uploadFailed")
         safeSet((prev) =>
           prev.map((f) =>
             f.taskId === entryId || f.taskId === backendTaskId
@@ -259,8 +260,8 @@ export function useKnowledgeUploads({
       if (!agentLevelEnabled) {
         onToast?.(
           "warning",
-          "Agent knowledge is disabled",
-          "Enable agent-level knowledge in Settings to upload permanent documents."
+          i18n.t("knowledge:panel.agentDisabled.title"),
+          i18n.t("knowledge:panel.agentDisabled.upload")
         )
         return
       }
@@ -314,7 +315,7 @@ export function useKnowledgeUploads({
       // reading as failed: painting it "Cancelled" would hide a real ingest
       // failure behind a user action that did not cause it.
       const failed = serverStatus === "failed"
-      const failureError = failed ? firstFileTaskError(serverTask) || "Ingestion failed" : undefined
+      const failureError = failed ? firstFileTaskError(serverTask) || i18n.t("knowledge:documents.uploadError.ingestionFailed") : undefined
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.taskId === taskId

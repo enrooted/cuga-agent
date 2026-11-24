@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import {
   AlertDialog as AlertDialogRoot,
   AlertDialogAction,
@@ -25,6 +27,7 @@ export function AlertDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <AlertDialogRoot open={open} onOpenChange={(o) => !o && onCancel()}>
       <AlertDialogContent>
@@ -33,7 +36,7 @@ export function AlertDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("action.cancel")}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onConfirm}>
             {confirmLabel}
           </AlertDialogAction>

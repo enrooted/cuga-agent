@@ -7,6 +7,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { Trans, useTranslation } from "react-i18next"
 import {
   FileTextIcon,
   QuoteIcon,
@@ -35,7 +36,13 @@ import type {
   ReindexProgress,
 } from "@/lib/manage/knowledge-types"
 import { cn } from "@/lib/utils"
-import { EmbeddingSection, SaveStatePill, type PresetGuide, type SaveState } from "./embedding-section"
+import {
+  EmbeddingSection,
+  SaveStatePill,
+  type PresetGuide,
+  type ResetSection,
+  type SaveState,
+} from "./embedding-section"
 import {
   asNumber,
   asRecord,
@@ -55,12 +62,13 @@ import { ReindexStatus } from "./reindex-status"
 type SectionStatus = { kind: "error" | "warning"; reason: string } | null
 
 function SectionTitle({ label, status }: { label: string; status?: SectionStatus }) {
+  const { t } = useTranslation("knowledge")
   return (
     <span className="inline-flex items-center gap-2">
       {label}
       {status && (
         <StatusBadge tone="warn" title={status.reason}>
-          {status.kind === "error" ? "Needs attention" : "Warning"}
+          {status.kind === "error" ? t("settings.sectionStatus.needsAttention") : t("settings.sectionStatus.warning")}
           <span className="sr-only">: {status.reason}</span>
         </StatusBadge>
       )}
@@ -157,6 +165,7 @@ export function SettingsTab({
   onPresetApplied?: () => void
   onToast?: KnowledgeToast
 }) {
+  const { t } = useTranslation("knowledge")
   const knowledgeEnabled = knowledgeConfig.enabled ?? true
   const agentLevelEnabled = knowledgeEnabled && (knowledgeConfig.agent_level_enabled ?? true)
   const sessionLevelEnabled = knowledgeEnabled && (knowledgeConfig.session_level_enabled ?? true)
@@ -193,22 +202,22 @@ export function SettingsTab({
     const spec = providerSpec(knowledgeConfig.embedding_provider)
     const model = (knowledgeConfig.embedding_model || "").trim()
     const apiKey = (knowledgeConfig.embedding_api_key || "").trim()
-    if (baseUrlError) return { kind: "error", reason: `Base URL: ${baseUrlError}` }
-    if (spec.modelRequired && !model) return { kind: "error", reason: "Model is required" }
-    if (spec.keyRequired && !apiKey) return { kind: "error", reason: "API Key is required" }
+    if (baseUrlError) return { kind: "error", reason: t("settings.reason.baseUrl", { error: baseUrlError }) }
+    if (spec.modelRequired && !model) return { kind: "error", reason: t("settings.reason.modelRequired") }
+    if (spec.keyRequired && !apiKey) return { kind: "error", reason: t("settings.reason.keyRequired") }
     if (extraParamsHint) return { kind: "error", reason: extraParamsHint }
-    if (testResult && !testResult.ok) return { kind: "warning", reason: "Test connection failed" }
+    if (testResult && !testResult.ok) return { kind: "warning", reason: t("settings.reason.testFailed") }
     return null
   })()
   const chunkingStatus: SectionStatus = (() => {
     const cs = knowledgeConfig.chunk_size ?? 1000
     const co = knowledgeConfig.chunk_overlap ?? 200
-    if (co >= cs) return { kind: "error", reason: "Overlap must be less than chunk size" }
+    if (co >= cs) return { kind: "error", reason: t("settings.reason.overlap") }
     return null
   })()
 
   // Reset state: confirmation dialog target. null = no dialog open.
-  const [resetTarget, setResetTarget] = React.useState<null | { section: string; fields: string[] }>(null)
+  const [resetTarget, setResetTarget] = React.useState<null | { section: ResetSection; fields: string[] }>(null)
   const [defaultsCache, setDefaultsCache] = React.useState<Record<string, unknown> | null>(null)
   const performReset = async () => {
     if (!resetTarget) return
@@ -217,7 +226,11 @@ export function SettingsTab({
       if (!defaults) {
         const res = await api.getKnowledgeDefaults()
         if (!res.ok) {
-          onToast?.("error", "Reset failed", `Server returned ${res.status} ${res.statusText}`)
+          onToast?.(
+            "error",
+            t("settings.reset.failed"),
+            t("settings.reset.serverReturned", { status: res.status, statusText: res.statusText })
+          )
           setResetTarget(null)
           return
         }
@@ -230,9 +243,13 @@ export function SettingsTab({
         if (f in defaults) updates[f] = defaults[f]
       }
       onKnowledgeConfigChange({ ...knowledgeConfig, ...updates })
-      onToast?.("success", "Section reset", `Restored ${resetTarget.section} to factory defaults.`)
+      onToast?.(
+        "success",
+        t("settings.reset.done"),
+        t("settings.reset.restored", { section: t(`settings.section.${resetTarget.section}`) })
+      )
     } catch (e) {
-      onToast?.("error", "Reset failed", e instanceof Error ? e.message : "unknown error")
+      onToast?.("error", t("settings.reset.failed"), e instanceof Error ? e.message : t("settings.reset.unknownError"))
     } finally {
       setResetTarget(null)
     }
@@ -246,8 +263,8 @@ export function SettingsTab({
   React.useEffect(() => {
     if (saveState === "saved") {
       setRecentlySaved(true)
-      const t = setTimeout(() => setRecentlySaved(false), 3000)
-      return () => clearTimeout(t)
+      const timer = setTimeout(() => setRecentlySaved(false), 3000)
+      return () => clearTimeout(timer)
     }
     setRecentlySaved(false)
   }, [saveState, draftSaveStatus])
@@ -361,6 +378,7 @@ export function SettingsTab({
   const set = (patch: Partial<KnowledgeConfigValues>) => onKnowledgeConfigChange({ ...knowledgeConfig, ...patch })
 
   const profileKey = knowledgeConfig.rag_profile ?? "standard"
+  const resetSectionName = resetTarget ? t(`settings.section.${resetTarget.section}`) : ""
 
   return (
     <div className="flex flex-col gap-5">
@@ -368,12 +386,16 @@ export function SettingsTab({
       <Tile className="flex items-center justify-between gap-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
           <StatusDot state={healthy === null ? "off" : healthy ? "ok" : "warn"} />
-          <span className="text-xs font-semibold whitespace-nowrap">Service</span>
+          <span className="text-xs font-semibold whitespace-nowrap">{t("settings.service.label")}</span>
           <StatusBadge tone={healthy === null ? "neutral" : healthy ? "ok" : "warn"}>
-            {healthy === null ? "Checking" : healthy ? "Connected" : "Disconnected"}
+            {healthy === null
+              ? t("settings.service.checking")
+              : healthy
+                ? t("settings.service.connected")
+                : t("settings.service.disconnected")}
           </StatusBadge>
         </div>
-        <IconButton label="Refresh status" onClick={onCheckHealth}>
+        <IconButton label={t("settings.service.refresh")} onClick={onCheckHealth}>
           <RefreshCwIcon />
         </IconButton>
       </Tile>
@@ -391,14 +413,12 @@ export function SettingsTab({
             }}
           />
           <Label htmlFor="knowledge-enabled" className="text-sm font-semibold">
-            Knowledge Base
+            {t("settings.enabled.label")}
           </Label>
-          <span className="text-xs text-muted-foreground">{(knowledgeConfig.enabled ?? true) ? "On" : "Off"}</span>
+          <span className="text-xs text-muted-foreground">{(knowledgeConfig.enabled ?? true) ? t("shared.on") : t("shared.off")}</span>
         </div>
         {!knowledgeEnabled && (
-          <p className="text-xs text-muted-foreground">
-            Knowledge base is disabled. Enable it to configure retrieval settings.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("settings.enabled.disabledHint")}</p>
         )}
       </Tile>
 
@@ -407,8 +427,8 @@ export function SettingsTab({
           <ScopeCard
             id="knowledge-agent-level-enabled"
             icon={FileTextIcon}
-            title="Agent-level knowledge"
-            description="Permanent documents shared across all conversations"
+            title={t("settings.scope.agent.title")}
+            description={t("settings.scope.agent.description")}
             active={agentLevelEnabled}
             checked={knowledgeConfig.agent_level_enabled ?? true}
             onCheckedChange={(checked) => set({ agent_level_enabled: checked })}
@@ -416,8 +436,8 @@ export function SettingsTab({
           <ScopeCard
             id="knowledge-session-level-enabled"
             icon={SearchIcon}
-            title="Session-level knowledge"
-            description="Per-conversation uploads and scoped search"
+            title={t("settings.scope.session.title")}
+            description={t("settings.scope.session.description")}
             active={sessionLevelEnabled}
             checked={knowledgeConfig.session_level_enabled ?? true}
             onCheckedChange={(checked) => set({ session_level_enabled: checked })}
@@ -425,8 +445,8 @@ export function SettingsTab({
           <ScopeCard
             id="knowledge-citations-enabled"
             icon={QuoteIcon}
-            title="Citations"
-            description="Number knowledge sources in answers ([1]) with clickable snippets"
+            title={t("settings.scope.citations.title")}
+            description={t("settings.scope.citations.description")}
             active={citationsEnabled}
             checked={knowledgeConfig.citations_enabled ?? true}
             onCheckedChange={(checked) => set({ citations_enabled: checked })}
@@ -438,13 +458,13 @@ export function SettingsTab({
       {knowledgeEnabled && (
         <>
           {!agentLevelEnabled && (
-            <Notice kind="info" title="Agent-level knowledge is off">
-              Permanent documents, indexing, and Manage search are unavailable until you turn it back on.
+            <Notice kind="info" title={t("settings.notice.agentOffTitle")}>
+              {t("settings.notice.agentOffBody")}
             </Notice>
           )}
           {!sessionLevelEnabled && (
-            <Notice kind="info" title="Session-level knowledge is off">
-              Conversation uploads and session-scoped knowledge search are unavailable in chat.
+            <Notice kind="info" title={t("settings.notice.sessionOffTitle")}>
+              {t("settings.notice.sessionOffBody")}
             </Notice>
           )}
 
@@ -454,14 +474,12 @@ export function SettingsTab({
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <h4 id="knowledge-profile-heading" className="text-sm font-semibold">
-                    Retrieval Profile
+                    {t("settings.profile.heading")}
                   </h4>
                   {/* Save-status pill at the surface the user is actually editing. */}
                   <SaveStatePill saveState={saveState} recentlySaved={recentlySaved} showFailed />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Balance retrieval accuracy against response speed and cost.
-                </p>
+                <p className="text-xs text-muted-foreground">{t("settings.profile.description")}</p>
               </div>
               <div role="radiogroup" aria-labelledby="knowledge-profile-heading" className="flex flex-col gap-2">
                 {Object.entries(ragProfiles).map(([key, profile]) => {
@@ -545,14 +563,14 @@ export function SettingsTab({
                       <span className="flex min-w-0 flex-1 flex-col gap-1">
                         <span className="flex items-center gap-2">
                           <span className="text-sm font-semibold">{profile.name}</span>
-                          {isModified && <StatusBadge tone="neutral">Modified</StatusBadge>}
+                          {isModified && <StatusBadge tone="neutral">{t("settings.profile.modified")}</StatusBadge>}
                         </span>
                         <span className="text-xs leading-normal text-muted-foreground">{profile.description}</span>
                         {!isSelected && willReindex && (
-                          <ProfileWarning>Requires re-indexing existing documents.</ProfileWarning>
+                          <ProfileWarning>{t("settings.profile.requiresReindex")}</ProfileWarning>
                         )}
                         {isModified && (
-                          <ProfileWarning>Overrides the profile defaults — re-indexing runs on Publish.</ProfileWarning>
+                          <ProfileWarning>{t("settings.profile.overrides")}</ProfileWarning>
                         )}
                       </span>
                     </button>
@@ -581,11 +599,9 @@ export function SettingsTab({
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             <Switch id="knowledge-show-advanced" checked={showAdvanced} onCheckedChange={persistShowAdvanced} />
             <Label htmlFor="knowledge-show-advanced" className="text-sm font-semibold">
-              Advanced settings
+              {t("settings.advanced.label")}
             </Label>
-            <span className="text-xs text-muted-foreground">
-              Embedding model, chunking, parsing, retrieval behavior, score &amp; metric, and limits.
-            </span>
+            <span className="text-xs text-muted-foreground">{t("settings.advanced.hint")}</span>
           </div>
 
           {/* 5. Advanced configuration (only when the toggle is on) */}
@@ -593,7 +609,7 @@ export function SettingsTab({
             <Accordion multiple className="rounded-lg border px-3">
               <AccordionItem value="embeddings">
                 <AccordionTrigger>
-                  <SectionTitle label="Embedding model" status={embeddingsStatus} />
+                  <SectionTitle label={t("settings.accordion.embeddings")} status={embeddingsStatus} />
                 </AccordionTrigger>
                 <AccordionContent>
                   <EmbeddingSection
@@ -628,20 +644,24 @@ export function SettingsTab({
 
               <AccordionItem value="chunking">
                 <AccordionTrigger>
-                  <SectionTitle label="Chunking" status={chunkingStatus} />
+                  <SectionTitle label={t("settings.accordion.chunking")} status={chunkingStatus} />
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-col gap-4 pt-2">
                     {ragProfiles && profileKey !== "custom" && (
                       <p className="text-xs text-muted-foreground">
-                        Values set by the <strong>{ragProfiles[profileKey]?.name ?? "Standard"}</strong> profile.
-                        Edit to override.
+                        <Trans
+                          t={t}
+                          i18nKey="settings.chunking.setByProfile"
+                          values={{ name: ragProfiles[profileKey]?.name ?? t("settings.profile.standard") }}
+                          components={{ strong: <strong /> }}
+                        />
                       </p>
                     )}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <NumberField
                         id="knowledge-chunk-size"
-                        label="Chunk Size"
+                        label={t("settings.chunking.size")}
                         value={knowledgeConfig.chunk_size ?? 1000}
                         min={100}
                         max={10000}
@@ -650,19 +670,19 @@ export function SettingsTab({
                       />
                       <NumberField
                         id="knowledge-chunk-overlap"
-                        label="Chunk Overlap"
+                        label={t("settings.chunking.overlap")}
                         value={knowledgeConfig.chunk_overlap ?? 200}
                         min={0}
                         max={(knowledgeConfig.chunk_size ?? 1000) - 1}
                         invalid={(knowledgeConfig.chunk_overlap ?? 0) >= (knowledgeConfig.chunk_size ?? 1000)}
-                        invalidText="Overlap must be less than chunk size"
+                        invalidText={t("settings.reason.overlap")}
                         onChange={(value) => set({ chunk_overlap: value })}
                       />
                     </div>
                     <ResetButton
-                      onClick={() => setResetTarget({ section: "Chunking", fields: ["chunk_size", "chunk_overlap"] })}
+                      onClick={() => setResetTarget({ section: "chunking", fields: ["chunk_size", "chunk_overlap"] })}
                     >
-                      Reset Chunking to defaults
+                      {t("settings.chunking.reset")}
                     </ResetButton>
                   </div>
                 </AccordionContent>
@@ -670,58 +690,49 @@ export function SettingsTab({
 
               <AccordionItem value="docling">
                 <AccordionTrigger>
-                  <SectionTitle label="Document Parsing (Docling)" />
+                  <SectionTitle label={t("settings.accordion.docling")} />
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-col gap-4 pt-2">
                     <SelectField
                       id="knowledge-docling-pdf-mode"
-                      label="Parsing Level"
-                      helperText="Applies to PDFs and every other Docling-supported format (DOCX, PPTX, HTML, images, …). Trades parse speed for extraction fidelity. Saved with the published config snapshot."
+                      label={t("settings.docling.level")}
+                      helperText={t("settings.docling.levelHelper")}
                       value={knowledgeConfig.docling_pdf_mode ?? "accurate"}
                       onChange={(e) => set({ docling_pdf_mode: e.target.value })}
                     >
-                      <NativeSelectOption value="fast">
-                        Fast — OCR off, tables off (digital docs only; ~3–10× faster)
-                      </NativeSelectOption>
-                      <NativeSelectOption value="balanced">
-                        Balanced — OCR off, tables on (digital docs with tables)
-                      </NativeSelectOption>
-                      <NativeSelectOption value="accurate">
-                        Accurate (default) — OCR on, tables on (scanned docs supported)
-                      </NativeSelectOption>
+                      <NativeSelectOption value="fast">{t("settings.docling.fast")}</NativeSelectOption>
+                      <NativeSelectOption value="balanced">{t("settings.docling.balanced")}</NativeSelectOption>
+                      <NativeSelectOption value="accurate">{t("settings.docling.accurate")}</NativeSelectOption>
                     </SelectField>
                     <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
                       <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-status-warn" aria-hidden="true" />
                       <span>
-                        <strong>Fast</strong> mode will extract little or no text from scanned documents. Use{" "}
-                        <strong>Accurate</strong> for OCR.
+                        <Trans t={t} i18nKey="settings.docling.scannedWarning" components={{ strong: <strong /> }} />
                       </span>
                     </p>
                     <SelectField
                       id="knowledge-docling-layout-engine"
-                      label="Layout Engine"
-                      helperText="Which backend runs the layout-detection model. Auto = ONNX (default; CPU on Mac, CUDA on NVIDIA). Transformers = PyTorch (only way to engage Apple GPU/MPS; ~500 MB more RAM)."
+                      label={t("settings.docling.layout")}
+                      helperText={t("settings.docling.layoutHelper")}
                       value={knowledgeConfig.docling_layout_engine ?? "auto"}
                       onChange={(e) => set({ docling_layout_engine: e.target.value })}
                     >
-                      <NativeSelectOption value="auto">
-                        Auto (default) — ONNX, fastest startup on CPU &amp; NVIDIA
-                      </NativeSelectOption>
-                      <NativeSelectOption value="onnx">ONNX — explicit (same as Auto today; pinned)</NativeSelectOption>
+                      <NativeSelectOption value="auto">{t("settings.docling.layoutAuto")}</NativeSelectOption>
+                      <NativeSelectOption value="onnx">{t("settings.docling.layoutOnnx")}</NativeSelectOption>
                       <NativeSelectOption value="transformers">
-                        Transformers (PyTorch) — engages MPS on Mac / CUDA on NVIDIA
+                        {t("settings.docling.layoutTransformers")}
                       </NativeSelectOption>
                     </SelectField>
                     <ResetButton
                       onClick={() =>
                         setResetTarget({
-                          section: "Document Parsing",
+                          section: "documentParsing",
                           fields: ["docling_pdf_mode", "docling_layout_engine"],
                         })
                       }
                     >
-                      Reset Document Parsing to defaults
+                      {t("settings.docling.reset")}
                     </ResetButton>
                   </div>
                 </AccordionContent>
@@ -731,29 +742,29 @@ export function SettingsTab({
 
               <AccordionItem value="metric">
                 <AccordionTrigger>
-                  <SectionTitle label="Score & Metric" />
+                  <SectionTitle label={t("settings.accordion.metric")} />
                 </AccordionTrigger>
                 <AccordionContent>
                   {/* Read-only: only COSINE is supported end to end (config
                       validation rejects IP/L2), so a dropdown could only ever
                       fail the save. */}
                   <dl className="pt-2">
-                    <dt className="text-xs text-muted-foreground">Distance Metric</dt>
-                    <dd className="mt-1 text-sm">Cosine Similarity</dd>
+                    <dt className="text-xs text-muted-foreground">{t("settings.metric.distance")}</dt>
+                    <dd className="mt-1 text-sm">{t("settings.metric.cosine")}</dd>
                   </dl>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="limits">
                 <AccordionTrigger>
-                  <SectionTitle label="Limits" />
+                  <SectionTitle label={t("settings.accordion.limits")} />
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-col gap-4 pt-2">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <NumberField
                         id="knowledge-max-upload"
-                        label="Max Upload Size (MB)"
+                        label={t("settings.limits.maxUpload")}
                         value={knowledgeConfig.max_upload_size_mb ?? 100}
                         min={1}
                         max={1000}
@@ -761,7 +772,7 @@ export function SettingsTab({
                       />
                       <NumberField
                         id="knowledge-max-files"
-                        label="Max Files per Request"
+                        label={t("settings.limits.maxFiles")}
                         value={knowledgeConfig.max_files_per_request ?? 10}
                         min={1}
                         max={100}
@@ -769,7 +780,7 @@ export function SettingsTab({
                       />
                       <NumberField
                         id="knowledge-max-url-download"
-                        label="Max URL Download (MB)"
+                        label={t("settings.limits.maxUrl")}
                         value={knowledgeConfig.max_url_download_size_mb ?? 50}
                         min={1}
                         max={500}
@@ -777,7 +788,7 @@ export function SettingsTab({
                       />
                       <NumberField
                         id="knowledge-max-chunks"
-                        label="Max Chunks per Document"
+                        label={t("settings.limits.maxChunks")}
                         value={knowledgeConfig.max_chunks_per_document ?? 10000}
                         min={100}
                         max={100000}
@@ -787,7 +798,7 @@ export function SettingsTab({
                     </div>
                     <NumberField
                       id="knowledge-max-pending"
-                      label="Max Pending Tasks"
+                      label={t("settings.limits.maxPending")}
                       value={knowledgeConfig.max_pending_tasks ?? 10}
                       min={1}
                       max={50}
@@ -796,7 +807,7 @@ export function SettingsTab({
                     <ResetButton
                       onClick={() =>
                         setResetTarget({
-                          section: "Limits",
+                          section: "limits",
                           fields: [
                             "max_upload_size_mb",
                             "max_files_per_request",
@@ -807,7 +818,7 @@ export function SettingsTab({
                         })
                       }
                     >
-                      Reset Limits to defaults
+                      {t("settings.limits.reset")}
                     </ResetButton>
                   </div>
                 </AccordionContent>
@@ -819,13 +830,12 @@ export function SettingsTab({
               user's tuned values. */}
           <AlertDialog
             open={resetTarget !== null}
-            title={`Reset ${resetTarget?.section ?? ""} to defaults?`}
-            description={
-              `This restores the ${resetTarget?.section ?? ""} section to factory defaults. ` +
-              `Your other knowledge settings are untouched. ` +
-              `Fields affected: ${(resetTarget?.fields ?? []).join(", ")}`
-            }
-            confirmLabel="Reset section"
+            title={t("settings.reset.dialogTitle", { section: resetSectionName })}
+            description={t("settings.reset.dialogBody", {
+              section: resetSectionName,
+              fields: (resetTarget?.fields ?? []).join(", "),
+            })}
+            confirmLabel={t("settings.reset.confirm")}
             onConfirm={() => void performReset()}
             onCancel={() => setResetTarget(null)}
           />
@@ -856,39 +866,39 @@ function RetrievalBehaviorItem({
   ragProfiles?: Record<string, RagProfileMeta>
   onPatch: (patch: Partial<KnowledgeConfigValues>) => void
 }) {
+  const { t } = useTranslation("knowledge")
   const qtVal = knowledgeConfig.search_query_transform ?? "off"
   const qtProfile = knowledgeConfig.rag_profile ?? "standard"
   const qtDefault = ragProfiles?.[qtProfile]?.search?.query_transform ?? "off"
   const qtLabels: Record<string, string> = {
-    off: "Off",
-    multi_query: "Reword the query (multi-query)",
-    hyde: "Draft an ideal answer first (HyDE)",
+    off: t("settings.retrieval.short.off"),
+    multi_query: t("settings.retrieval.short.multi_query"),
+    hyde: t("settings.retrieval.short.hyde"),
   }
   return (
     <AccordionItem value="retrieval">
       <AccordionTrigger>
-        <SectionTitle label="Retrieval behavior" />
+        <SectionTitle label={t("settings.accordion.retrieval")} />
       </AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-4 pt-2">
           <SelectField
             id="knowledge-query-transform"
-            label="Query expansion"
-            helperText="Rewrites the query before searching to catch documents that word things differently. Adds one LLM call (~0.3–1.5s) per search and may not improve every corpus — leave Off unless you've seen it help. The original query still runs, and if the rewrite errors or times out the plain query is used."
+            label={t("settings.retrieval.label")}
+            helperText={t("settings.retrieval.helper")}
             value={qtVal}
             onChange={(e) => onPatch({ search_query_transform: e.target.value })}
           >
-            <NativeSelectOption value="off">Off — search the query as typed (default)</NativeSelectOption>
-            <NativeSelectOption value="multi_query">
-              Reword the query (multi-query) — try a few alternate phrasings
-            </NativeSelectOption>
-            <NativeSelectOption value="hyde">
-              Draft an ideal answer first (HyDE) — match against a hypothetical passage
-            </NativeSelectOption>
+            <NativeSelectOption value="off">{t("settings.retrieval.optionOff")}</NativeSelectOption>
+            <NativeSelectOption value="multi_query">{t("settings.retrieval.optionMultiQuery")}</NativeSelectOption>
+            <NativeSelectOption value="hyde">{t("settings.retrieval.optionHyde")}</NativeSelectOption>
           </SelectField>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span>
-              Default for the {ragProfiles?.[qtProfile]?.name ?? qtProfile} profile: {qtLabels[qtDefault] ?? qtDefault}
+              {t("settings.retrieval.profileDefault", {
+                profile: ragProfiles?.[qtProfile]?.name ?? qtProfile,
+                value: qtLabels[qtDefault] ?? qtDefault,
+              })}
             </span>
             {qtVal !== qtDefault && (
               <Button
@@ -897,14 +907,13 @@ function RetrievalBehaviorItem({
                 size="sm"
                 onClick={() => onPatch({ search_query_transform: qtDefault })}
               >
-                Reset to profile default
+                {t("settings.retrieval.resetToProfile")}
               </Button>
             )}
           </div>
           {qtVal !== "off" && (
-            <Notice kind="info" title="Adds an extra AI step per search">
-              Every search now makes one model call first — about 0.3–1.5s slower, with a small added cost.
-              Watch latency after enabling and switch back to Off if recall doesn&apos;t improve.
+            <Notice kind="info" title={t("settings.retrieval.extraStepTitle")}>
+              {t("settings.retrieval.extraStepBody")}
             </Notice>
           )}
         </div>
@@ -913,6 +922,7 @@ function RetrievalBehaviorItem({
   )
 }
 
-export function SettingsUnavailable({ page }: { page: string }) {
-  return <MessageTile>Knowledge settings are managed from the {page} page.</MessageTile>
+export function SettingsUnavailable({ page }: { page: "manage" | "settings" }) {
+  const { t } = useTranslation("knowledge")
+  return <MessageTile>{t(`settings.unavailable.${page}`)}</MessageTile>
 }

@@ -11,7 +11,9 @@ export default defineConfig({
   server: {
     // `npm run dev`: proxy the API to a CUGA reachable at CUGA_URL (default the pod's port).
     proxy: Object.fromEntries(
-      ["/stream", "/stop", "/api", "/auth", "/health"].map((p) => [
+      // /invoke, /docs and /openapi.json: the events service when it shares CUGA's origin (Studio → API).
+      // /studio itself is not proxied: like /chat and /manage it falls through to the SPA.
+      ["/stream", "/stop", "/api", "/auth", "/health", "/invoke", "/docs", "/openapi.json"].map((p) => [
         p,
         { target: process.env.CUGA_URL ?? "http://localhost:7860", changeOrigin: false },
       ])

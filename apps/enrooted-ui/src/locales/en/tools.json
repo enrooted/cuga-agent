@@ -1,0 +1,263 @@
+{
+  "shared": {
+    "opensInNewTab": "{{label}} (opens in a new tab)"
+  },
+  "authType": {
+    "none": "No auth",
+    "header": "Header",
+    "bearer": "Bearer token",
+    "apiKey": "API key (query)",
+    "basic": "Basic (user:pass)",
+    "query": "Query parameter"
+  },
+  "templates": {
+    "title": "Start from a template",
+    "configureManually": "Or configure manually",
+    "browse": "Browse templates",
+    "mcpGateway": {
+      "name": "MCP Gateway instance",
+      "description": "Connect workspace tools as a signed-in user or service ID"
+    },
+    "filesystem": {
+      "name": "Filesystem",
+      "description": "Read and write files in a specified directory"
+    },
+    "drawio": {
+      "name": "Drawio",
+      "description": "Create and manipulate diagrams using Draw.io"
+    },
+    "browserMcp": {
+      "name": "Browser_MCP",
+      "description": "Browser automation and web interaction capabilities"
+    }
+  },
+  "addTool": {
+    "title": {
+      "add": "Add tool",
+      "edit": "Edit tool",
+      "addGateway": "Add MCP Gateway",
+      "editGateway": "Edit MCP Gateway"
+    },
+    "description": {
+      "tool": "Connect an MCP server or an OpenAPI service and set how the agent authenticates to it.",
+      "gateway": "Connect an MCP gateway instance, choose who tool calls run as and select the tools the agent may use."
+    },
+    "notSaved": "Not saved",
+    "name": {
+      "label": "Name",
+      "placeholderMcp": "e.g. my_tool",
+      "placeholderOpenapi": "e.g. crm_api",
+      "help": "Lowercase letters, digits, underscores (e.g. my_tool)",
+      "required": "Name is required",
+      "invalid": "Use lowercase letters, digits, and underscores only (e.g. my_tool)"
+    },
+    "type": {
+      "label": "Type",
+      "mcp": "MCP server",
+      "openapi": "OpenAPI service"
+    },
+    "connection": {
+      "label": "Connection",
+      "url": "URL (SSE)",
+      "urlHttp": "URL (HTTP)",
+      "command": "Command (stdio)",
+      "gateway": "MCP Gateway instance"
+    },
+    "gatewayUrl": {
+      "label": "Gateway instance URL",
+      "placeholder": "https://<gateway>/?instance=<instance id>",
+      "invalid": "Copy the URL from the gateway instance page in your workspace; it ends with ?instance=<id>",
+      "help": "From the gateway instance page in your workspace"
+    },
+    "command": {
+      "label": "Command",
+      "placeholder": "e.g. npx"
+    },
+    "args": {
+      "label": "Args (one per line)",
+      "help": "One argument per line (e.g. -y, package name, working directory)"
+    },
+    "env": {
+      "label": "Environment variables (one per line)",
+      "help": "KEY=VALUE per line. Use ENV_VAR_NAME as value to reference process env (e.g. MY_KEY=MY_KEY)",
+      "invalid_one": "Invalid env line: {{lines}}. Use KEY=VALUE format.",
+      "invalid_other": "Invalid env lines: {{lines}}. Use KEY=VALUE format."
+    },
+    "url": {
+      "label": "URL",
+      "helpHttp": "MCP server Streamable HTTP endpoint",
+      "helpSse": "MCP server SSE endpoint (e.g. /sse)",
+      "helpOpenapi": "OpenAPI spec URL"
+    },
+    "descriptionField": {
+      "label": "Description",
+      "placeholder": "Short description of what this tool provides"
+    },
+    "gateway": {
+      "legend": "Gateway access",
+      "runAs": {
+        "label": "Tool calls run as",
+        "user": "Signed-in user",
+        "service": "Service ID (instance API key)",
+        "helpUser": "Each tool call uses the signed-in user’s identity and role. Scheduled runs need a service ID.",
+        "helpService": "The API key's service ID, for every user and for scheduled runs. The gateway sees one identity."
+      },
+      "hintUser": "Connect with your sign-in, then choose the tools this agent can use. No tools are selected automatically.",
+      "hintService": "An API key created on the instance page, stored as a secret. It lists the instance's tools and makes the tool calls.",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "refresh": "Refresh tools",
+      "refreshing": "Refreshing tools…",
+      "connectFailed": "Connect failed",
+      "connectFailedStatus": "Connect failed ({{status}})",
+      "selectedSummary_one": "{{count}} tools selected. Connect to change the selection.",
+      "selectedSummary_other": "{{count}} tools selected. Connect to change the selection.",
+      "keyNotSaved": "The API key could not be saved as a secret ({{reason}}). Nothing was saved.",
+      "unknownError": "error"
+    },
+    "auth": {
+      "legend": "Authentication",
+      "type": "Auth type",
+      "key": "Header / query key"
+    },
+    "secret": {
+      "useSaved": "Use saved secret",
+      "loading": "Loading saved secrets…",
+      "label": "Secret",
+      "select": "Select a secret",
+      "createNew": "Create new secret",
+      "keyName": "Key name",
+      "keyNamePlaceholder": "e.g. my-tool-api-key",
+      "keyNameHelp": "Optional; leave empty to auto-generate",
+      "newValue": "New secret value",
+      "valuePlaceholder": "Secret value",
+      "saving": "Saving secret…",
+      "value": "Secret / token / value",
+      "keepExisting": "Leave empty to keep existing",
+      "saveAsNew": "Save as new secret",
+      "saveFailed": "Failed to save secret",
+      "saveFailedStatus": "Failed to save secret ({{status}})"
+    },
+    "submit": {
+      "savingGateway": "Saving gateway…",
+      "savingTool": "Saving tool…",
+      "addGateway": "Add gateway",
+      "addTool": "Add tool"
+    }
+  },
+  "gatewayPicker": {
+    "label": "Gateway tools",
+    "heading_one": "Select the tools this agent may use ({{count}} selected)",
+    "heading_other": "Select the tools this agent may use ({{count}} selected)",
+    "empty": "This instance has no tools yet."
+  },
+  "toolsList": {
+    "empty": "No tools configured yet.",
+    "gatewayBadge": "MCP Gateway",
+    "runAsUserTitle": "Tool calls run as each signed-in user",
+    "runAsServiceTitle": "Tool calls run as the instance API key's service ID",
+    "asUser": "as user",
+    "asService": "as service ID",
+    "builtIn": "Built-in",
+    "connected": "Connected",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "selectTools": "Select tools",
+    "openConsole": "Open gateway console",
+    "toolCount_one": "{{count}} tool",
+    "toolCount_other": "{{count}} tools",
+    "manageSecrets": "Manage secrets",
+    "addTool": "Add tool",
+    "gatewayButton": "MCP Gateway",
+    "showMore": "Show {{count}} more",
+    "showLess": "Show less"
+  },
+  "serverTools": {
+    "title": "Tools for {{name}}",
+    "willAdd": "Saving will add <strong>{{name}}</strong> to your configuration list above.",
+    "description": "Choose which tools of this server the agent may use.",
+    "selectAll": "Select all"
+  },
+  "secrets": {
+    "title": "Secrets Manager",
+    "description": "Environment variables and stored secrets that tools and models can reference. Values are never shown.",
+    "error": "Error",
+    "dismissError": "Dismiss error",
+    "forceEnvTitle": "force_env is enabled",
+    "forceEnvBody": "All secret resolution uses environment variables only.",
+    "loading": "Loading secrets…",
+    "retry": "Retry",
+    "tabsLabel": "Secrets tabs",
+    "tab": {
+      "env": "Environment",
+      "vault": "Vault",
+      "overrides": "Overrides"
+    },
+    "envIntro": "Environment variables detected at startup. Available as references in local mode.",
+    "envHiddenVault": "Environment variable list is not shown in vault mode.",
+    "envNone": "No known LLM environment variables detected.",
+    "add": {
+      "legend": "Add secret",
+      "id": "Name (id)",
+      "idPlaceholder": "e.g. my-openai-key",
+      "value": "Value",
+      "valuePlaceholder": "Secret value",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "Optional description"
+    },
+    "vaultSecrets": "Vault secrets",
+    "storedOverrides": "Stored overrides",
+    "empty": "No secrets stored yet.",
+    "copyRef": "Copy reference",
+    "deleting": "Deleting secret…",
+    "newValueFor": "New value for {{id}}",
+    "newValue": "New value",
+    "deleteTitle": "Delete secret",
+    "deleteConfirm": "Delete secret \"{{id}}\"?",
+    "errors": {
+      "loadSecrets": "Failed to load secrets ({{status}})",
+      "loadConfig": "Failed to load secrets configuration ({{status}})",
+      "load": "Failed to load",
+      "create": "Failed to create",
+      "delete": "Failed to delete",
+      "update": "Failed to update"
+    }
+  },
+  "sandbox": {
+    "title": "Code sandbox",
+    "loading": "Loading sandbox settings…",
+    "enabled": "Sandbox enabled",
+    "disabled": "Sandbox disabled",
+    "label": "Sandbox",
+    "descriptionRequired": "Required by the deployment (sandbox_mode = \"execd\"). Applies to all agents and users. Conversations are isolated by the sandbox, not by CUGA.",
+    "description": "Run generated code in a remote execd sandbox. Applies to this server process; other replicas pick it up when they restart. Applies to all agents and users. Conversations are isolated by the sandbox, not by CUGA.",
+    "unavailable": "Sandbox unavailable",
+    "testAgain": "Test again",
+    "checking": "Checking…",
+    "connected": "Connected"
+  },
+  "variables": {
+    "title": "Variables",
+    "collapse": "Collapse variables panel",
+    "selectTurn": "Select which conversation turn to view variables from",
+    "historyOption_one": "{{title}} - {{count}} variable ({{time}})",
+    "historyOption_other": "{{title}} - {{count}} variables ({{time}})",
+    "viewing": "Viewing: {{title}}",
+    "latestTurn": "Latest turn",
+    "turnsTotal_one": "{{count}} turns total",
+    "turnsTotal_other": "{{count}} turns total",
+    "emptyTurn": "No variables in current turn.",
+    "emptyTurnHint": "Select a previous turn from the dropdown above to view its variables.",
+    "items_one": "{{count}} items",
+    "items_other": "{{count}} items",
+    "showPanel": "Show variables panel ({{count}})",
+    "popup": {
+      "title": "Variable Details",
+      "download": "Download {{format}}",
+      "heading": "Variable: {{name}}",
+      "type": "Type",
+      "description": "Description",
+      "value": "Value"
+    }
+  }
+}

@@ -7,6 +7,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { Trans, useTranslation } from "react-i18next"
 import { CheckIcon, CircleAlertIcon, ExternalLinkIcon, RotateCcwIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,9 @@ export interface PresetGuide {
   label: string
   openedAt: number
 }
+
+/** A resettable settings section; its name is `settings.section.<id>` in the locale files. */
+export type ResetSection = "embeddings" | "chunking" | "documentParsing" | "limits"
 
 export const EMBEDDER_RESET_FIELDS = [
   "embedding_provider",
@@ -78,7 +82,7 @@ function serializeDraft(draft: string): string | null {
 export function SaveStatePill({
   saveState,
   recentlySaved,
-  slowText = "Still saving",
+  slowText,
   showFailed,
 }: {
   saveState: SaveState
@@ -86,12 +90,13 @@ export function SaveStatePill({
   slowText?: string
   showFailed?: boolean
 }) {
-  if (saveState === "saving") return <InlineLoading>Saving…</InlineLoading>
+  const { t } = useTranslation("knowledge")
+  if (saveState === "saving") return <InlineLoading>{t("common:state.saving")}</InlineLoading>
   // saving-slow: 25 s+ into the save with no response yet. Softer copy than a
   // failure: a perfectly healthy save over a slow network should not read as broken.
-  if (saveState === "saving-slow") return <InlineLoading>{slowText}</InlineLoading>
-  if (saveState === "saved" && recentlySaved) return <StatusBadge tone="ok">Saved</StatusBadge>
-  if (saveState === "failed" && showFailed) return <StatusBadge tone="warn">Couldn&apos;t save</StatusBadge>
+  if (saveState === "saving-slow") return <InlineLoading>{slowText ?? t("embedding.stillSaving")}</InlineLoading>
+  if (saveState === "saved" && recentlySaved) return <StatusBadge tone="ok">{t("shared.saved")}</StatusBadge>
+  if (saveState === "failed" && showFailed) return <StatusBadge tone="warn">{t("shared.couldntSave")}</StatusBadge>
   return null
 }
 
@@ -112,6 +117,7 @@ function ExtraParamsField({
   onHint: (hint: string | null) => void
   onChange: (params: KnowledgeExtraParams) => void
 }) {
+  const { t } = useTranslation("knowledge")
   const serialized = serializeExtraParams(params)
   const [draft, setDraft] = React.useState(serialized)
   const [lastSerialized, setLastSerialized] = React.useState(serialized)
@@ -124,7 +130,7 @@ function ExtraParamsField({
   return (
     <TextField
       id="knowledge-embedding-extra-params"
-      label="Advanced: Extra provider kwargs (optional, JSON dict)"
+      label={t("embedding.extraParams.label")}
       className="font-mono"
       value={draft}
       onChange={(e) => {
@@ -139,9 +145,7 @@ function ExtraParamsField({
           if (parsed) {
             const violations = RESERVED_EXTRA_KEYS.filter((k) => k in parsed)
             if (violations.length > 0) {
-              onHint(
-                `Don't put ${violations.join(", ")} here — those go in the named fields above. This box is for provider-specific extras (e.g. api_version for Azure).`
-              )
+              onHint(t("embedding.extraParams.reserved", { keys: violations.join(", ") }))
               return
             }
             onHint(null)
@@ -154,9 +158,9 @@ function ExtraParamsField({
       placeholder={
         model?.startsWith("azure/")
           ? '{"api_version":"2024-02-15","azure_deployment":"my-deployment"}'
-          : "leave empty for most providers"
+          : t("embedding.extraParams.placeholder")
       }
-      helperText="NOT for the model name — model has its own field above. Use this only for provider-specific extras (Azure: api_version. Bedrock: aws_region_name)."
+      helperText={t("embedding.extraParams.helper")}
       invalid={!!hint}
       invalidText={hint ?? undefined}
     />
@@ -214,8 +218,9 @@ export function EmbeddingSection({
   onReindexNow: () => void
   onPresetApplied?: () => void
   onToast?: KnowledgeToast
-  onResetRequest: (target: { section: string; fields: string[] }) => void
+  onResetRequest: (target: { section: ResetSection; fields: string[] }) => void
 }) {
+  const { t } = useTranslation("knowledge")
   const p = knowledgeConfig.embedding_provider ?? "auto"
   const spec = providerSpec(p)
   const modelRequired = !!spec.modelRequired
@@ -231,23 +236,30 @@ export function EmbeddingSection({
     // "Re-index now" button only exists once the connection test passes.
     const label = presetGuide.label
     const reindexActive = knowledgeReindexing || !!(reindexProgress && !reindexProgress.done)
-    const reach = `Reachable — ${testResult?.dim ?? "?"}-dim${
-      testResult?.latency_ms != null ? `, ${testResult.latency_ms} ms` : ""
-    }`
+    const reach =
+      testResult?.latency_ms != null
+        ? t("embedding.guide.reachableLatency", { dim: testResult?.dim ?? "?", ms: testResult.latency_ms })
+        : t("embedding.guide.reachable", { dim: testResult?.dim ?? "?" })
     const dismiss = () => onPresetGuideChange(null)
 
     // In flight: the per-file progress lives in the re-index block above; here
     // only an in-place acknowledgement, never a second progress UI.
-    if (reindexActive) return <InlineLoading>Re-indexing your documents…</InlineLoading>
-    if (testing) return <InlineLoading>{`Testing ${label} connection…`}</InlineLoading>
+    if (reindexActive) return <InlineLoading>{t("embedding.guide.reindexing")}</InlineLoading>
+    if (testing) return <InlineLoading>{t("embedding.guide.testing", { label })}</InlineLoading>
     if (testResult?.ok) {
       return knowledgeReindexNeeded ? (
-        <Notice kind="success" title={reach} onClose={dismiss} actionLabel="Re-index now" onAction={onReindexNow}>
-          Existing documents still use the old provider — re-index to switch them over.
+        <Notice
+          kind="success"
+          title={reach}
+          onClose={dismiss}
+          actionLabel={t("shared.reindexNow")}
+          onAction={onReindexNow}
+        >
+          {t("embedding.guide.stillOld")}
         </Notice>
       ) : (
         <Notice kind="success" title={reach} onClose={dismiss}>
-          Nothing to re-index yet — new uploads will use this provider.
+          {t("embedding.guide.nothingToReindex")}
         </Notice>
       )
     }
@@ -255,24 +267,26 @@ export function EmbeddingSection({
       return (
         <Notice
           kind="error"
-          title={`Couldn't reach ${label}`}
+          title={t("embedding.guide.unreachableTitle", { label })}
           onClose={dismiss}
-          actionLabel="Test again"
+          actionLabel={t("embedding.guide.testAgain")}
           onAction={onTestConnection}
         >
-          {`${testResult.error || "The embedder didn't respond."} Check credentials in your environment, then test again.`}
+          {t("embedding.guide.unreachableBody", { error: testResult.error || t("embedding.guide.noResponse") })}
         </Notice>
       )
     }
     return (
       <Notice
         kind="info"
-        title={`Verify ${label} before re-indexing`}
+        title={t("embedding.guide.verifyTitle", { label })}
         onClose={dismiss}
-        actionLabel="Test connection"
+        actionLabel={t("embedding.testConnection")}
         onAction={onTestConnection}
       >
-        {`${knowledgeConfig.embedding_provider}${knowledgeConfig.embedding_model ? ` · ${knowledgeConfig.embedding_model}` : ""} — test the embedder responds so you don't re-index against a broken connection.`}
+        {t("embedding.guide.verifyBody", {
+          embedder: `${knowledgeConfig.embedding_provider}${knowledgeConfig.embedding_model ? ` · ${knowledgeConfig.embedding_model}` : ""}`,
+        })}
       </Notice>
     )
   }
@@ -281,12 +295,14 @@ export function EmbeddingSection({
     <div className="flex flex-col gap-4 pt-2">
       <p className="text-[0.8125rem]">
         {knowledgeConfig.embedding_provider && knowledgeConfig.embedding_provider !== "auto" ? (
-          <>
-            Using <strong>{knowledgeConfig.embedding_provider}</strong>
-            {knowledgeConfig.embedding_model ? ` · ${knowledgeConfig.embedding_model}` : ""}
-          </>
+          <Trans
+            t={t}
+            i18nKey={knowledgeConfig.embedding_model ? "embedding.usingModel" : "embedding.using"}
+            values={{ provider: knowledgeConfig.embedding_provider, model: knowledgeConfig.embedding_model }}
+            components={{ strong: <strong /> }}
+          />
         ) : (
-          "Not set up yet — pick an embedder below."
+          t("embedding.notSetUp")
         )}
       </p>
 
@@ -307,8 +323,11 @@ export function EmbeddingSection({
             })
             onToast?.(
               "success",
-              `${preset.label} applied`,
-              `Provider set to ${preset.default_provider}; model set to ${preset.default_model}. The engine will read credentials from the environment.`
+              t("embedding.presetApplied.title", { label: preset.label }),
+              t("embedding.presetApplied.body", {
+                provider: preset.default_provider,
+                model: preset.default_model,
+              })
             )
             // Start the guided verify → re-index flow (one notification right
             // below the presets list).
@@ -332,18 +351,18 @@ export function EmbeddingSection({
       {saveState === "failed" && draftSaveStatus?.kind === "failed" && (
         <Notice
           kind="error"
-          title="Couldn't save your changes"
+          title={t("embedding.saveFailedTitle")}
           onClose={() => onDismissDraftSave?.()}
-          actionLabel="Retry"
+          actionLabel={t("shared.retry")}
           onAction={() => onRetryDraftSave?.()}
         >
-          {draftSaveStatus.error || "No detail returned."}
+          {draftSaveStatus.error || t("shared.noDetail")}
         </Notice>
       )}
 
       <SelectField
         id="knowledge-embedding-provider"
-        label="Provider"
+        label={t("embedding.provider.label")}
         value={p}
         onChange={(e) => {
           const newProvider = e.target.value
@@ -362,38 +381,36 @@ export function EmbeddingSection({
           })
         }}
       >
-        {!isKnown && <NativeSelectOption value={p}>{`${p} — custom provider`}</NativeSelectOption>}
-        <NativeSelectOption value="auto">Auto-detect — best available, chosen for you</NativeSelectOption>
-        <NativeSelectOptGroup label="On your machine">
-          <NativeSelectOption value="fastembed">FastEmbed — runs locally, no key</NativeSelectOption>
-          <NativeSelectOption value="ollama">Ollama — local Ollama server</NativeSelectOption>
-          <NativeSelectOption value="huggingface">HuggingFace — local, uses your GPU</NativeSelectOption>
+        {!isKnown && <NativeSelectOption value={p}>{t("embedding.provider.custom", { provider: p })}</NativeSelectOption>}
+        <NativeSelectOption value="auto">{t("embedding.provider.auto")}</NativeSelectOption>
+        <NativeSelectOptGroup label={t("embedding.provider.groupLocal")}>
+          <NativeSelectOption value="fastembed">{t("embedding.provider.fastembed")}</NativeSelectOption>
+          <NativeSelectOption value="ollama">{t("embedding.provider.ollama")}</NativeSelectOption>
+          <NativeSelectOption value="huggingface">{t("embedding.provider.huggingface")}</NativeSelectOption>
         </NativeSelectOptGroup>
-        <NativeSelectOptGroup label="Hosted API">
-          <NativeSelectOption value="openai">
-            OpenAI / compatible — OpenAI, Together, Fireworks, proxies
-          </NativeSelectOption>
-          <NativeSelectOption value="openrouter">OpenRouter — one key, many models</NativeSelectOption>
-          <NativeSelectOption value="litellm">LiteLLM — routes to many providers</NativeSelectOption>
+        <NativeSelectOptGroup label={t("embedding.provider.groupHosted")}>
+          <NativeSelectOption value="openai">{t("embedding.provider.openai")}</NativeSelectOption>
+          <NativeSelectOption value="openrouter">{t("embedding.provider.openrouter")}</NativeSelectOption>
+          <NativeSelectOption value="litellm">{t("embedding.provider.litellm")}</NativeSelectOption>
         </NativeSelectOptGroup>
       </SelectField>
 
       <TextField
         id="knowledge-embedding-model"
-        label="Model"
+        label={t("embedding.model.label")}
         value={knowledgeConfig.embedding_model ?? ""}
         onChange={(e) => onKnowledgeConfigChange({ ...knowledgeConfig, embedding_model: e.target.value })}
-        placeholder="e.g. openai/text-embedding-3-small"
+        placeholder={t("embedding.model.placeholder")}
         helperText={
           modelRequired
-            ? "Required — include the provider prefix (e.g. openai/text-embedding-3-small)."
+            ? t("embedding.model.helperRequired")
             : p === "ollama"
-              ? "Optional — defaults to nomic-embed-text."
-              : "Optional — auto-detected for this provider."
+              ? t("embedding.model.helperOllama")
+              : t("embedding.model.helperOptional")
         }
         required={modelRequired}
         invalid={modelMissing}
-        invalidText="Required for this provider — include the provider prefix."
+        invalidText={t("embedding.model.invalid")}
       />
 
       {spec.needsKey && (
@@ -401,40 +418,42 @@ export function EmbeddingSection({
           id="knowledge-embedding-api-key"
           type="password"
           autoComplete="off"
-          label={spec.keyRequired ? "API key" : "API key (optional)"}
+          label={spec.keyRequired ? t("embedding.apiKey.label") : t("embedding.apiKey.labelOptional")}
           value={knowledgeConfig.embedding_api_key ?? ""}
           onChange={(e) => onKnowledgeConfigChange({ ...knowledgeConfig, embedding_api_key: e.target.value })}
-          placeholder={spec.keyRequired ? "Paste OPENROUTER_API_KEY" : "Leave empty to use the provider's env var"}
+          placeholder={
+            spec.keyRequired ? t("embedding.apiKey.placeholderRequired") : t("embedding.apiKey.placeholderOptional")
+          }
           helperText={
             spec.keyRequired
-              ? "Required for OpenRouter."
-              : "Optional — falls back to the provider's environment variable."
+              ? t("embedding.apiKey.helperRequired")
+              : t("embedding.apiKey.helperOptional")
           }
           required={!!spec.keyRequired}
           invalid={!!spec.keyRequired && !(knowledgeConfig.embedding_api_key || "").trim()}
-          invalidText="API key is required for OpenRouter."
+          invalidText={t("embedding.apiKey.invalid")}
         />
       )}
 
       {spec.needsBaseUrl && (
         <TextField
           id="knowledge-embedding-base-url"
-          label="Base URL (optional)"
+          label={t("embedding.baseUrl.label")}
           value={knowledgeConfig.embedding_base_url ?? ""}
           onChange={(e) => onKnowledgeConfigChange({ ...knowledgeConfig, embedding_base_url: e.target.value })}
           placeholder={
             p === "openai"
-              ? "e.g. https://api.together.xyz/v1"
+              ? t("embedding.baseUrl.placeholderOpenai")
               : p === "ollama"
-                ? "e.g. http://localhost:11434"
-                : "e.g. http://localhost:4000"
+                ? t("embedding.baseUrl.placeholderOllama")
+                : t("embedding.baseUrl.placeholderLitellm")
           }
           helperText={
             p === "openai"
-              ? "Optional — leave empty for OpenAI direct; append /v1 for most proxies."
+              ? t("embedding.baseUrl.helperOpenai")
               : p === "ollama"
-                ? "Optional — defaults to http://localhost:11434."
-                : "Optional — for a self-hosted LiteLLM proxy."
+                ? t("embedding.baseUrl.helperOllama")
+                : t("embedding.baseUrl.helperLitellm")
           }
           invalid={!!baseUrlError}
           invalidText={baseUrlError ?? undefined}
@@ -452,7 +471,7 @@ export function EmbeddingSection({
           rel="noopener noreferrer"
           className="inline-flex w-fit items-center gap-1 text-sm text-link underline"
         >
-          {p === "openrouter" ? "Browse OpenRouter embedding models" : "Supported LiteLLM models"}
+          {p === "openrouter" ? t("embedding.links.openrouter") : t("embedding.links.litellm")}
           <ExternalLinkIcon className="size-3.5" aria-hidden="true" />
         </a>
       )}
@@ -467,12 +486,12 @@ export function EmbeddingSection({
           onClick={onTestConnection}
         >
           {testing && <Spinner data-icon="inline-start" aria-hidden="true" />}
-          {testing ? "Testing…" : "Test connection"}
+          {testing ? t("embedding.testing") : t("embedding.testConnection")}
         </Button>
 
         {/* The failed state is not repeated here: Retry lives once, in the
             notification above. */}
-        <SaveStatePill saveState={saveState} recentlySaved={recentlySaved} slowText="Still saving — network is slow" />
+        <SaveStatePill saveState={saveState} recentlySaved={recentlySaved} slowText={t("embedding.stillSavingSlow")} />
 
         {/* Key-source chip: only while no test result is up (the test result
             is more informative when available). */}
@@ -481,13 +500,13 @@ export function EmbeddingSection({
             tone={
               accel.key_source.source === "missing" ? "warn" : accel.key_source.source === "ui" ? "ok" : "active"
             }
-            title="Where the embedding API key is being read from."
+            title={t("embedding.keySource.title")}
           >
             {accel.key_source.source === "ui"
-              ? "Key: from UI"
+              ? t("embedding.keySource.ui")
               : accel.key_source.source === "missing"
-                ? "Key: missing"
-                : `Key: ${accel.key_source.source}`}
+                ? t("embedding.keySource.missing")
+                : t("embedding.keySource.other", { source: accel.key_source.source })}
           </StatusBadge>
         )}
       </div>
@@ -498,15 +517,22 @@ export function EmbeddingSection({
         <Notice
           kind={testResult.ok ? "success" : "error"}
           onClose={onClearTestResult}
-          title={testResult.ok ? `Connected — dim=${testResult.dim}, ${testResult.latency_ms} ms` : "Test failed"}
+          title={
+            testResult.ok
+              ? t("embedding.testResult.connected", {
+                  dim: String(testResult.dim),
+                  ms: String(testResult.latency_ms),
+                })
+              : t("embedding.testResult.failed")
+          }
         >
           {testResult.ok
-            ? "You can now upload documents on the Documents tab."
-            : testResult.error || "No detail returned."}
+            ? t("embedding.testResult.okBody")
+            : testResult.error || t("shared.noDetail")}
         </Notice>
       )}
 
-      <h5 className="mt-1 text-[0.8125rem] font-semibold text-muted-foreground">Throughput &amp; hardware</h5>
+      <h5 className="mt-1 text-[0.8125rem] font-semibold text-muted-foreground">{t("embedding.hardware.heading")}</h5>
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <Switch
@@ -514,8 +540,8 @@ export function EmbeddingSection({
             checked={knowledgeConfig.use_gpu ?? true}
             onCheckedChange={(checked) => onKnowledgeConfigChange({ ...knowledgeConfig, use_gpu: checked })}
           />
-          <Label htmlFor="knowledge-use-gpu">GPU Acceleration</Label>
-          <span className="text-xs text-muted-foreground">{(knowledgeConfig.use_gpu ?? true) ? "On" : "Off"}</span>
+          <Label htmlFor="knowledge-use-gpu">{t("embedding.hardware.gpu")}</Label>
+          <span className="text-xs text-muted-foreground">{(knowledgeConfig.use_gpu ?? true) ? t("shared.on") : t("shared.off")}</span>
           {/* Honest device label: OK when the GPU is engaged, warning when the
               GPU was requested but only the CPU loaded, neutral when not
               relevant (cloud provider). */}
@@ -531,9 +557,11 @@ export function EmbeddingSection({
                   false
                 )
               }
-              title="What the running engine actually loaded for embedding inference."
+              title={t("embedding.hardware.deviceTitle")}
             >
-              {accel.fallback_to_cpu ? "GPU fallback to CPU" : `Detected: ${accel.device_label}`}
+              {accel.fallback_to_cpu
+                ? t("embedding.hardware.fallback")
+                : t("embedding.hardware.detected", { device: accel.device_label })}
             </StatusBadge>
           )}
         </div>
@@ -551,33 +579,33 @@ export function EmbeddingSection({
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField
             id="knowledge-embedding-batch-size"
-            label="Batch Size"
+            label={t("embedding.batchSize.label")}
             value={knowledgeConfig.embedding_batch_size ?? 64}
             min={1}
             max={2048}
             step={16}
-            helperText="Chunks per embed call. Smaller = finer progress; larger = lower per-call overhead."
+            helperText={t("embedding.batchSize.helper")}
             onChange={(value) => onKnowledgeConfigChange({ ...knowledgeConfig, embedding_batch_size: value })}
           />
           <NumberField
             id="knowledge-embedding-concurrency"
-            label="Concurrency"
+            label={t("embedding.concurrency.label")}
             value={knowledgeConfig.embedding_concurrency ?? 4}
             min={1}
             max={32}
             step={1}
-            helperText="Parallel embed sub-batches for network providers (OpenAI / Ollama). No effect on local providers."
+            helperText={t("embedding.concurrency.helper")}
             onChange={(value) => onKnowledgeConfigChange({ ...knowledgeConfig, embedding_concurrency: value })}
           />
         </div>
         <NumberField
           id="knowledge-vector-insert-batch-size"
-          label="Vector Insert Batch Size"
+          label={t("embedding.vectorInsert.label")}
           value={knowledgeConfig.vector_insert_batch_size ?? 200}
           min={1}
           max={5000}
           step={50}
-          helperText="Chunks per add_many transaction. Caps each transaction so a large document does not blow past pgvector's command_timeout or hold the HNSW write lock for long. Default 200 works for typical docs."
+          helperText={t("embedding.vectorInsert.helper")}
           onChange={(value) => onKnowledgeConfigChange({ ...knowledgeConfig, vector_insert_batch_size: value })}
         />
 
@@ -587,10 +615,10 @@ export function EmbeddingSection({
             variant="ghost"
             size="sm"
             className="-ml-2.5"
-            onClick={() => onResetRequest({ section: "Embeddings", fields: EMBEDDER_RESET_FIELDS })}
+            onClick={() => onResetRequest({ section: "embeddings", fields: EMBEDDER_RESET_FIELDS })}
           >
             <RotateCcwIcon data-icon="inline-start" />
-            Reset Embedder to defaults
+            {t("embedding.reset")}
           </Button>
         </div>
       </div>

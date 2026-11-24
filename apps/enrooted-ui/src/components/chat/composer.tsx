@@ -8,6 +8,7 @@
  *  - translucent highlight pills behind known /commands
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { ArrowUpIcon, FileTextIcon, PaperclipIcon, RotateCwIcon, SquareIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 
 import {
@@ -89,6 +90,7 @@ function ComposerAttachments({
   onOpenKnowledge?: () => void
   scope: "session" | "agent"
 }) {
+  const { t } = useTranslation("chat")
   if (items.length === 0) return null
   return (
     <InputGroupAddon align="block-start" className="flex-wrap border-b">
@@ -124,12 +126,12 @@ function ComposerAttachments({
               </AttachmentContent>
               <AttachmentActions>
                 {item.kind === "upload" && item.status === "error" && (
-                  <AttachmentAction aria-label={`Retry upload ${item.displayName}`} onClick={() => onRetryUpload(item.id)}>
+                  <AttachmentAction aria-label={t("composer.retryUpload", { name: item.displayName })} onClick={() => onRetryUpload(item.id)}>
                     <RotateCwIcon />
                   </AttachmentAction>
                 )}
                 <AttachmentAction
-                  aria-label={`${item.kind === "document" ? "Remove file" : "Dismiss"} ${item.displayName}`}
+                  aria-label={t(item.kind === "document" ? "composer.removeFile" : "composer.dismiss", { name: item.displayName })}
                   disabled={item.status === "deleting"}
                   onClick={() =>
                     item.kind === "document" && item.knowledgeFilename
@@ -145,7 +147,7 @@ function ComposerAttachments({
         })}
       </AttachmentGroup>
       {onOpenKnowledge && (
-        <InputGroupButton onClick={onOpenKnowledge}>Manage</InputGroupButton>
+        <InputGroupButton onClick={onOpenKnowledge}>{t("composer.manage")}</InputGroupButton>
       )}
     </InputGroupAddon>
   )
@@ -159,6 +161,7 @@ export function Composer({
   commands,
   commandsLoading,
   commandsError,
+  onCommandsOpen,
   attachmentItems,
   attachmentsEnabled,
   attachmentScope,
@@ -168,7 +171,7 @@ export function Composer({
   onDismissUpload,
   onPreviewAttachment,
   onOpenKnowledge,
-  placeholder = "Type something...",
+  placeholder,
 }: {
   disabled: boolean
   isStreaming: boolean
@@ -177,6 +180,8 @@ export function Composer({
   commands: SlashCommandInfo[]
   commandsLoading: boolean
   commandsError: string | null
+  /** The slash dropdown opened: the list may be stale. */
+  onCommandsOpen?: () => void
   attachmentItems: SessionAttachmentItem[]
   attachmentsEnabled: boolean
   attachmentScope: "session" | "agent"
@@ -188,6 +193,7 @@ export function Composer({
   onOpenKnowledge?: () => void
   placeholder?: string
 }) {
+  const { t } = useTranslation("chat")
   const [value, setValue] = React.useState("")
   const [caret, setCaret] = React.useState(0)
   const [highlight, setHighlight] = React.useState(0)
@@ -200,6 +206,11 @@ export function Composer({
   const token = findSlashTokenAtCaret(value, caret)
   const isDismissed = !!token && dismissed?.value === value && dismissed.tokenStart === token.start
   const open = !!token && !isDismissed && !disabled
+  const onCommandsOpenRef = React.useRef(onCommandsOpen)
+  onCommandsOpenRef.current = onCommandsOpen
+  React.useEffect(() => {
+    if (open) onCommandsOpenRef.current?.()
+  }, [open])
   const filtered = React.useMemo(() => {
     if (!token) return []
     const q = token.queryToCaret.toLowerCase()
@@ -297,13 +308,13 @@ export function Composer({
         <div
           role="listbox"
           id="cuga-slash-options"
-          aria-label="Slash commands"
+          aria-label={t("composer.slashCommands")}
           className="glass-card absolute inset-x-0 bottom-full z-20 mb-2 max-h-80 overflow-y-auto rounded-lg border p-1 text-popover-foreground shadow-md"
           onMouseDown={(e) => e.preventDefault()}
         >
           {commandsLoading ? (
             <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
-              <Spinner /> Loading commands…
+              <Spinner /> {t("composer.loadingCommands")}
             </div>
           ) : commandsError ? (
             <div className="flex items-center gap-1.5 p-2 text-sm text-warn-text">
@@ -311,7 +322,7 @@ export function Composer({
               {commandsError}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-2 text-sm text-muted-foreground">No matching commands</div>
+            <div className="p-2 text-sm text-muted-foreground">{t("composer.noMatchingCommands")}</div>
           ) : (
             <ItemGroup>
               {filtered.map((command, index) => (
@@ -331,7 +342,7 @@ export function Composer({
                       {command.argument_hint && (
                         <span className="font-mono text-xs text-muted-foreground">{command.argument_hint}</span>
                       )}
-                      <Badge variant="outline">skill</Badge>
+                      <Badge variant="outline">{t("composer.skill")}</Badge>
                     </ItemTitle>
                     {command.description && <ItemDescription>{command.description}</ItemDescription>}
                   </ItemContent>
@@ -383,8 +394,8 @@ export function Composer({
             rows={1}
             value={value}
             disabled={disabled}
-            placeholder={placeholder}
-            aria-label="Message"
+            placeholder={placeholder ?? t("composer.placeholder")}
+            aria-label={t("composer.message")}
             aria-autocomplete="list"
             aria-controls={open ? "cuga-slash-options" : undefined}
             aria-activedescendant={open && match ? `cuga-slash-option-${match.name}` : undefined}
@@ -409,20 +420,20 @@ export function Composer({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <InputGroupButton size="icon-sm" aria-label="Attach files" disabled={disabled} onClick={() => fileInputRef.current?.click()} />
+                    <InputGroupButton size="icon-sm" aria-label={t("composer.attachFiles")} disabled={disabled} onClick={() => fileInputRef.current?.click()} />
                   }
                 >
                   <PaperclipIcon />
                 </TooltipTrigger>
-                <TooltipContent>Attach files</TooltipContent>
+                <TooltipContent>{t("composer.attachFiles")}</TooltipContent>
               </Tooltip>
             )}
             <span className="hidden pl-1 text-xs font-normal text-muted-foreground sm:inline">
-              Enter to send · Shift+Enter for a new line{commands.length > 0 ? " · / for commands" : ""}
+              {commands.length > 0 ? t("composer.hintWithCommands") : t("composer.hint")}
             </span>
           </div>
           {isStreaming ? (
-            <InputGroupButton variant="default" size="icon-sm" className="size-8 rounded-full" aria-label="Stop response" onClick={onStop}>
+            <InputGroupButton variant="default" size="icon-sm" className="size-8 rounded-full" aria-label={t("composer.stop")} onClick={onStop}>
               <SquareIcon className="fill-current" />
             </InputGroupButton>
           ) : (
@@ -430,7 +441,7 @@ export function Composer({
               variant="default"
               size="icon-sm"
               className="size-8 rounded-full"
-              aria-label="Send message"
+              aria-label={t("composer.send")}
               disabled={disabled || !value.trim()}
               onClick={submit}
             >

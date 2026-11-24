@@ -1,5 +1,6 @@
 // Ported from cuga-agent/src/frontend_workspaces/frontend/src/manage/hooks/useLlmDraftSave.ts (Copyright IBM Corp., Apache-2.0). Logic unchanged.
 import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
+import i18n from "@/i18n";
 import * as api from "@/lib/manage/api";
 import { isAbortError, type AddToast } from "./saveHelpers";
 
@@ -32,14 +33,14 @@ export function useLlmDraftSave(opts: {
       setDraftSaving(false);
       if (res.ok) {
         setCurrentVersion("draft");
-        addToast("success", "Draft saved", "LLM settings saved to draft");
+        addToast("success", i18n.t("manage:draft.savedTitle"), i18n.t("manage:draft.llmSaved"));
       } else {
-        addToast("error", "Draft Save Failed", `Failed to save LLM (${res.status} ${res.statusText})`);
+        addToast("error", i18n.t("manage:draft.saveFailedTitle"), i18n.t("manage:draft.llmFailed", { status: res.status, statusText: res.statusText }));
       }
     } catch (error) {
       if (isAbortError(error)) return;
       setDraftSaving(false);
-      addToast("error", "Draft Save Failed", error instanceof Error ? error.message : "Network error");
+      addToast("error", i18n.t("manage:draft.saveFailedTitle"), error instanceof Error ? error.message : i18n.t("manage:generic.networkError"));
     }
   }, [addToast, effectiveAgentId, llmConfigRef, setCurrentVersion, setDraftSaving]);
 

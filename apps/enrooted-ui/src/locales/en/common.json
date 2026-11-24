@@ -1,0 +1,100 @@
+{
+  "action": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "closePanel": "Close panel",
+    "save": "Save",
+    "delete": "Delete",
+    "remove": "Remove",
+    "edit": "Edit",
+    "add": "Add",
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "copy": "Copy",
+    "copied": "Copied",
+    "back": "Back",
+    "continue": "Continue",
+    "confirm": "Confirm",
+    "search": "Search"
+  },
+  "state": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "app": {
+    "loading": "Loading {{brand}}…",
+    "loadingStudio": "Loading Studio…",
+    "notAuthorized": "Not authorized",
+    "notAuthorizedBody": "Your account can't manage agents.",
+    "backToChat": "Back to chat"
+  },
+  "account": {
+    "menu": "Account",
+    "guest": "Guest",
+    "authOff": "Sign-in is turned off on this server",
+    "signedInAs": "Signed in as",
+    "language": "Language",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedOutTitle": "You are signed out",
+    "signedOutBody": "Sign in to continue.",
+    "signInFailedTitle": "Sign-in failed",
+    "signInFailedBody": "We couldn't sign you in. Try again, or contact your administrator if it keeps happening."
+  },
+  "nav": {
+    "agent": "Agent: {{name}}",
+    "switchAgent": "Switch agent",
+    "supervisor": "Supervisor",
+    "newConversation": "New conversation",
+    "openConversations": "Open conversations",
+    "closeConversations": "Close conversations",
+    "chat": "Chat",
+    "agents": "Agents",
+    "studio": "Studio",
+    "memory": "Memory",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "search": "Search conversations",
+    "loading": "Loading conversations…",
+    "empty": "No conversations yet.",
+    "emptyHint": "Start a new chat to begin.",
+    "noMatch": "No conversations match “{{query}}”.",
+    "untitled": "Untitled conversation",
+    "count_one": "{{count}} conversation",
+    "count_other": "{{count}} conversations",
+    "removeAll": "Remove all",
+    "removeAllTooltip": "Remove all conversations",
+    "group": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Previous 7 days",
+      "older": "Older"
+    }
+  },
+  "time": {
+    "justNow": "Just now",
+    "secondsAgo": "{{count}}s ago",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "now": "now",
+    "minutes": "{{count}}m",
+    "hours": "{{count}}h",
+    "days": "{{count}}d"
+  },
+  "ui": {
+    "breadcrumb": "breadcrumb",
+    "more": "More",
+    "loading": "Loading",
+    "scrollToEnd": "Scroll to end",
+    "scrollToStart": "Scroll to start"
+  }
+}

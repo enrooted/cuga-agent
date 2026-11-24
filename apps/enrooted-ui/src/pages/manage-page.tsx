@@ -9,6 +9,7 @@
    ported logic kept verbatim so it stays comparable with upstream */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   ArrowLeftIcon,
@@ -44,6 +45,7 @@ import { ChatView } from "@/components/chat/chat-view";
 import { Markdown } from "@/components/markdown";
 import { CheckField, Hint, Notice, NumberField, Section, TextAreaField, TextField } from "@/components/manage/form";
 import { ManageShell } from "@/components/manage/manage-shell";
+import i18n from "@/i18n";
 import { PoliciesConfig } from "@/components/manage/policies/policies-config";
 import { KnowledgePanel } from "@/components/manage/knowledge/knowledge-config";
 import { ToolsConfig, type ConnectedApp, type ConnectedTool } from "@/components/manage/tools/tools-config";
@@ -288,12 +290,13 @@ const DEFAULT_CONFIG: AgentConfig = {
 
 const TEXT_EXTENSIONS = [".txt", ".md", ".json", ".csv", ".html", ".xml", ".yaml", ".yml", ".py"];
 
-const POLICY_TYPE_LABELS: Record<string, string> = {
-  intent_guard: "Intent guards",
-  playbook: "Playbooks",
-  tool_guide: "Tool guides",
-  tool_approval: "Tool approval",
-  output_formatter: "Output formatters",
+// Translation keys (namespace "manage"); translated where the badge is rendered.
+const POLICY_TYPE_LABEL_KEYS: Record<string, string> = {
+  intent_guard: "policies.type.intent_guard",
+  playbook: "policies.type.playbook",
+  tool_guide: "policies.type.tool_guide",
+  tool_approval: "policies.type.tool_approval",
+  output_formatter: "policies.type.output_formatter",
 };
 
 function policiesSummary(policies: unknown[]): { total: number; byType: Record<string, number> } {
@@ -333,6 +336,7 @@ function AddA2AAgentDialog({
   onClose: () => void;
   onAdd: (entry: Extract<SubAgentRef, { kind: "a2a" }>) => void;
 }) {
+  const { t } = useTranslation("manage");
   const [name, setName] = useState("");
   const [endpoint, setEndpoint] = useState("");
   const [tokenEnvVar, setTokenEnvVar] = useState("");
@@ -344,25 +348,25 @@ function AddA2AAgentDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add A2A agent</DialogTitle>
-          <DialogDescription className="sr-only">An external agent reached over the A2A protocol</DialogDescription>
+          <DialogTitle>{t("a2a.title")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("a2a.description")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <TextField id="a2a-name" label="Name" helper="Identifier for the A2A agent" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. research-agent" />
-          <TextField id="a2a-endpoint" label="Endpoint URL" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="e.g. http://localhost:8080" />
+          <TextField id="a2a-name" label={t("generic.name")} helper={t("a2a.nameHelper")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("a2a.namePlaceholder")} />
+          <TextField id="a2a-endpoint" label={t("a2a.endpoint")} value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder={t("a2a.endpointPlaceholder")} />
           <TextField
             id="a2a-token-env-var"
-            label="Auth token env var (optional)"
-            helper="Name of an environment variable holding a bearer token — not the token itself"
+            label={t("a2a.tokenEnvVar")}
+            helper={t("a2a.tokenEnvVarHelper")}
             value={tokenEnvVar}
             onChange={(e) => setTokenEnvVar(e.target.value)}
-            placeholder="e.g. RESEARCH_AGENT_TOKEN"
+            placeholder={t("a2a.tokenEnvVarPlaceholder")}
           />
-          <NumberField id="a2a-timeout" label="Timeout (seconds)" value={timeout} min={1} onValue={(v) => setTimeoutVal(Number(v) || 30)} />
+          <NumberField id="a2a-timeout" label={t("a2a.timeout")} value={timeout} min={1} onValue={(v) => setTimeoutVal(Number(v) || 30)} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("common:action.cancel")}
           </Button>
           <Button
             disabled={!canAdd}
@@ -376,7 +380,7 @@ function AddA2AAgentDialog({
               })
             }
           >
-            Add
+            {t("common:action.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -387,6 +391,7 @@ function AddA2AAgentDialog({
 export function ManagePage() {
   const { agentId } = useParams<{ agentId: string }>();
   const effectiveAgentId = agentId ?? "cuga-default";
+  const { t } = useTranslation("manage");
   const [llmConfig, setLlmConfig] = useState<NonNullable<AgentConfig["llm"]>>(DEFAULT_CONFIG.llm!);
   const [llmExtraParamsDraft, setLlmExtraParamsDraft] = useState<string | null>(null);
   const [llmExtraParamsError, setLlmExtraParamsError] = useState<string | null>(null);
@@ -571,7 +576,7 @@ export function ManagePage() {
     setManageVariablesHistory(
       (history ?? []).map((h: any) => ({
         id: h.id ?? String(h.timestamp ?? Math.random()),
-        title: h.title ?? "Turn",
+        title: h.title ?? i18n.t("manage:variables.turn"),
         timestamp: h.timestamp ?? 0,
         variables: h.variables ?? {},
       }))
@@ -625,7 +630,7 @@ export function ManagePage() {
         attachment.knowledge_filename,
       );
       if (!response.ok) {
-        addToast("error", "Preview unavailable", response.statusText || "Failed to load attachment.");
+        addToast("error", i18n.t("manage:knowledge.previewUnavailable"), response.statusText || i18n.t("manage:knowledge.previewLoadFailed"));
         return;
       }
 
@@ -660,7 +665,7 @@ export function ManagePage() {
       anchor.click();
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      addToast("error", "Preview unavailable", error instanceof Error ? error.message : "Unknown error");
+      addToast("error", i18n.t("manage:knowledge.previewUnavailable"), error instanceof Error ? error.message : i18n.t("manage:generic.unknownError"));
     }
   }, [addToast]);
 
@@ -680,12 +685,12 @@ export function ManagePage() {
 
       // Check for HTTP errors
       if (!draftRes.ok && draftRes.status >= 400) {
-        const errorMsg = `Failed to load draft config (${draftRes.status} ${draftRes.statusText})`;
-        addToast("error", "Load Error", errorMsg);
+        const errorMsg = i18n.t("manage:load.draftFailed", { status: draftRes.status, statusText: draftRes.statusText });
+        addToast("error", i18n.t("manage:load.errorTitle"), errorMsg);
       }
       if (!toolsListRes.ok && toolsListRes.status >= 400) {
-        const errorMsg = `Failed to load tools list (${toolsListRes.status} ${toolsListRes.statusText})`;
-        addToast("warning", "Load Warning", errorMsg);
+        const errorMsg = i18n.t("manage:load.toolsFailed", { status: toolsListRes.status, statusText: toolsListRes.statusText });
+        addToast("warning", i18n.t("manage:load.warningTitle"), errorMsg);
       }
 
       const out = { ...DEFAULT_CONFIG };
@@ -784,8 +789,8 @@ export function ManagePage() {
           }
           version = typeof data.version === "number" ? data.version : null;
         } else if (publishedRes.status >= 400) {
-          const errorMsg = `Failed to load published config (${publishedRes.status} ${publishedRes.statusText})`;
-          addToast("error", "Load Error", errorMsg);
+          const errorMsg = i18n.t("manage:load.publishedFailed", { status: publishedRes.status, statusText: publishedRes.statusText });
+          addToast("error", i18n.t("manage:load.errorTitle"), errorMsg);
         }
       }
       if (isStale()) return;
@@ -794,9 +799,9 @@ export function ManagePage() {
         if (isStale()) return;
         setConnectedApps(toolsData.apps ?? []);
         setConnectedTools(
-          (toolsData.tools ?? []).map((t: ConnectedTool & { id?: string }) => ({
-            ...t,
-            id: t.id ?? t.name,
+          (toolsData.tools ?? []).map((tool: ConnectedTool & { id?: string }) => ({
+            ...tool,
+            id: tool.id ?? tool.name,
           }))
         );
       } else {
@@ -835,9 +840,9 @@ export function ManagePage() {
       }, 0);
     } catch (e) {
       if (isStale()) return;
-      const errorMsg = e instanceof Error ? e.message : "Failed to load config";
+      const errorMsg = e instanceof Error ? e.message : i18n.t("manage:load.failed");
       setLoadError(errorMsg);
-      addToast("error", "Load Error", errorMsg);
+      addToast("error", i18n.t("manage:load.errorTitle"), errorMsg);
       skipDraftSaveRef.current = false;
     } finally {
       if (!isStale()) setConfigLoading(false);
@@ -1140,13 +1145,13 @@ export function ManagePage() {
         if (res.ok) {
           setCurrentVersion("draft");
         } else {
-          addToast("error", "Draft Save Failed", `Failed to save sub-agents (${res.status} ${res.statusText})`);
+          addToast("error", i18n.t("manage:draft.saveFailedTitle"), i18n.t("manage:draft.subagentsFailed", { status: res.status, statusText: res.statusText }));
         }
       } catch (error) {
         if (isAbortError(error) || agentId !== effectiveAgentIdRef.current) return;
         if (ac !== supervisorAbortRef.current) return;
         setDraftSaving(false);
-        addToast("error", "Draft Save Failed", error instanceof Error ? error.message : "Network error");
+        addToast("error", i18n.t("manage:draft.saveFailedTitle"), error instanceof Error ? error.message : i18n.t("manage:generic.networkError"));
       }
     },
     [addToast, effectiveAgentId]
@@ -1257,16 +1262,16 @@ export function ManagePage() {
         setKnowledgeConfig(next.knowledge ? { ...DEFAULT_KNOWLEDGE_CONFIG, ...next.knowledge } : { ...DEFAULT_KNOWLEDGE_CONFIG });
         setKnowledgeSavedSnapshot(next.knowledge ?? null);
         setCurrentVersion(version);
-        addToast("success", "Version Loaded", `Loaded version ${version}`);
+        addToast("success", i18n.t("manage:history.loadedTitle"), i18n.t("manage:history.loadedBody", { version }));
       } else {
-        const errorMsg = `Failed to load version ${version} (${res.status} ${res.statusText})`;
-        addToast("error", "Load Error", errorMsg);
+        const errorMsg = i18n.t("manage:history.loadFailedStatus", { version, status: res.status, statusText: res.statusText });
+        addToast("error", i18n.t("manage:load.errorTitle"), errorMsg);
         setSaveStatus("error");
         setTimeout(() => setSaveStatus("idle"), 2000);
       }
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : `Failed to load version ${version}`;
-      addToast("error", "Load Error", errorMsg);
+      const errorMsg = e instanceof Error ? e.message : i18n.t("manage:history.loadFailed", { version });
+      addToast("error", i18n.t("manage:load.errorTitle"), errorMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
@@ -1397,10 +1402,10 @@ export function ManagePage() {
           setImportError(null);
           setTimeout(() => setImportStatus("idle"), 2500);
         } catch {
-          const msg = "Invalid JSON";
+          const msg = i18n.t("manage:generic.invalidJson");
           setImportStatus("error");
           setImportError(msg);
-          addToast("error", "Import failed", msg);
+          addToast("error", i18n.t("manage:saveBar.importFailed"), msg);
           setTimeout(() => {
             setImportStatus("idle");
             setImportError(null);
@@ -1408,10 +1413,10 @@ export function ManagePage() {
         }
       };
       reader.onerror = () => {
-        const msg = "Failed to read file";
+        const msg = i18n.t("manage:saveBar.readFailed");
         setImportStatus("error");
         setImportError(msg);
-        addToast("error", "Import failed", msg);
+        addToast("error", i18n.t("manage:saveBar.importFailed"), msg);
         setTimeout(() => {
           setImportStatus("idle");
           setImportError(null);
@@ -1440,8 +1445,8 @@ export function ManagePage() {
   const [pane, setPane] = useState<"config" | "chat">("config");
   const [draftThreadId, setDraftThreadId] = useState(() => uuid());
   void handleManageVariablesUpdate; // upstream keeps this handler but its chat never calls it
-  const displayName = configLoading ? "Agent configuration" : agentName || effectiveAgentId;
-  const secretLabel = llm.auth_type === "auth_header" ? "Header value" : "API Key";
+  const displayName = configLoading ? t("header.loadingName") : agentName || effectiveAgentId;
+  const secretLabel = llm.auth_type === "auth_header" ? t("llm.headerValue") : t("llm.apiKey");
   const iconButton = (label: string, icon: React.ReactNode, onClick: () => void) => (
     <Tooltip>
       <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label={label} className="text-muted-foreground" onClick={onClick} />}>
@@ -1458,15 +1463,15 @@ export function ManagePage() {
       agentContext={agentContext ?? undefined}
       titleStart={
         <Tooltip>
-          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Back to agents" className="text-muted-foreground" render={<Link to="/manage" />} />}>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label={t("header.back")} className="text-muted-foreground" render={<Link to="/manage" />} />}>
             <ArrowLeftIcon />
           </TooltipTrigger>
-          <TooltipContent>Back to agents</TooltipContent>
+          <TooltipContent>{t("header.back")}</TooltipContent>
         </Tooltip>
       }
       title={
         <>
-          <span className="hidden text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase sm:inline">Configuration</span>
+          <span className="hidden text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase sm:inline">{t("header.eyebrow")}</span>
           <h1 className="truncate text-sm font-medium">{displayName}</h1>
         </>
       }
@@ -1474,18 +1479,18 @@ export function ManagePage() {
         <>
           <Tabs value={pane} onValueChange={(v) => setPane(v as "config" | "chat")} className="lg:hidden">
             <TabsList>
-              <TabsTrigger value="config">Configure</TabsTrigger>
-              <TabsTrigger value="chat">Try it</TabsTrigger>
+              <TabsTrigger value="config">{t("header.tabConfigure")}</TabsTrigger>
+              <TabsTrigger value="chat">{t("header.tabTry")}</TabsTrigger>
             </TabsList>
           </Tabs>
-          {iconButton("Manage secrets", <KeyRoundIcon />, () => setSecretsModalOpen(true))}
+          {iconButton(t("header.manageSecrets"), <KeyRoundIcon />, () => setSecretsModalOpen(true))}
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Open in chat"
+                  aria-label={t("header.openInChat")}
                   className="text-muted-foreground"
                   render={<Link to={effectiveAgentId === "cuga-default" ? "/chat" : `/chat/${encodeURIComponent(effectiveAgentId)}`} />}
                 />
@@ -1493,7 +1498,7 @@ export function ManagePage() {
             >
               <MessageSquareIcon />
             </TooltipTrigger>
-            <TooltipContent>Open the published agent in chat</TooltipContent>
+            <TooltipContent>{t("header.openInChatTooltip")}</TooltipContent>
           </Tooltip>
         </>
       }
@@ -1503,78 +1508,72 @@ export function ManagePage() {
         <div className={cn("min-h-0 w-full flex-col border-r lg:flex lg:w-[34rem] lg:shrink-0", pane === "config" ? "flex" : "hidden")}>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {configLoading ? (
-              <div className="flex flex-col gap-3 p-4" aria-label="Loading agent configuration…">
+              <div className="flex flex-col gap-3 p-4" aria-label={t("load.loadingConfig")}>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Skeleton key={i} className="h-10" />
                 ))}
               </div>
             ) : loadError ? (
               <div className="flex flex-col items-start gap-3 p-4">
-                <Notice kind="error" title="Load Error">
+                <Notice kind="error" title={t("load.errorTitle")}>
                   {loadError}
                 </Notice>
                 <Button variant="outline" size="sm" onClick={() => void loadLatest()}>
                   <RotateCcwIcon data-icon="inline-start" />
-                  Retry
+                  {t("load.retry")}
                 </Button>
               </div>
             ) : (
               <Accordion multiple defaultValue={["agent", "subagents", "llm", "tools"]}>
-                <Section id="agent" title="Agent">
+                <Section id="agent" title={t("agent.section")}>
                   <TextField
                     id="agent-name"
-                    label="Name (required)"
+                    label={t("agent.name")}
                     value={agentName}
                     onChange={(e) => setAgentName(e.target.value)}
                     onBlur={() => saveAgentDraft()}
-                    placeholder="Enter agent name"
-                    error={!agentName.trim() ? "Name is required" : undefined}
+                    placeholder={t("agent.namePlaceholder")}
+                    error={!agentName.trim() ? t("generic.nameRequired") : undefined}
                     required
                   />
                   <TextAreaField
                     id="agent-description"
-                    label="Description"
+                    label={t("generic.description")}
                     value={agentDescription}
                     onChange={(e) => setAgentDescription(e.target.value)}
                     onBlur={() => saveAgentDraft()}
-                    placeholder="Optional description"
+                    placeholder={t("agent.descriptionPlaceholder")}
                     rows={3}
                   />
                 </Section>
 
-                <Section id="instructions" title="Special Instructions">
-                  <Hint>
-                    Text injected directly into the agent&apos;s system prompt before every conversation. Use this to give the agent a persona, domain
-                    context, or standing rules.
-                  </Hint>
+                <Section id="instructions" title={t("instructions.section")}>
+                  <Hint>{t("instructions.hint")}</Hint>
                   <TextAreaField
                     id="special-instructions"
-                    aria-label="Special instructions"
+                    aria-label={t("instructions.label")}
                     value={specialInstructions}
                     onChange={(e) => {
                       const v = e.target.value;
                       setSpecialInstructions(v);
                       if (!skipDraftSaveRef.current) scheduleSpecialInstructionsDraftSave(v);
                     }}
-                    placeholder="e.g. You are a helpful sales assistant for Acme Corp. Always respond formally and focus on enterprise software solutions."
+                    placeholder={t("instructions.placeholder")}
                     rows={6}
                   />
                   <div className="flex justify-end">
                     <Button variant="outline" size="sm" onClick={() => saveSpecialInstructionsDraft(specialInstructions, true)}>
                       <SaveIcon data-icon="inline-start" />
-                      Save draft
+                      {t("instructions.saveDraft")}
                     </Button>
                   </div>
                 </Section>
 
                 {agentRegistry && agentKind === "supervisor" && (
-                  <Section id="subagents" title="Sub-agents">
-                    <Hint>
-                      A supervisor doesn&apos;t use its own tools or LLM section — it delegates to the agents listed below, each an existing agent or
-                      an external A2A endpoint.
-                    </Hint>
+                  <Section id="subagents" title={t("subagents.section")}>
+                    <Hint>{t("subagents.hint")}</Hint>
                     <Field>
-                      <FieldLabel htmlFor="add-internal-subagent">Add an existing agent</FieldLabel>
+                      <FieldLabel htmlFor="add-internal-subagent">{t("subagents.addExisting")}</FieldLabel>
                       <NativeSelect
                         id="add-internal-subagent"
                         value=""
@@ -1582,7 +1581,7 @@ export function ManagePage() {
                           if (e.target.value) addInternalSubAgent(e.target.value);
                         }}
                       >
-                        <NativeSelectOption value="">Select an agent to add…</NativeSelectOption>
+                        <NativeSelectOption value="">{t("subagents.selectPlaceholder")}</NativeSelectOption>
                         {availableAgents
                           .filter((a) => a.id !== effectiveAgentId && a.kind !== "supervisor" && !subAgents.some((s) => s.kind === "internal" && s.ref === a.id))
                           .map((a) => (
@@ -1595,43 +1594,42 @@ export function ManagePage() {
                     <div className="flex justify-end">
                       <Button variant="outline" size="sm" onClick={() => setShowAddA2AModal(true)}>
                         <PlusIcon data-icon="inline-start" />
-                        Add A2A agent
+                        {t("a2a.title")}
                       </Button>
                     </div>
                     {subAgents.length === 0 ? (
-                      <Hint>No sub-agents yet. Add an existing agent or an A2A agent above.</Hint>
+                      <Hint>{t("subagents.empty")}</Hint>
                     ) : (
                       <ul className="flex flex-col gap-2">
                         {subAgents.map((s, i) => (
                           <li key={i} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
                             <div className="flex min-w-0 items-center gap-2">
-                              <Badge variant={s.kind === "internal" ? "secondary" : "outline"}>{s.kind === "internal" ? "Agent" : "A2A"}</Badge>
+                              <Badge variant={s.kind === "internal" ? "secondary" : "outline"}>{s.kind === "internal" ? t("subagents.badgeAgent") : "A2A"}</Badge>
                               <span className="truncate text-sm">{s.kind === "internal" ? s.ref : `${s.name} (${s.endpoint})`}</span>
                             </div>
-                            {iconButton("Remove sub-agent", <Trash2Icon />, () => removeSubAgent(i))}
+                            {iconButton(t("subagents.remove"), <Trash2Icon />, () => removeSubAgent(i))}
                           </li>
                         ))}
                       </ul>
                     )}
                     <Field orientation="horizontal" className="items-center">
                       <Switch id="plan-approval-toggle" checked={planApproval} onCheckedChange={(c) => updatePlanApproval(c === true)} />
-                      <FieldLabel htmlFor="plan-approval-toggle">Plan approval: {planApproval ? "On" : "Off"}</FieldLabel>
+                      <FieldLabel htmlFor="plan-approval-toggle">{planApproval ? t("subagents.planApprovalOn") : t("subagents.planApprovalOff")}</FieldLabel>
                     </Field>
-                    <Hint>When on, the supervisor pauses for approval before delegating to sub-agents.</Hint>
+                    <Hint>{t("subagents.planApprovalHint")}</Hint>
                   </Section>
                 )}
 
                 {agentKind !== "supervisor" && (
-                  <Section id="llm" title="LLM Configuration">
+                  <Section id="llm" title={t("llm.section")}>
                     {llmSecretsMode === "local" && llmForceEnv ? (
-                      <Notice kind="info" title="Managed via environment">
-                        LLM configuration is controlled by settings.toml and environment variables (mode=local + force_env=true). No UI configuration
-                        is needed.
+                      <Notice kind="info" title={t("llm.envManagedTitle")}>
+                        {t("llm.envManagedBody")}
                       </Notice>
                     ) : (
                       <>
                         <Field>
-                          <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
+                          <FieldLabel htmlFor="llm-provider">{t("llm.provider")}</FieldLabel>
                           <NativeSelect
                             id="llm-provider"
                             value={llm.provider ?? "openai"}
@@ -1660,7 +1658,7 @@ export function ManagePage() {
                         </Field>
 
                         <Field>
-                          <FieldLabel id="llm-auth-type-label">Auth type</FieldLabel>
+                          <FieldLabel id="llm-auth-type-label">{t("llm.authType")}</FieldLabel>
                           <RadioGroup
                             aria-labelledby="llm-auth-type-label"
                             value={llm.auth_type ?? "api_key"}
@@ -1672,17 +1670,17 @@ export function ManagePage() {
                           >
                             <label className="flex items-center gap-2 text-sm">
                               <RadioGroupItem value="api_key" id="llm-auth-api-key" />
-                              API Key
+                              {t("llm.apiKey")}
                             </label>
                             <label className="flex items-center gap-2 text-sm">
                               <RadioGroupItem value="auth_header" id="llm-auth-header" />
-                              Auth header
+                              {t("llm.authHeader")}
                             </label>
                           </RadioGroup>
                           {(llm.auth_type ?? "api_key") === "auth_header" && (
                             <TextField
                               id="llm-auth-header-name"
-                              label="Header name"
+                              label={t("llm.headerName")}
                               value={llm.auth_header_name ?? "Authorization"}
                               onChange={(e) => updateLlm("auth_header_name", e.target.value)}
                               onBlur={scheduleLlmDraftSave}
@@ -1695,19 +1693,19 @@ export function ManagePage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <CheckField
                               id="llm-use-saved-secret"
-                              label="Use saved secret"
+                              label={t("llm.useSavedSecret")}
                               checked={llmUseSavedSecret}
                               onChange={(checked) => {
                                 setLlmUseSavedSecret(checked);
                                 setLlmInlineCreate(false);
                               }}
                             />
-                            {iconButton("Manage secrets", <KeyRoundIcon />, () => setSecretsModalOpen(true))}
+                            {iconButton(t("header.manageSecrets"), <KeyRoundIcon />, () => setSecretsModalOpen(true))}
                           </div>
                           {llmUseSavedSecret ? (
                             <>
                               <Field>
-                                <FieldLabel htmlFor="llm-api-key-secret">{secretLabel} (saved secret)</FieldLabel>
+                                <FieldLabel htmlFor="llm-api-key-secret">{llm.auth_type === "auth_header" ? t("llm.headerValueSaved") : t("llm.apiKeySaved")}</FieldLabel>
                                 <NativeSelect
                                   id="llm-api-key-secret"
                                   value={llmSecretSelectValue}
@@ -1716,9 +1714,9 @@ export function ManagePage() {
                                     setTimeout(saveLlmDraft, 0);
                                   }}
                                 >
-                                  <NativeSelectOption value="">Select a secret</NativeSelectOption>
+                                  <NativeSelectOption value="">{t("llm.selectSecret")}</NativeSelectOption>
                                   {llmSecretOrphanInList && (
-                                    <NativeSelectOption value={llmSecretStoredRef}>{`${secretIdFromRef(llmSecretStoredRef)} (configured)`}</NativeSelectOption>
+                                    <NativeSelectOption value={llmSecretStoredRef}>{t("llm.secretConfigured", { id: secretIdFromRef(llmSecretStoredRef) })}</NativeSelectOption>
                                   )}
                                   {llmSecretsList.map((s) => (
                                     <NativeSelectOption key={s.id} value={s.ref}>
@@ -1730,24 +1728,24 @@ export function ManagePage() {
                               <div>
                                 <Button variant="ghost" size="sm" onClick={() => setLlmInlineCreate((v) => !v)}>
                                   <KeyRoundIcon data-icon="inline-start" />
-                                  {llmInlineCreate ? "Cancel" : "Create new secret"}
+                                  {llmInlineCreate ? t("common:action.cancel") : t("llm.createSecret")}
                                 </Button>
                               </div>
                               {llmInlineCreate && (
                                 <div className="flex flex-col gap-3 rounded-md border p-3">
                                   <TextField
                                     id="llm-inline-secret-key"
-                                    label="Key name"
+                                    label={t("llm.keyName")}
                                     value={llmInlineCreateKey}
                                     onChange={(e) => setLlmInlineCreateKey(e.target.value)}
-                                    placeholder="e.g. llm-api-key"
-                                    helper="Optional; leave empty to auto-generate"
+                                    placeholder={t("llm.keyNamePlaceholder")}
+                                    helper={t("llm.keyNameHelper")}
                                   />
                                   <div className="flex flex-wrap items-end gap-2">
                                     <TextField
                                       id="llm-inline-secret-value"
                                       type="password"
-                                      label="New secret value"
+                                      label={t("llm.newSecretValue")}
                                       value={llmInlineCreateValue}
                                       onChange={(e) => setLlmInlineCreateValue(e.target.value)}
                                       placeholder="sk-..."
@@ -1775,7 +1773,7 @@ export function ManagePage() {
                                         }
                                       }}
                                     >
-                                      Save
+                                      {t("common:action.save")}
                                     </Button>
                                   </div>
                                 </div>
@@ -1799,17 +1797,17 @@ export function ManagePage() {
                         {(llm.provider === "litellm" || !["groq"].includes(llm.provider ?? "")) && (
                           <TextField
                             id="llm-base-url"
-                            label="Base URL"
+                            label={t("llm.baseUrl")}
                             value={llm.base_url ?? ""}
                             onChange={(e) => updateLlm("base_url", e.target.value)}
                             onBlur={scheduleLlmDraftSave}
                             placeholder={llm.provider === "litellm" ? "http://localhost:4000" : "https://api.openai.com/v1"}
-                            helper={llm.provider === "litellm" ? "Required for LiteLLM proxy" : "Optional; leave empty for default"}
+                            helper={llm.provider === "litellm" ? t("llm.baseUrlRequired") : t("llm.baseUrlOptional")}
                           />
                         )}
                         <CheckField
                           id="llm-disable-ssl"
-                          label="Disable SSL verification"
+                          label={t("llm.disableSsl")}
                           checked={!!llm.disable_ssl}
                           onChange={(checked) => {
                             updateLlm("disable_ssl", checked);
@@ -1821,7 +1819,7 @@ export function ManagePage() {
                           <div className="flex flex-wrap items-end gap-2">
                             <TextField
                               id="llm-model"
-                              label="Model"
+                              label={t("llm.model")}
                               value={llm.model ?? ""}
                               onChange={(e) => updateLlm("model", e.target.value)}
                               onBlur={scheduleLlmDraftSave}
@@ -1850,22 +1848,22 @@ export function ManagePage() {
                                 }
                               }}
                             >
-                              List models
+                              {t("llm.listModels")}
                             </Button>
                           </div>
                           {llmModelsLoading && (
                             <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Spinner /> Fetching models…
+                              <Spinner /> {t("llm.fetchingModels")}
                             </p>
                           )}
                           {llmModelsError && (
-                            <Notice kind="error" title="Error">
+                            <Notice kind="error" title={t("generic.error")}>
                               {llmModelsError}
                             </Notice>
                           )}
                           {llmModelsList.length > 0 && (
                             <Field>
-                              <FieldLabel htmlFor="llm-model-select">Choose from list</FieldLabel>
+                              <FieldLabel htmlFor="llm-model-select">{t("llm.chooseFromList")}</FieldLabel>
                               <NativeSelect
                                 id="llm-model-select"
                                 value={llm.model ?? ""}
@@ -1886,10 +1884,10 @@ export function ManagePage() {
                         </div>
 
                         <fieldset className="flex flex-col gap-3">
-                          <legend className="mb-2 font-heading text-sm font-medium">Sampling</legend>
+                          <legend className="mb-2 font-heading text-sm font-medium">{t("llm.sampling")}</legend>
                           <NumberField
                             id="llm-temperature"
-                            label="Temperature"
+                            label={t("llm.temperature")}
                             min={0}
                             max={2}
                             step={0.1}
@@ -1899,8 +1897,8 @@ export function ManagePage() {
                           />
                           <NumberField
                             id="llm-max-tokens"
-                            label="Max tokens"
-                            helper="Leave empty to keep the model/TOML default"
+                            label={t("llm.maxTokens")}
+                            helper={t("llm.maxTokensHelper")}
                             min={1}
                             step={256}
                             allowEmpty
@@ -1915,13 +1913,13 @@ export function ManagePage() {
 
                         <Accordion>
                           <AccordionItem value="advanced" className="rounded-md border">
-                            <AccordionTrigger className="px-3 text-sm">Advanced LLM params</AccordionTrigger>
+                            <AccordionTrigger className="px-3 text-sm">{t("llm.advanced")}</AccordionTrigger>
                             <AccordionContent className="px-3">
                               <div className="flex flex-col gap-4 pb-2">
                                 <NumberField
                                   id="llm-top-p"
-                                  label="Top P"
-                                  helper="Only sent when set (safer for Bedrock/Claude via OpenAI-compatible endpoints)"
+                                  label={t("llm.topP")}
+                                  helper={t("llm.topPHelper")}
                                   min={0}
                                   max={1}
                                   step={0.05}
@@ -1935,8 +1933,8 @@ export function ManagePage() {
                                 />
                                 <NumberField
                                   id="llm-top-k"
-                                  label="Top K"
-                                  helper="Used by Watsonx / LiteLLM when supported"
+                                  label={t("llm.topK")}
+                                  helper={t("llm.topKHelper")}
                                   min={1}
                                   step={1}
                                   allowEmpty
@@ -1949,8 +1947,8 @@ export function ManagePage() {
                                 />
                                 <NumberField
                                   id="llm-frequency-penalty"
-                                  label="Frequency penalty"
-                                  helper="OpenAI-compatible providers (ignored by Groq/Watsonx)"
+                                  label={t("llm.frequencyPenalty")}
+                                  helper={t("llm.penaltyHelper")}
                                   min={-2}
                                   max={2}
                                   step={0.1}
@@ -1964,8 +1962,8 @@ export function ManagePage() {
                                 />
                                 <NumberField
                                   id="llm-presence-penalty"
-                                  label="Presence penalty"
-                                  helper="OpenAI-compatible providers (ignored by Groq/Watsonx)"
+                                  label={t("llm.presencePenalty")}
+                                  helper={t("llm.penaltyHelper")}
                                   min={-2}
                                   max={2}
                                   step={0.1}
@@ -1979,8 +1977,8 @@ export function ManagePage() {
                                 />
                                 <TextField
                                   id="llm-stop"
-                                  label="Stop sequences"
-                                  helper="Comma-separated stop strings"
+                                  label={t("llm.stop")}
+                                  helper={t("llm.stopHelper")}
                                   value={Array.isArray(llm.stop) ? llm.stop.join(", ") : (llm.stop ?? "")}
                                   onChange={(e) => {
                                     const parts = e.target.value
@@ -1993,8 +1991,8 @@ export function ManagePage() {
                                 />
                                 <TextAreaField
                                   id="llm-extra-params"
-                                  label="Extra params (JSON)"
-                                  helper="Provider-agnostic map for LiteLLM / OpenAI-compatible backends. Auth keys are stripped server-side."
+                                  label={t("llm.extraParams")}
+                                  helper={t("llm.extraParamsHelper")}
                                   rows={4}
                                   className="font-mono"
                                   error={llmExtraParamsError ?? undefined}
@@ -2019,7 +2017,7 @@ export function ManagePage() {
                                     try {
                                       const parsed = JSON.parse(raw) as unknown;
                                       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-                                        setLlmExtraParamsError("Extra params must be a JSON object");
+                                        setLlmExtraParamsError(t("llm.extraParamsNotObject"));
                                         return;
                                       }
                                       const isJsonValue = (v: unknown): v is LlmJsonValue => {
@@ -2035,7 +2033,7 @@ export function ManagePage() {
                                         else dropped = true;
                                       }
                                       if (dropped) {
-                                        setLlmExtraParamsError("Extra params must be JSON values (no functions)");
+                                        setLlmExtraParamsError(t("llm.extraParamsNotJsonValues"));
                                         return;
                                       }
                                       updateLlm("extra_params", Object.keys(cleaned).length ? cleaned : undefined);
@@ -2043,7 +2041,7 @@ export function ManagePage() {
                                       setLlmExtraParamsError(null);
                                       scheduleLlmDraftSave();
                                     } catch {
-                                      setLlmExtraParamsError("Invalid JSON");
+                                      setLlmExtraParamsError(t("generic.invalidJson"));
                                     }
                                   }}
                                 />
@@ -2057,16 +2055,16 @@ export function ManagePage() {
                 )}
 
                 {sandboxOn && (
-                  <Section id="sandbox" title="Code Sandbox (experimental)">
+                  <Section id="sandbox" title={t("sandbox.section")}>
                     <SandboxSettings
                       onError={(title, message) => addToast("error", title, message)}
-                      onSaved={(message) => addToast("success", "Code sandbox", message)}
+                      onSaved={(message) => addToast("success", t("sandbox.savedTitle"), message)}
                     />
                   </Section>
                 )}
 
                 {agentKind !== "supervisor" && (
-                  <Section id="tools" title="Tools">
+                  <Section id="tools" title={t("tools.section")}>
                     <ToolsConfig
                       tools={tools}
                       onChange={setTools}
@@ -2081,13 +2079,12 @@ export function ManagePage() {
                 )}
 
                 {agentContext?.skills_enabled ? (
-                  <Section id="skills" title="Skills">
+                  <Section id="skills" title={t("skills.section")}>
                     {skillsLoading ? (
-                      <Skeleton className="h-16" aria-label="Loading skills…" />
+                      <Skeleton className="h-16" aria-label={t("skills.loading")} />
                     ) : skills.length === 0 ? (
                       <Hint>
-                        No skills found. Add SKILL.md files under <code className="font-mono">.cuga/skills/</code> (default) or set{" "}
-                        <code className="font-mono">[skills] root</code> in settings.toml.
+                        <Trans t={t} i18nKey="skills.empty" components={{ code: <code className="font-mono" /> }} />
                       </Hint>
                     ) : (
                       <div className="flex flex-col gap-3">
@@ -2104,7 +2101,7 @@ export function ManagePage() {
                                 <SparklesIcon className="size-4 text-link" />
                                 <span className="text-sm font-bold">{skill.name}</span>
                                 <Badge variant="outline" className="ml-auto">
-                                  <span className="size-1.5 rounded-full bg-status-ok" /> active
+                                  <span className="size-1.5 rounded-full bg-status-ok" /> {t("skills.active")}
                                 </Badge>
                               </div>
                               <p className="text-xs leading-snug text-muted-foreground">
@@ -2122,7 +2119,7 @@ export function ManagePage() {
                                       })
                                     }
                                   >
-                                    {isExpanded ? "less" : "more"}
+                                    {isExpanded ? t("skills.less") : t("skills.more")}
                                   </button>
                                 )}
                               </p>
@@ -2149,10 +2146,10 @@ export function ManagePage() {
                   </Section>
                 ) : null}
 
-                <Section id="welcome" title="Welcome Screen">
+                <Section id="welcome" title={t("welcome.section")}>
                   <CheckField
                     id="homescreen-isOn"
-                    label="Show welcome screen"
+                    label={t("welcome.show")}
                     checked={homescreen?.isOn ?? true}
                     onChange={(checked) => {
                       updateHomescreen("isOn", checked);
@@ -2161,71 +2158,71 @@ export function ManagePage() {
                   />
                   <TextField
                     id="homescreen-greeting"
-                    label="Greeting message"
+                    label={t("welcome.greeting")}
                     value={homescreen?.greeting ?? DEFAULT_HOMESCREEN.greeting ?? ""}
                     onChange={(e) => updateHomescreen("greeting", e.target.value)}
                     onBlur={() => performDraftSave()}
-                    placeholder="Hello, how can I help you today?"
+                    placeholder={t("welcome.greetingPlaceholder")}
                   />
                   <fieldset className="flex flex-col gap-3">
-                    <legend className="mb-2 font-heading text-sm font-medium">Starter buttons (max 4)</legend>
+                    <legend className="mb-2 font-heading text-sm font-medium">{t("welcome.starters")}</legend>
                     {[0, 1, 2, 3].map((i) => (
                       <TextField
                         key={i}
                         id={`homescreen-starter-${i}`}
-                        label={`Starter ${i + 1}`}
+                        label={t("welcome.starter", { number: i + 1 })}
                         value={(homescreen?.starters ?? [])[i] ?? ""}
                         onChange={(e) => updateStarter(i, e.target.value)}
                         onBlur={() => performDraftSave()}
-                        placeholder={i === 0 ? "Hi, what can you do for me?" : "Optional"}
+                        placeholder={i === 0 ? t("welcome.starterPlaceholder") : t("generic.optional")}
                       />
                     ))}
                   </fieldset>
                   <div>
                     <Button variant="outline" size="sm" onClick={() => performDraftSave()} disabled={draftSaving}>
                       <SaveIcon data-icon="inline-start" />
-                      Save welcome screen
+                      {t("welcome.save")}
                     </Button>
                   </div>
                 </Section>
 
-                <Section id="features" title="Features">
-                  <CheckField id="enable_todos" label="Enable todos" checked={flags.enable_todos ?? false} onChange={(c) => updateFeatureFlag("enable_todos", c)} />
-                  <CheckField id="reflection" label="Reflection" checked={flags.reflection ?? false} onChange={(c) => updateFeatureFlag("reflection", c)} />
+                <Section id="features" title={t("features.section")}>
+                  <CheckField id="enable_todos" label={t("features.todos")} checked={flags.enable_todos ?? false} onChange={(c) => updateFeatureFlag("enable_todos", c)} />
+                  <CheckField id="reflection" label={t("features.reflection")} checked={flags.reflection ?? false} onChange={(c) => updateFeatureFlag("reflection", c)} />
                   <CheckField
                     id="enable_filesystem_tools"
-                    label="Filesystem tools"
-                    helper="Gives the agent read, write, edit, list, and search access to the workspace filesystem."
+                    label={t("features.filesystem")}
+                    helper={t("features.filesystemHelper")}
                     checked={flags.enable_filesystem_tools ?? false}
                     onChange={(c) => updateFeatureFlag("enable_filesystem_tools", c)}
                   />
-                  <NumberField id="max_steps" label="Max steps" min={1} max={200} value={flags.max_steps ?? 70} onValue={(v) => updateMaxSteps(Number(v) || 70)} />
+                  <NumberField id="max_steps" label={t("features.maxSteps")} min={1} max={200} value={flags.max_steps ?? 70} onValue={(v) => updateMaxSteps(Number(v) || 70)} />
                   <NumberField
                     id="shortlisting_tool_threshold"
-                    label="Shortlisting tool threshold"
+                    label={t("features.shortlisting")}
                     min={1}
                     max={500}
                     value={flags.shortlisting_tool_threshold ?? 35}
                     onValue={(v) => updateShortlistingThreshold(Number(v) || 35)}
-                    helper="Enable find_tools when total tools exceed this count"
+                    helper={t("features.shortlistingHelper")}
                   />
                   <div>
                     <Button variant="outline" size="sm" onClick={() => performDraftSave()} disabled={draftSaving}>
                       <SaveIcon data-icon="inline-start" />
-                      Save Flags
+                      {t("features.save")}
                     </Button>
                   </div>
                 </Section>
 
-                <Section id="policies" title="Policies">
+                <Section id="policies" title={t("policies.section")}>
                   <p className="text-sm text-body">
-                    {policiesEnabled ? `${summary.total} ${summary.total !== 1 ? "policies" : "policy"} defined` : "Policies disabled"}
+                    {policiesEnabled ? t("policies.defined", { count: summary.total }) : t("policies.disabled")}
                   </p>
                   {policiesEnabled && summary.total > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(summary.byType).map(([type, count]) => (
                         <Badge key={type} variant="secondary">
-                          {POLICY_TYPE_LABELS[type] ?? type}: {count}
+                          {POLICY_TYPE_LABEL_KEYS[type] ? t(POLICY_TYPE_LABEL_KEYS[type]) : type}: {count}
                         </Badge>
                       ))}
                     </div>
@@ -2233,12 +2230,12 @@ export function ManagePage() {
                   <div>
                     <Button variant="outline" size="sm" onClick={() => setShowPoliciesModal(true)}>
                       <ShieldIcon data-icon="inline-start" />
-                      Configure policies
+                      {t("policies.configure")}
                     </Button>
                   </div>
                 </Section>
 
-                <Section id="knowledge" title="Knowledge">
+                <Section id="knowledge" title={t("knowledge.section")}>
                   <p className="flex items-center gap-2 text-sm text-body">
                     <span
                       aria-hidden
@@ -2252,43 +2249,43 @@ export function ManagePage() {
                       )}
                     />
                     {knowledgeHealthStatus === "starting" || knowledgeHealthy === null
-                      ? "Starting knowledge..."
+                      ? t("knowledge.starting")
                       : knowledgeHealthy
-                        ? `Connected${knowledgeDocCount > 0 ? ` · ${knowledgeDocCount} document${knowledgeDocCount !== 1 ? "s" : ""} indexed` : ""}`
+                        ? knowledgeDocCount > 0
+                          ? t("knowledge.connectedDocs", { count: knowledgeDocCount })
+                          : t("knowledge.connected")
                         : knowledgeHealthStatus === "disabled"
-                          ? "Disabled"
-                          : "Disconnected"}
+                          ? t("knowledge.disabled")
+                          : t("knowledge.disconnected")}
                   </p>
                   {/* Cold start: the model is still loading. Not a failure, so never shown as one. */}
                   {knowledgeEmbedderState === "preparing" && knowledgeDocCount > 0 && (
-                    <Notice kind="info" title="Preparing embedder">
-                      {`Getting the embedding model${knowledgeEmbedderModel ? ` (${knowledgeEmbedderModel})` : ""} ready — this can take a minute the first time. Search will work as soon as it finishes.`}
+                    <Notice kind="info" title={t("knowledge.preparingTitle")}>
+                      {t("knowledge.preparingBody", { model: knowledgeEmbedderModel ? ` (${knowledgeEmbedderModel})` : "" })}
                     </Notice>
                   )}
                   {/* Documents exist but their embedder can't embed queries: search returns nothing. */}
                   {knowledgeEmbedderAvailable === false && knowledgeDocCount > 0 && (
-                    <Notice kind="error" title="Embedder unavailable">
-                      {`Your ${knowledgeDocCount} indexed document${knowledgeDocCount !== 1 ? "s" : ""} can't be searched — ` +
-                        `the active embedder${knowledgeEmbedderModel ? ` (${knowledgeEmbedderModel})` : ""} isn't usable. ` +
-                        (isLocalEmbeddingProvider(knowledgeEmbedderModel)
-                          ? `It runs locally, so there's no key or connection to check — its model files are missing or unreadable. ` +
-                            `Restart to let CUGA re-download them; if it persists, check free disk space and network access.`
-                          : `Open Configure knowledge base to check its API key / connection and run Test connection.`) +
-                        (knowledgeEmbedderError ? ` (${knowledgeEmbedderError})` : "")}
+                    <Notice kind="error" title={t("knowledge.unavailableTitle")}>
+                      {t(isLocalEmbeddingProvider(knowledgeEmbedderModel) ? "knowledge.unavailableLocal" : "knowledge.unavailableRemote", {
+                        count: knowledgeDocCount,
+                        model: knowledgeEmbedderModel ? ` (${knowledgeEmbedderModel})` : "",
+                        error: knowledgeEmbedderError ? ` (${knowledgeEmbedderError})` : "",
+                      })}
                     </Notice>
                   )}
                   <div>
                     <Button variant="outline" size="sm" onClick={() => setShowKnowledgeModal(true)}>
                       <FileTextIcon data-icon="inline-start" />
-                      Configure knowledge base
+                      {t("knowledge.configure")}
                     </Button>
                   </div>
                 </Section>
 
-                <Section id="history" title="Version History">
-                  <Hint>Click a version to set it as your current configuration.</Hint>
+                <Section id="history" title={t("history.section")}>
+                  <Hint>{t("history.hint")}</Hint>
                   {history.length === 0 ? (
-                    <Hint>No versions yet</Hint>
+                    <Hint>{t("history.empty")}</Hint>
                   ) : (
                     <ul className="flex flex-col gap-1.5">
                       {history.map((v: ConfigVersion) => (
@@ -2299,10 +2296,10 @@ export function ManagePage() {
                             onClick={() => loadVersion(v.version)}
                           >
                             <Badge variant="secondary">v{v.version}</Badge>
-                            <span className="truncate text-body">{new Date(v.created_at).toLocaleString()}</span>
-                            <span className="ml-auto hidden text-xs text-muted-foreground group-hover:inline group-focus-visible:inline">Set as current</span>
+                            <span className="truncate text-body">{new Date(v.created_at).toLocaleString(i18n.language)}</span>
+                            <span className="ml-auto hidden text-xs text-muted-foreground group-hover:inline group-focus-visible:inline">{t("history.setCurrent")}</span>
                           </button>
-                          {iconButton(`View JSON of version ${v.version}`, <FileJsonIcon />, () => {
+                          {iconButton(t("history.viewJson", { version: v.version }), <FileJsonIcon />, () => {
                             api
                               .getManageConfigVersion(String(v.version), effectiveAgentId)
                               .then((res) => (res.ok ? res.json() : null))
@@ -2320,40 +2317,40 @@ export function ManagePage() {
 
           {/* ── save bar ───────────────────────────────────────────────── */}
           <div className="glass-chrome flex shrink-0 flex-col gap-2 border-t px-4 py-3">
-            <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" aria-label="Import config JSON" onChange={handleImportJson} />
+            <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" aria-label={t("saveBar.importLabel")} onChange={handleImportJson} />
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                 <UploadIcon data-icon="inline-start" />
-                Import
+                {t("saveBar.import")}
               </Button>
               <Button onClick={handleSaveClick} disabled={saveStatus === "saving" || configLoading || !!loadError}>
                 {saveStatus === "saving" ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
-                {saveStatus === "saving" && "Publishing…"}
-                {saveStatus === "idle" && "Publish"}
-                {saveStatus === "success" && "Published"}
-                {saveStatus === "error" && "Error"}
+                {saveStatus === "saving" && t("saveBar.publishing")}
+                {saveStatus === "idle" && t("saveBar.publish")}
+                {saveStatus === "success" && t("saveBar.published")}
+                {saveStatus === "error" && t("generic.error")}
               </Button>
               {draftSaving && (
                 <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground" role="status">
-                  <Spinner className="size-3.5" /> Saving draft…
+                  <Spinner className="size-3.5" /> {t("saveBar.savingDraft")}
                 </span>
               )}
             </div>
             {(loadError || currentVersion != null || importStatus !== "idle") && (
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 {loadError && (
-                  <Notice kind="error" title="Error" className="w-full">
+                  <Notice kind="error" title={t("generic.error")} className="w-full">
                     {loadError}
                   </Notice>
                 )}
                 {!loadError && importStatus === "ok" && (
-                  <Notice kind="success" title="Success" className="w-full">
-                    Config imported
+                  <Notice kind="success" title={t("generic.success")} className="w-full">
+                    {t("saveBar.imported")}
                   </Notice>
                 )}
                 {!loadError && importStatus === "error" && (
-                  <Notice kind="error" title="Import failed" className="w-full">
-                    {importError ?? "Import failed"}
+                  <Notice kind="error" title={t("saveBar.importFailed")} className="w-full">
+                    {importError ?? t("saveBar.importFailed")}
                   </Notice>
                 )}
                 {/* Live truth anchor: what is actually serving traffic, from the published config. */}
@@ -2364,8 +2361,13 @@ export function ManagePage() {
                     const label = (
                       <>
                         <span aria-hidden className={cn("size-1.5 rounded-full", diverged ? "bg-status-warn" : "bg-status-ok")} />
-                        Live: {liveKnowledge.provider} · {liveKnowledge.model || "(default)"}
-                        {liveKnowledge.version != null && ` · v${liveKnowledge.version}`}
+                        {liveKnowledge.version != null
+                          ? t("saveBar.liveVersion", {
+                              provider: liveKnowledge.provider,
+                              model: liveKnowledge.model || t("saveBar.defaultModel"),
+                              version: liveKnowledge.version,
+                            })
+                          : t("saveBar.live", { provider: liveKnowledge.provider, model: liveKnowledge.model || t("saveBar.defaultModel") })}
                       </>
                     );
                     if (!diverged) return <Badge variant="outline">{label}</Badge>;
@@ -2375,18 +2377,26 @@ export function ManagePage() {
                           <Badge variant="outline">{label}</Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {`Draft differs from Live (now ${knowledgeConfig.embedding_provider} · ${knowledgeConfig.embedding_model || "(default)"}). Click Publish to apply.`}
+                          {t("saveBar.diverged", {
+                            provider: knowledgeConfig.embedding_provider,
+                            model: knowledgeConfig.embedding_model || t("saveBar.defaultModel"),
+                          })}
                         </TooltipContent>
                       </Tooltip>
                     );
                   })()}
                 {!loadError && !draftSaving && currentVersion != null && (
                   <span>
-                    Version: {currentVersion === "draft" ? "draft" : `v${currentVersion}`}
+                    {currentVersion === "draft" ? t("saveBar.versionDraft") : t("saveBar.version", { version: currentVersion })}
                     {history.length > 0 && (
                       <>
-                        {" · "}Last publish: v{history[0].version}
-                        {typeof history[0].created_at === "string" && <> ({new Date(history[0].created_at).toLocaleDateString()})</>}
+                        {" · "}
+                        {typeof history[0].created_at === "string"
+                          ? t("saveBar.lastPublishDate", {
+                              version: history[0].version,
+                              date: new Date(history[0].created_at).toLocaleDateString(i18n.language),
+                            })
+                          : t("saveBar.lastPublish", { version: history[0].version })}
                       </>
                     )}
                   </span>
@@ -2399,7 +2409,7 @@ export function ManagePage() {
         {/* ── try it out: chat against the draft ───────────────────────── */}
         <div className={cn("relative min-h-0 min-w-0 flex-1 lg:block", pane === "chat" ? "block" : "hidden")}>
           {configLoading ? (
-            <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6" aria-label="Loading agent preview…">
+            <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6" aria-label={t("load.loadingPreview")}>
               <Skeleton className="ml-auto h-10 w-1/2" />
               <Skeleton className="h-24 w-full" />
             </div>
@@ -2408,7 +2418,7 @@ export function ManagePage() {
               key={`${effectiveAgentId}:${draftThreadId}`}
               agentId={effectiveAgentId}
               threadId={draftThreadId}
-              title="Try your configuration"
+              title={t("preview.title")}
               isReadonly={false}
               useDraft
               disableHistory
@@ -2427,7 +2437,7 @@ export function ManagePage() {
                 (manageVariablesHistory.length > 0 || Object.keys(manageVariables).length > 0) && (
                   <Button variant="ghost" size="sm" aria-expanded={manageVariablesPanelOpen} onClick={() => setManageVariablesPanelOpen((o: boolean) => !o)}>
                     <VariableIcon data-icon="inline-start" />
-                    Variables
+                    {t("variables.title")}
                     <Badge variant="secondary">{Object.keys(manageVariables).length || manageVariablesHistory.length}</Badge>
                   </Button>
                 )
@@ -2440,8 +2450,8 @@ export function ManagePage() {
       <Dialog open={manageVariablesPanelOpen} onOpenChange={setManageVariablesPanelOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Variables</DialogTitle>
-            <DialogDescription className="sr-only">Variables produced by the draft conversation</DialogDescription>
+            <DialogTitle>{t("variables.title")}</DialogTitle>
+            <DialogDescription className="sr-only">{t("variables.description")}</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto">
             <VariablesSidebar
@@ -2536,30 +2546,30 @@ export function ManagePage() {
                   setKnowledgeReindexing(false);
                   const ERR: Record<string, { title: string; kind: "warning" | "error"; msg: string }> = {
                     active_snapshot_missing: {
-                      title: "Re-index didn't run",
+                      title: t("reindex.didNotRunTitle"),
                       kind: "error",
-                      msg: "Your active document set isn't on disk. If you restored an older version, re-upload or migrate via CLI.",
+                      msg: t("reindex.snapshotMissing"),
                     },
                     copy_failed: {
-                      title: "Re-index didn't run",
+                      title: t("reindex.didNotRunTitle"),
                       kind: "error",
-                      msg: "Couldn't copy your documents to the new collection. Check disk space / permissions and retry.",
+                      msg: t("reindex.copyFailed"),
                     },
                     reindex_failed: {
-                      title: "Re-index didn't run",
+                      title: t("reindex.didNotRunTitle"),
                       kind: "error",
-                      msg: "Re-index ran but didn't embed anything. Check server logs and retry.",
+                      msg: t("reindex.embeddedNothing"),
                     },
                     reindex_busy: {
-                      title: "Re-index couldn't start",
+                      title: t("reindex.couldNotStartTitle"),
                       kind: "warning",
-                      msg: "Uploads or another re-index are still running. Wait a moment, then try again.",
+                      msg: t("reindex.busy"),
                     },
                   };
                   const code = typeof data.error === "string" ? data.error : "unknown";
                   const spec = ERR[code];
                   if (spec) addToast(spec.kind, spec.title, spec.msg);
-                  else addToast("error", "Re-index didn't run", `Re-index couldn't run (${code}).`);
+                  else addToast("error", t("reindex.didNotRunTitle"), t("reindex.couldNotRun", { code }));
                   return null;
                 }
                 // The saved snapshot is advanced only on full success, via
@@ -2575,14 +2585,14 @@ export function ManagePage() {
                 }
                 return { count: data.count ?? 0, task_ids: data.task_ids ?? [], tasks: data.tasks ?? [] };
               } else if (res.status === 409) {
-                addToast("warning", "Cannot re-index", "Uploads in progress. Try again later.");
+                addToast("warning", t("reindex.cannotTitle"), t("reindex.uploadsInProgress"));
                 setKnowledgeReindexing(false);
               } else {
-                addToast("error", "Re-index failed", `Error ${res.status}`);
+                addToast("error", t("reindex.failedTitle"), t("reindex.errorStatus", { status: res.status }));
                 setKnowledgeReindexing(false);
               }
             } catch {
-              addToast("error", "Re-index failed", "Network error");
+              addToast("error", t("reindex.failedTitle"), t("generic.networkError"));
               setKnowledgeReindexing(false);
             }
             return null;
@@ -2594,18 +2604,15 @@ export function ManagePage() {
       <Dialog open={showReindexConfirm} onOpenChange={(o) => !o && setShowReindexConfirm(false)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Re-index required</DialogTitle>
-            <DialogDescription>
-              Embedding or chunking settings changed. Publishing will re-index {knowledgeDocCount} document{knowledgeDocCount !== 1 ? "s" : ""} in the
-              background. Search may return incomplete results during re-indexing.
-            </DialogDescription>
+            <DialogTitle>{t("reindex.confirmTitle")}</DialogTitle>
+            <DialogDescription>{t("reindex.confirmBody", { count: knowledgeDocCount })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowReindexConfirm(false)}>
-              Cancel
+              {t("common:action.cancel")}
             </Button>
             <Button variant="destructive" onClick={() => saveConfig()}>
-              Publish &amp; Re-index
+              {t("reindex.confirmAction")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2615,7 +2622,7 @@ export function ManagePage() {
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle className="truncate pr-8">{knowledgePreviewModal?.attachment.display_name ?? ""}</DialogTitle>
-            <DialogDescription className="sr-only">Document preview</DialogDescription>
+            <DialogDescription className="sr-only">{t("knowledge.previewDescription")}</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto">
             {knowledgePreviewModal &&
@@ -2641,9 +2648,9 @@ export function ManagePage() {
                 }}
               >
                 <DownloadIcon data-icon="inline-start" />
-                Download
+                {t("generic.download")}
               </Button>
-              <Button onClick={closeKnowledgePreviewModal}>Close</Button>
+              <Button onClick={closeKnowledgePreviewModal}>{t("common:action.close")}</Button>
             </DialogFooter>
           )}
         </DialogContent>
@@ -2652,8 +2659,8 @@ export function ManagePage() {
       <Dialog open={!!viewVersion} onOpenChange={(o) => !o && setViewVersion(null)}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{viewVersion ? `Version ${viewVersion.version}` : ""}</DialogTitle>
-            <DialogDescription className="sr-only">Configuration JSON of this version, secrets masked</DialogDescription>
+            <DialogTitle>{viewVersion ? t("history.versionTitle", { version: viewVersion.version }) : ""}</DialogTitle>
+            <DialogDescription className="sr-only">{t("history.jsonDescription")}</DialogDescription>
           </DialogHeader>
           <div className="max-h-[65vh] overflow-y-auto">
             {viewVersion && (
@@ -2689,7 +2696,7 @@ export function ManagePage() {
                 }}
               >
                 <DownloadIcon data-icon="inline-start" />
-                Download
+                {t("generic.download")}
               </Button>
               <Button
                 onClick={() => {
@@ -2711,11 +2718,11 @@ export function ManagePage() {
                   setKnowledgeSavedSnapshot(next.knowledge ?? null);
                   setCurrentVersion(viewVersion.version);
                   setViewVersion(null);
-                  addToast("success", "Version loaded", `Version ${viewVersion.version} is now your current configuration`);
+                  addToast("success", t("history.usedTitle"), t("history.usedBody", { version: viewVersion.version }));
                 }}
               >
                 <SaveIcon data-icon="inline-start" />
-                Use as current
+                {t("history.useAsCurrent")}
               </Button>
             </DialogFooter>
           )}

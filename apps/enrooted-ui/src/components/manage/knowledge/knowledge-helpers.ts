@@ -5,6 +5,7 @@
  * Ported from cuga-agent/src/frontend_workspaces/agentic_chat/src/KnowledgeConfig.tsx
  * (Copyright IBM Corp., Apache-2.0)
  */
+import i18n from "@/i18n"
 import type { ReindexTask } from "@/lib/manage/knowledge-types"
 
 // ── JSON narrowing ─────────────────────────────────────────────────────────
@@ -49,12 +50,12 @@ export function getReindexTaskProgressLabel(task: ReindexTask): string | undefin
   const total = progress?.total
   // Map raw backend stage names to friendly labels.
   const friendly: Record<string, string> = {
-    parsed: "Parsed",
-    embed: "Embedding",
-    insert_start: "Saving",
-    insert: "Saving",
+    parsed: "knowledge:reindex.stage.parsed",
+    embed: "knowledge:reindex.stage.embed",
+    insert_start: "knowledge:reindex.stage.saving",
+    insert: "knowledge:reindex.stage.saving",
   }
-  const label = friendly[stage] ?? stage
+  const label = friendly[stage] ? i18n.t(friendly[stage]) : stage
   if (typeof done === "number" && typeof total === "number" && total > 0) {
     return `${label} (${done}/${total})`
   }
@@ -73,10 +74,10 @@ export function getReindexTaskError(task: ReindexTask): string | undefined {
 }
 
 export function getReindexStatusLabel(status: ReindexTask["status"]): string {
-  if (status === "running") return "Indexing"
-  if (status === "completed") return "Completed"
-  if (status === "failed") return "Failed"
-  return "Pending"
+  if (status === "running") return i18n.t("knowledge:reindex.status.running")
+  if (status === "completed") return i18n.t("knowledge:reindex.status.completed")
+  if (status === "failed") return i18n.t("knowledge:reindex.status.failed")
+  return i18n.t("knowledge:reindex.status.pending")
 }
 
 // Narrative phase headline for the re-index tile: says what is happening right
@@ -87,23 +88,28 @@ export function getReindexPhaseHeadline(tasks: ReindexTask[]): string {
   // "Preparing" only while EVERY task is still pending. Once any task is
   // running the worker is doing real work even if no stage event arrived yet.
   if (tasks.length === 0 || tasks.every((t) => t.status === "pending")) {
-    return "Preparing your new reading model"
+    return i18n.t("knowledge:reindex.phase.preparing")
   }
   const stages = tasks
     .flatMap((t) => Object.values(t.file_tasks ?? {}).map((ft) => ft.stage))
     .filter(Boolean)
   if (stages.some((s) => s === "insert" || s === "insert_start")) {
-    return "Filing everything in its new place"
+    return i18n.t("knowledge:reindex.phase.filing")
   }
-  return "Re-reading your documents"
+  return i18n.t("knowledge:reindex.phase.rereading")
 }
 
 // Honest elapsed timer: "Running for 47s" beats a fake countdown. Bands switch
 // at 60 s / 5 min to keep the unit readable.
 export function formatElapsedSeconds(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 300) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
-  return `${Math.floor(seconds / 60)}m`
+  if (seconds < 60) return i18n.t("knowledge:reindex.elapsed.seconds", { seconds })
+  if (seconds < 300) {
+    return i18n.t("knowledge:reindex.elapsed.minutesSeconds", {
+      minutes: Math.floor(seconds / 60),
+      seconds: seconds % 60,
+    })
+  }
+  return i18n.t("knowledge:reindex.elapsed.minutes", { minutes: Math.floor(seconds / 60) })
 }
 
 // Merge backend tasks by task_id over the placeholder list so a partial poll
@@ -166,7 +172,7 @@ export const providerSpec = (id: string | undefined | null): ProviderSpec =>
 export function validateBaseUrl(url: string | undefined): string | null {
   const trimmed = (url ?? "").trim()
   if (!trimmed) return null
-  if (!/^https?:\/\/.+/i.test(trimmed)) return "Must start with http:// or https://"
+  if (!/^https?:\/\/.+/i.test(trimmed)) return i18n.t("knowledge:embedding.baseUrl.invalid")
   return null
 }
 

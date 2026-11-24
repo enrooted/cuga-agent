@@ -3,6 +3,7 @@
  * (Copyright IBM Corp., Apache-2.0). Logic unchanged; imports adapted.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import i18n from "@/i18n"
 import * as api from "@/lib/api"
 import type { AttachmentSnapshot } from "@/lib/chat-model"
 
@@ -90,7 +91,7 @@ const createUploadId = (file: File) =>
 
 function getUploadError(task: UploadTaskResponse | undefined) {
   const info = task?.file_tasks ? Object.values(task.file_tasks)[0] : undefined
-  return info?.error || "Ingestion failed"
+  return info?.error || i18n.t("chat:attachments.ingestionFailed")
 }
 
 export function useSessionKnowledgeAttachments({
@@ -149,7 +150,7 @@ export function useSessionKnowledgeAttachments({
           ? await api.listKnowledgeDocuments()
           : await api.listSessionKnowledgeDocuments(tid!)
       if (!isCurrent()) return
-      if (!res.ok) throw new Error(`Failed to load documents (${res.status})`)
+      if (!res.ok) throw new Error(i18n.t("chat:panel.knowledge.loadFailedStatus", { status: res.status }))
       const data = await res.json()
       if (!isCurrent()) return
       const next = ((data.documents ?? []) as DocResponse[]).map((d) =>
@@ -163,7 +164,7 @@ export function useSessionKnowledgeAttachments({
         return filtered.size === current.size ? current : filtered
       })
     } catch (error) {
-      if (isCurrent()) setLoadError(error instanceof Error ? error.message : "Failed to load documents")
+      if (isCurrent()) setLoadError(error instanceof Error ? error.message : i18n.t("chat:panel.knowledge.loadFailed"))
     } finally {
       if (isCurrent()) setIsLoading(false)
     }
@@ -179,7 +180,7 @@ export function useSessionKnowledgeAttachments({
   const uploadSingleFile = useCallback(async (upload: PendingUpload) => {
     const tid = threadIdRef.current
     const currentScope = scopeRef.current
-    if (currentScope === "session" && !tid) throw new Error("Session attachments are unavailable.")
+    if (currentScope === "session" && !tid) throw new Error(i18n.t("chat:attachments.sessionUnavailable"))
     setPendingUploads((cur) =>
       cur.map((i) => (i.id === upload.id ? { ...i, status: "uploading", error: undefined } : i))
     )
@@ -188,8 +189,8 @@ export function useSessionKnowledgeAttachments({
         ? await api.uploadKnowledgeDocuments([upload.file])
         : await api.uploadSessionKnowledgeDocuments(tid!, [upload.file])
     if (!res.ok) {
-      const detail = await res.text().catch(() => "Upload failed")
-      throw new Error(detail || "Upload failed")
+      const detail = await res.text().catch(() => "")
+      throw new Error(detail || i18n.t("chat:attachments.uploadFailed"))
     }
     const data = (await res.json().catch(() => ({}))) as UploadTaskResponse
     const task = data?.tasks?.[0] ?? data
@@ -224,7 +225,7 @@ export function useSessionKnowledgeAttachments({
             await uploadSingleFile(upload)
             return true
           } catch (error) {
-            const message = error instanceof Error ? error.message : "Upload failed"
+            const message = error instanceof Error ? error.message : i18n.t("chat:attachments.uploadFailed")
             setPendingUploads((cur) =>
               cur.map((i) => (i.id === upload.id ? { ...i, status: "error", error: message } : i))
             )
@@ -247,7 +248,7 @@ export function useSessionKnowledgeAttachments({
         await refreshDocuments()
         onSessionDocsChanged?.()
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Upload failed"
+        const message = error instanceof Error ? error.message : i18n.t("chat:attachments.uploadFailed")
         setPendingUploads((cur) =>
           cur.map((i) => (i.id === uploadId ? { ...i, status: "error", error: message } : i))
         )
@@ -272,8 +273,8 @@ export function useSessionKnowledgeAttachments({
             ? await api.deleteKnowledgeDocument(filename)
             : await api.deleteSessionKnowledgeDocument(tid!, filename)
         if (!res.ok) {
-          const detail = await res.text().catch(() => "Delete failed")
-          throw new Error(detail || "Delete failed")
+          const detail = await res.text().catch(() => "")
+          throw new Error(detail || i18n.t("chat:attachments.deleteFailed"))
         }
         metaRef.current.delete(filename)
         setTracked((cur) => {

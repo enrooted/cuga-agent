@@ -1,5 +1,6 @@
 // Ported from cuga-agent/src/frontend_workspaces/frontend/src/manage/hooks/useKnowledgeDraftSave.ts (Copyright IBM Corp., Apache-2.0). Logic unchanged.
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import i18n from "@/i18n";
 import * as api from "@/lib/manage/api";
 import { isAbortError, type AddToast } from "./saveHelpers";
 
@@ -99,7 +100,7 @@ export function useKnowledgeDraftSave(opts: {
         prev.kind === "saving" || prev.kind === "saving-slow"
           ? {
               kind: "failed",
-              error: "Save took too long — server may be busy. Try again.",
+              error: i18n.t("knowledge:draftSave.tooLong"),
             }
           : prev,
       );
@@ -187,10 +188,10 @@ export function useKnowledgeDraftSave(opts: {
             }
             setDraftSaveStatus({
               kind: "failed",
-              error: (err && err.message) || "Couldn't apply — see provider error below",
+              error: (err && err.message) || i18n.t("knowledge:draftSave.couldntApply"),
             });
           } catch {
-            setDraftSaveStatus({ kind: "failed", error: "Save rejected by server" });
+            setDraftSaveStatus({ kind: "failed", error: i18n.t("knowledge:draftSave.rejected") });
           }
         } else if (res.status === 409) {
           if (ac.signal.aborted) return;
@@ -216,7 +217,7 @@ export function useKnowledgeDraftSave(opts: {
             } else {
               setDraftSaveStatus({
                 kind: "failed",
-                error: "Re-index still running — click Retry once it finishes.",
+                error: i18n.t("knowledge:draftSave.reindexRunning"),
               });
             }
             return;
@@ -224,12 +225,12 @@ export function useKnowledgeDraftSave(opts: {
 
           setDraftSaveStatus({
             kind: "failed",
-            error: "Save conflicts with current server state. Try again.",
+            error: i18n.t("knowledge:draftSave.conflict"),
           });
           addToast(
             "warning",
-            "Can't change settings yet",
-            "A re-index or other config update was in progress. Your change will save on the next attempt.",
+            i18n.t("knowledge:draftSave.conflictToastTitle"),
+            i18n.t("knowledge:draftSave.conflictToastBody"),
           );
         } else {
           if (ac.signal.aborted) return;
@@ -243,7 +244,9 @@ export function useKnowledgeDraftSave(opts: {
           console.error(`[useKnowledgeDraftSave] knowledge PATCH failed: ${res.status}`, detail);
           setDraftSaveStatus({
             kind: "failed",
-            error: detail ? `Save failed (${res.status}): ${detail}` : `Save failed (${res.status})`,
+            error: detail
+              ? i18n.t("knowledge:draftSave.failedStatusDetail", { status: res.status, detail })
+              : i18n.t("knowledge:draftSave.failedStatus", { status: res.status }),
           });
         }
       } catch (err) {
@@ -251,7 +254,7 @@ export function useKnowledgeDraftSave(opts: {
         console.error("[useKnowledgeDraftSave] knowledge PATCH threw:", err);
         setDraftSaveStatus({
           kind: "failed",
-          error: err instanceof Error ? err.message : "Couldn't save — check your connection",
+          error: err instanceof Error ? err.message : i18n.t("knowledge:draftSave.checkConnection"),
         });
       }
     }, debounceMs);

@@ -2,12 +2,23 @@
  * Ported from cuga-agent/src/frontend_workspaces/frontend/src/ToolsConfig.tsx
  * (Copyright IBM Corp., Apache-2.0)
  *
- * The tools list of an agent: configured MCP / OpenAPI entries (edit, remove,
- * pick a subset of a connected server's tools), the runtime built-in apps, and
- * the entry points to the add-tool dialog and the secrets manager.
+ * The tools list of an agent: configured MCP / OpenAPI / MCP gateway entries
+ * (edit, remove, pick a subset of a connected server's tools, open the gateway
+ * console), the runtime built-in apps, and the entry points to the add-tool
+ * dialog, the MCP gateway form and the secrets manager.
  */
 import * as React from "react"
-import { CircleCheckIcon, KeyRoundIcon, ListFilterIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import {
+  CableIcon,
+  CircleCheckIcon,
+  ExternalLinkIcon,
+  KeyRoundIcon,
+  ListFilterIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react"
+import { Trans, useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,7 +36,7 @@ import type { ConnectedApp, ConnectedTool, ToolEntry } from "@/lib/manage/tools-
 
 import { AddToolDialog } from "./add-tool-dialog"
 import { SecretsManager } from "./secrets-manager"
-import { IconButton } from "./shared"
+import { IconButton, IconLink } from "./shared"
 
 export type { ConnectedApp, ConnectedTool, ToolEntry }
 
@@ -63,8 +74,10 @@ function ToolsConfigInner({
   builtinTools = DEFAULT_BUILTIN_TOOLS,
   onOpenSecrets,
 }: ToolsConfigProps) {
+  const { t: tr } = useTranslation("tools")
   const builtinSet = React.useMemo(() => new Set(builtinTools.map((n) => n.toLowerCase())), [builtinTools])
   const [modalOpen, setModalOpen] = React.useState(false)
+  const [gatewayModalOpen, setGatewayModalOpen] = React.useState(false)
   const [secretsOpen, setSecretsOpen] = React.useState(false)
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null)
   const [toolsModalIndex, setToolsModalIndex] = React.useState<number | null>(null)
@@ -150,7 +163,7 @@ function ToolsConfigInner({
   return (
     <div className="flex flex-col gap-4">
       {tools.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No tools configured yet.</p>
+        <p className="text-sm text-muted-foreground">{tr("toolsList.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {displayTools.map((t, i) => {
@@ -160,31 +173,53 @@ function ToolsConfigInner({
               t.url || (t.command ? `${t.command}${t.args?.length ? ` ${t.args.join(" ")}` : ""}` : null)
             const include = t.include ?? []
             const typeLabel = t.type === "mcp" ? "MCP" : "OpenAPI"
+            const gateway = t.gateway
             return (
               <li key={i} className="rounded-lg border bg-card px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="truncate text-sm font-semibold text-foreground">{t.name || typeLabel}</span>
-                    <Badge variant="secondary">{typeLabel}</Badge>
-                    {isBuiltIn && <Badge variant="outline">Built-in</Badge>}
+                    <Badge variant="secondary">{gateway ? tr("toolsList.gatewayBadge") : typeLabel}</Badge>
+                    {gateway && (
+                      <Badge
+                        variant="outline"
+                        title={
+                          gateway.run_as === "user"
+                            ? tr("toolsList.runAsUserTitle")
+                            : tr("toolsList.runAsServiceTitle")
+                        }
+                      >
+                        {gateway.run_as === "user" ? tr("toolsList.asUser") : tr("toolsList.asService")}
+                      </Badge>
+                    )}
+                    {isBuiltIn && <Badge variant="outline">{tr("toolsList.builtIn")}</Badge>}
                     {isConnected && (
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <CircleCheckIcon className="size-3.5 text-status-ok" aria-hidden="true" />
-                        Connected
+                        {tr("toolsList.connected")}
                       </span>
                     )}
-                    {include.length > 0 && <Badge variant="outline">{include.length} selected</Badge>}
+                    {include.length > 0 && <Badge variant="outline">{tr("toolsList.selected", { count: include.length })}</Badge>}
                   </div>
                   <div className="flex shrink-0 items-center gap-0.5">
-                    {isConnected && (
-                      <IconButton label="Select tools" onClick={() => setToolsModalIndex(i)}>
+                    {(isConnected || gateway) && (
+                      <IconButton
+                        label={tr("toolsList.selectTools")}
+                        // A gateway's picker lists the instance's tools, also the unselected ones.
+                        onClick={() => (gateway ? setEditingIndex(i) : setToolsModalIndex(i))}
+                      >
                         <ListFilterIcon />
                       </IconButton>
                     )}
-                    <IconButton label="Edit" onClick={() => setEditingIndex(i)} disabled={isBuiltIn}>
+                    {gateway && /^https?:\/\//i.test(gateway.instance_url) && (
+                      <IconLink label={tr("toolsList.openConsole")} href={gateway.instance_url}>
+                        <ExternalLinkIcon />
+                      </IconLink>
+                    )}
+                    <IconButton label={tr("common:action.edit")} onClick={() => setEditingIndex(i)} disabled={isBuiltIn}>
                       <PencilIcon />
                     </IconButton>
-                    <IconButton label="Remove" onClick={() => handleRemove(i)} disabled={isBuiltIn}>
+                    <IconButton label={tr("common:action.remove")} onClick={() => handleRemove(i)} disabled={isBuiltIn}>
                       <Trash2Icon />
                     </IconButton>
                   </div>
@@ -211,9 +246,9 @@ function ToolsConfigInner({
               <li key={app.name} className="rounded-lg border bg-card px-3 py-2">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="truncate text-sm font-semibold text-foreground">{app.name}</span>
-                  <Badge variant="outline">Built-in</Badge>
+                  <Badge variant="outline">{tr("toolsList.builtIn")}</Badge>
                   <Badge variant="secondary">
-                    {app.tool_count} tool{app.tool_count !== 1 ? "s" : ""}
+                    {tr("toolsList.toolCount", { count: app.tool_count })}
                   </Badge>
                 </div>
                 {appToolNames && (
@@ -228,27 +263,40 @@ function ToolsConfigInner({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <IconButton label="Manage secrets" onClick={() => (onOpenSecrets ? onOpenSecrets() : setSecretsOpen(true))}>
+        <IconButton label={tr("toolsList.manageSecrets")} onClick={() => (onOpenSecrets ? onOpenSecrets() : setSecretsOpen(true))}>
           <KeyRoundIcon />
         </IconButton>
         <Button type="button" variant="secondary" size="sm" onClick={() => setModalOpen(true)}>
           <PlusIcon data-icon="inline-start" />
-          Add tool
+          {tr("toolsList.addTool")}
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => setGatewayModalOpen(true)}>
+          <CableIcon data-icon="inline-start" />
+          {tr("toolsList.gatewayButton")}
         </Button>
         {tools.length > TOOLS_PREVIEW_COUNT && !showAllTools && (
           <Button type="button" variant="ghost" size="sm" onClick={() => setShowAllTools(true)}>
-            Show {tools.length - TOOLS_PREVIEW_COUNT} more
+            {tr("toolsList.showMore", { count: tools.length - TOOLS_PREVIEW_COUNT })}
           </Button>
         )}
         {tools.length > TOOLS_PREVIEW_COUNT && showAllTools && (
           <Button type="button" variant="ghost" size="sm" onClick={() => setShowAllTools(false)}>
-            Show less
+            {tr("toolsList.showLess")}
           </Button>
         )}
       </div>
 
       {modalOpen && (
         <AddToolDialog onClose={() => setModalOpen(false)} onSave={handleAdd} initial={null} agentId={agentId} />
+      )}
+      {gatewayModalOpen && (
+        <AddToolDialog
+          onClose={() => setGatewayModalOpen(false)}
+          onSave={handleAdd}
+          initial={null}
+          agentId={agentId}
+          gatewayOnly
+        />
       )}
       {editingIndex !== null && editingTool !== null && (
         <AddToolDialog
@@ -301,6 +349,7 @@ export function ServerToolsDialog({
   onClose,
   onSave,
 }: ServerToolsDialogProps) {
+  const { t: tr } = useTranslation("tools")
   const allIds = React.useMemo(() => appTools.map((t) => t.id ?? t.name), [appTools])
   const defaultChecked =
     !currentInclude || currentInclude.length === 0 || currentInclude.length === allIds.length
@@ -338,15 +387,20 @@ export function ServerToolsDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{`Tools for ${serverName}`}</DialogTitle>
+          <DialogTitle>{tr("serverTools.title", { name: serverName })}</DialogTitle>
           <DialogDescription className={isNewInConfig ? undefined : "sr-only"}>
             {isNewInConfig ? (
-              <>
-                Saving will add <strong className="font-bold text-foreground">{serverName}</strong> to your
-                configuration list above.
-              </>
+              <Trans
+                ns="tools"
+                i18nKey="serverTools.willAdd"
+                values={{ name: serverName }}
+                components={{ strong: <strong className="font-bold text-foreground" /> }}
+                // The name is data: escape it so it cannot be read as markup, then show it as typed.
+                tOptions={{ interpolation: { escapeValue: true } }}
+                shouldUnescape
+              />
             ) : (
-              "Choose which tools of this server the agent may use."
+              tr("serverTools.description")
             )}
           </DialogDescription>
         </DialogHeader>
@@ -357,7 +411,7 @@ export function ServerToolsDialog({
               checked={selectAll || selected.size === allIds.length}
               onCheckedChange={(checked) => handleSelectAll(!!checked)}
             />
-            <Label htmlFor={`${baseId}-all`}>Select all</Label>
+            <Label htmlFor={`${baseId}-all`}>{tr("serverTools.selectAll")}</Label>
           </div>
           <ul className="flex flex-col gap-2">
             {appTools.map((t, i) => {
@@ -383,10 +437,10 @@ export function ServerToolsDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {tr("common:action.cancel")}
           </Button>
           <Button type="button" onClick={handleSave}>
-            Save
+            {tr("common:action.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

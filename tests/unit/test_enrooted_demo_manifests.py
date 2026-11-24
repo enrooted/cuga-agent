@@ -67,6 +67,8 @@ def test_demo_preview(tmp_path, scenario, build):
     assert settings["OPENAI_SSL_VERIFY"] == "false"
     assert settings["DYNACONF_EVOLVE__ENABLED"] == settings["DYNACONF_SKILLS__ENABLED"] == "true"
     assert settings["DYNACONF_STORAGE__MODE"] == "prod"
+    # Manage needs the registry to offer "Create agent".
+    assert settings["DYNACONF_SUPERVISOR__REGISTRY_ENABLED"] == "true"
     pod = next(d for d in docs if d["kind"] == "Pod")
     containers = {c["name"]: c for c in pod["spec"]["containers"]}
     tag = "demo-mac" if platform.machine().lower() in ("aarch64", "arm64") else "demo"

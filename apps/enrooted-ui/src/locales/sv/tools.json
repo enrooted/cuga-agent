@@ -1,0 +1,263 @@
+{
+  "shared": {
+    "opensInNewTab": "{{label}} (öppnas i en ny flik)"
+  },
+  "authType": {
+    "none": "Ingen autentisering",
+    "header": "Header",
+    "bearer": "Bearer-token",
+    "apiKey": "API-nyckel (query)",
+    "basic": "Basic (användare:lösenord)",
+    "query": "Query-parameter"
+  },
+  "templates": {
+    "title": "Börja från en mall",
+    "configureManually": "Eller konfigurera manuellt",
+    "browse": "Bläddra bland mallar",
+    "mcpGateway": {
+      "name": "MCP Gateway-instans",
+      "description": "Anslut arbetsytans verktyg som inloggad användare eller tjänste-ID"
+    },
+    "filesystem": {
+      "name": "Filesystem",
+      "description": "Läs och skriv filer i en angiven katalog"
+    },
+    "drawio": {
+      "name": "Drawio",
+      "description": "Skapa och ändra diagram med Draw.io"
+    },
+    "browserMcp": {
+      "name": "Browser_MCP",
+      "description": "Automatisera webbläsaren och interagera med webbsidor"
+    }
+  },
+  "addTool": {
+    "title": {
+      "add": "Lägg till verktyg",
+      "edit": "Redigera verktyg",
+      "addGateway": "Lägg till MCP Gateway",
+      "editGateway": "Redigera MCP Gateway"
+    },
+    "description": {
+      "tool": "Anslut en MCP-server eller en OpenAPI-tjänst och ange hur agenten autentiserar sig mot den.",
+      "gateway": "Anslut en MCP Gateway-instans, välj vem verktygsanropen körs som och vilka verktyg agenten får använda."
+    },
+    "notSaved": "Inte sparat",
+    "name": {
+      "label": "Namn",
+      "placeholderMcp": "t.ex. my_tool",
+      "placeholderOpenapi": "t.ex. crm_api",
+      "help": "Små bokstäver, siffror och understreck (t.ex. my_tool)",
+      "required": "Namn måste anges",
+      "invalid": "Använd bara små bokstäver, siffror och understreck (t.ex. my_tool)"
+    },
+    "type": {
+      "label": "Typ",
+      "mcp": "MCP-server",
+      "openapi": "OpenAPI-tjänst"
+    },
+    "connection": {
+      "label": "Anslutning",
+      "url": "URL (SSE)",
+      "urlHttp": "URL (HTTP)",
+      "command": "Kommando (stdio)",
+      "gateway": "MCP Gateway-instans"
+    },
+    "gatewayUrl": {
+      "label": "Gateway-instansens URL",
+      "placeholder": "https://<gateway>/?instance=<instans-ID>",
+      "invalid": "Kopiera URL:en från gateway-instansens sida i din arbetsyta; den slutar med ?instance=<id>",
+      "help": "Från gateway-instansens sida i din arbetsyta"
+    },
+    "command": {
+      "label": "Kommando",
+      "placeholder": "t.ex. npx"
+    },
+    "args": {
+      "label": "Argument (ett per rad)",
+      "help": "Ett argument per rad (t.ex. -y, paketnamn, arbetskatalog)"
+    },
+    "env": {
+      "label": "Miljövariabler (en per rad)",
+      "help": "KEY=VALUE per rad. Ange ENV_VAR_NAME som värde för att hänvisa till processens miljö (t.ex. MY_KEY=MY_KEY)",
+      "invalid_one": "Ogiltig miljövariabelrad: {{lines}}. Använd formatet KEY=VALUE.",
+      "invalid_other": "Ogiltiga miljövariabelrader: {{lines}}. Använd formatet KEY=VALUE."
+    },
+    "url": {
+      "label": "URL",
+      "helpHttp": "MCP-serverns Streamable HTTP-endpoint",
+      "helpSse": "MCP-serverns SSE-endpoint (t.ex. /sse)",
+      "helpOpenapi": "URL till OpenAPI-specifikationen"
+    },
+    "descriptionField": {
+      "label": "Beskrivning",
+      "placeholder": "Kort beskrivning av vad verktyget erbjuder"
+    },
+    "gateway": {
+      "legend": "Åtkomst till gatewayen",
+      "runAs": {
+        "label": "Verktygsanrop körs som",
+        "user": "Inloggad användare",
+        "service": "Tjänste-ID (instansens API-nyckel)",
+        "helpUser": "Varje verktygsanrop görs med den inloggade användarens identitet och roll. Schemalagda körningar kräver ett tjänste-ID.",
+        "helpService": "API-nyckelns tjänste-ID, för alla användare och för schemalagda körningar. Gatewayen ser en enda identitet."
+      },
+      "hintUser": "Anslut med din inloggning och välj sedan vilka verktyg agenten får använda. Inga verktyg väljs automatiskt.",
+      "hintService": "En API-nyckel som skapats på instansens sida och sparas som en hemlighet. Den används för att lista instansens verktyg och göra verktygsanropen.",
+      "connect": "Anslut",
+      "connecting": "Ansluter…",
+      "refresh": "Uppdatera verktyg",
+      "refreshing": "Uppdaterar verktyg…",
+      "connectFailed": "Anslutningen misslyckades",
+      "connectFailedStatus": "Anslutningen misslyckades ({{status}})",
+      "selectedSummary_one": "{{count}} verktyg valt. Anslut för att ändra urvalet.",
+      "selectedSummary_other": "{{count}} verktyg valda. Anslut för att ändra urvalet.",
+      "keyNotSaved": "API-nyckeln kunde inte sparas som en hemlighet ({{reason}}). Inget sparades.",
+      "unknownError": "fel"
+    },
+    "auth": {
+      "legend": "Autentisering",
+      "type": "Autentiseringstyp",
+      "key": "Header- eller query-nyckel"
+    },
+    "secret": {
+      "useSaved": "Använd en sparad hemlighet",
+      "loading": "Läser in sparade hemligheter…",
+      "label": "Hemlighet",
+      "select": "Välj en hemlighet",
+      "createNew": "Skapa ny hemlighet",
+      "keyName": "Nyckelnamn",
+      "keyNamePlaceholder": "t.ex. my-tool-api-key",
+      "keyNameHelp": "Valfritt; lämna tomt för att skapa ett automatiskt",
+      "newValue": "Den nya hemlighetens värde",
+      "valuePlaceholder": "Hemlighetens värde",
+      "saving": "Sparar hemligheten…",
+      "value": "Hemlighet / token / värde",
+      "keepExisting": "Lämna tomt för att behålla det befintliga",
+      "saveAsNew": "Spara som ny hemlighet",
+      "saveFailed": "Det gick inte att spara hemligheten",
+      "saveFailedStatus": "Det gick inte att spara hemligheten ({{status}})"
+    },
+    "submit": {
+      "savingGateway": "Sparar gatewayen…",
+      "savingTool": "Sparar verktyget…",
+      "addGateway": "Lägg till gateway",
+      "addTool": "Lägg till verktyg"
+    }
+  },
+  "gatewayPicker": {
+    "label": "Gatewayens verktyg",
+    "heading_one": "Välj vilka verktyg agenten får använda ({{count}} valt)",
+    "heading_other": "Välj vilka verktyg agenten får använda ({{count}} valda)",
+    "empty": "Instansen har inga verktyg än."
+  },
+  "toolsList": {
+    "empty": "Inga verktyg har konfigurerats än.",
+    "gatewayBadge": "MCP Gateway",
+    "runAsUserTitle": "Verktygsanrop körs som respektive inloggad användare",
+    "runAsServiceTitle": "Verktygsanrop körs som tjänste-ID:t för instansens API-nyckel",
+    "asUser": "som användare",
+    "asService": "som tjänste-ID",
+    "builtIn": "Inbyggt",
+    "connected": "Anslutet",
+    "selected_one": "{{count}} valt",
+    "selected_other": "{{count}} valda",
+    "selectTools": "Välj verktyg",
+    "openConsole": "Öppna gatewayens konsol",
+    "toolCount_one": "{{count}} verktyg",
+    "toolCount_other": "{{count}} verktyg",
+    "manageSecrets": "Hantera hemligheter",
+    "addTool": "Lägg till verktyg",
+    "gatewayButton": "MCP Gateway",
+    "showMore": "Visa {{count}} till",
+    "showLess": "Visa färre"
+  },
+  "serverTools": {
+    "title": "Verktyg för {{name}}",
+    "willAdd": "När du sparar läggs <strong>{{name}}</strong> till i konfigurationslistan ovan.",
+    "description": "Välj vilka av serverns verktyg agenten får använda.",
+    "selectAll": "Markera alla"
+  },
+  "secrets": {
+    "title": "Hemligheter",
+    "description": "Miljövariabler och sparade hemligheter som verktyg och modeller kan hänvisa till. Värdena visas aldrig.",
+    "error": "Fel",
+    "dismissError": "Stäng felmeddelandet",
+    "forceEnvTitle": "force_env är aktiverat",
+    "forceEnvBody": "Alla hemligheter hämtas enbart från miljövariabler.",
+    "loading": "Läser in hemligheter…",
+    "retry": "Försök igen",
+    "tabsLabel": "Flikar för hemligheter",
+    "tab": {
+      "env": "Miljö",
+      "vault": "Vault",
+      "overrides": "Åsidosättningar"
+    },
+    "envIntro": "Miljövariabler som hittades vid start. Kan användas som referenser i lokalt läge.",
+    "envHiddenVault": "Listan över miljövariabler visas inte i vault-läge.",
+    "envNone": "Inga kända miljövariabler för LLM hittades.",
+    "add": {
+      "legend": "Lägg till hemlighet",
+      "id": "Namn (id)",
+      "idPlaceholder": "t.ex. my-openai-key",
+      "value": "Värde",
+      "valuePlaceholder": "Hemlighetens värde",
+      "description": "Beskrivning (valfritt)",
+      "descriptionPlaceholder": "Valfri beskrivning"
+    },
+    "vaultSecrets": "Hemligheter i Vault",
+    "storedOverrides": "Sparade åsidosättningar",
+    "empty": "Inga hemligheter har sparats än.",
+    "copyRef": "Kopiera referens",
+    "deleting": "Tar bort hemligheten…",
+    "newValueFor": "Nytt värde för {{id}}",
+    "newValue": "Nytt värde",
+    "deleteTitle": "Ta bort hemlighet",
+    "deleteConfirm": "Ta bort hemligheten ”{{id}}”?",
+    "errors": {
+      "loadSecrets": "Det gick inte att läsa in hemligheterna ({{status}})",
+      "loadConfig": "Det gick inte att läsa in konfigurationen för hemligheter ({{status}})",
+      "load": "Det gick inte att läsa in",
+      "create": "Det gick inte att skapa hemligheten",
+      "delete": "Det gick inte att ta bort hemligheten",
+      "update": "Det gick inte att uppdatera hemligheten"
+    }
+  },
+  "sandbox": {
+    "title": "Kodsandlåda",
+    "loading": "Läser in sandlådans inställningar…",
+    "enabled": "Sandlådan är aktiverad",
+    "disabled": "Sandlådan är avstängd",
+    "label": "Sandlåda",
+    "descriptionRequired": "Krävs av driftsättningen (sandbox_mode = \"execd\"). Gäller alla agenter och användare. Konversationer hålls isär av sandlådan, inte av CUGA.",
+    "description": "Kör genererad kod i en fjärransluten execd-sandlåda. Gäller den här serverprocessen; övriga repliker börjar använda den när de startas om. Gäller alla agenter och användare. Konversationer hålls isär av sandlådan, inte av CUGA.",
+    "unavailable": "Sandlådan är inte tillgänglig",
+    "testAgain": "Testa igen",
+    "checking": "Kontrollerar…",
+    "connected": "Ansluten"
+  },
+  "variables": {
+    "title": "Variabler",
+    "collapse": "Fäll ihop variabelpanelen",
+    "selectTurn": "Välj vilken tur i konversationen du vill se variabler från",
+    "historyOption_one": "{{title}} – {{count}} variabel ({{time}})",
+    "historyOption_other": "{{title}} – {{count}} variabler ({{time}})",
+    "viewing": "Visar: {{title}}",
+    "latestTurn": "Senaste turen",
+    "turnsTotal_one": "{{count}} tur totalt",
+    "turnsTotal_other": "{{count}} turer totalt",
+    "emptyTurn": "Inga variabler i den aktuella turen.",
+    "emptyTurnHint": "Välj en tidigare tur i listan ovan för att se dess variabler.",
+    "items_one": "{{count}} objekt",
+    "items_other": "{{count}} objekt",
+    "showPanel": "Visa variabelpanelen ({{count}})",
+    "popup": {
+      "title": "Variabeldetaljer",
+      "download": "Ladda ned {{format}}",
+      "heading": "Variabel: {{name}}",
+      "type": "Typ",
+      "description": "Beskrivning",
+      "value": "Värde"
+    }
+  }
+}

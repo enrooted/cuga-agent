@@ -1,0 +1,495 @@
+{
+  "shared": {
+    "on": "På",
+    "off": "Av",
+    "dismiss": "Stäng",
+    "retry": "Försök igen",
+    "saved": "Sparat",
+    "couldntSave": "Kunde inte spara",
+    "invalidNumber": "Ogiltigt tal",
+    "unknownError": "Okänt fel",
+    "networkError": "Nätverksfel",
+    "noDetail": "Inga detaljer returnerades.",
+    "reindexNow": "Indexera om nu"
+  },
+  "panel": {
+    "title": "Kunskapsbas",
+    "description": "Dokument, söktest, kunskapsstyrning och inställningar för agentens kunskapsbas.",
+    "tabsLabel": "Kunskapsbasens avsnitt",
+    "tab": {
+      "documents": "Dokument ({{total}})",
+      "search": "Söktest",
+      "behavior": "Kunskapsstyrning",
+      "settings": "Inställningar"
+    },
+    "loadFailed": "Det gick inte att läsa in dokumenten",
+    "loadFailedStatus": "Det gick inte att läsa in dokumenten ({{status}})",
+    "agentDisabled": {
+      "title": "Agentens kunskap är avstängd",
+      "manage": "Slå på kunskap på agentnivå under Inställningar för att hantera permanenta dokument.",
+      "search": "Slå på kunskap på agentnivå under Inställningar för att söka i permanenta dokument.",
+      "upload": "Slå på kunskap på agentnivå under Inställningar för att ladda upp permanenta dokument."
+    },
+    "delete": {
+      "title": "Ta bort dokumentet?",
+      "description": "Vill du ta bort ”{{name}}”? Det går inte att ångra.",
+      "done": "Dokumentet togs bort",
+      "failed": "Det gick inte att ta bort dokumentet"
+    }
+  },
+  "documents": {
+    "disabledTitle": "Kunskap på agentnivå är avstängd",
+    "disabledBody": "Permanenta dokument är inte tillgängliga när kunskap på agentnivå är avstängd. Slå på den igen under Inställningar för att ladda upp, indexera och söka i dokument för den här agenten.",
+    "loading": "Läser in dokument…",
+    "empty": "Inga dokument har indexerats än. Ladda upp filer för att komma igång.",
+    "heading": "Indexerade dokument ({{total}})",
+    "deleteDocument": "Ta bort dokument",
+    "dropHere": "Släpp filerna här",
+    "dropOrClick": "Släpp filer här eller klicka för att ladda upp",
+    "uploadLabel": "Ladda upp dokument",
+    "reindexStatus": {
+      "completed": "Klart",
+      "failed": "Misslyckades",
+      "running": "Uppgraderar…",
+      "pending": "I kö"
+    },
+    "upload": {
+      "indexed": "Indexerat",
+      "failed": "Misslyckades",
+      "cancelled": "Avbrutet",
+      "finishing": "Slutför…",
+      "queued": "I kö",
+      "processing": "Bearbetar",
+      "removeFromQueue": "Ta bort från kön",
+      "cancel": "Avbryt uppladdningen"
+    },
+    "uploadError": {
+      "taskNotFound": "Uppgiften hittades inte",
+      "ingestionFailed": "Inläsningen misslyckades",
+      "timedOut": "Inläsningen tog för lång tid",
+      "failed": "Misslyckades",
+      "uploadFailed": "Uppladdningen misslyckades"
+    }
+  },
+  "search": {
+    "disabledTitle": "Sökning i kunskap på agentnivå är avstängd",
+    "disabledBody": "Söktestet i Hantera gäller bara agentens permanenta dokument. Slå på kunskap på agentnivå igen under Inställningar för att testa sökningen här.",
+    "queryLabel": "Sökfråga",
+    "queryPlaceholder": "Sök i kunskapsbasen…",
+    "searching": "Söker…",
+    "limit": "Maxantal",
+    "threshold": "Poängtröskel",
+    "results": "Resultat ({{total}})",
+    "time": "{{ms}} ms",
+    "page": "s. {{page}}",
+    "relevance": "Relevanspoäng",
+    "showLess": "Visa mindre",
+    "showFull": "Visa hela textavsnittet",
+    "noResults": "Inga resultat. Prova en annan sökfråga.",
+    "failed": "Sökningen misslyckades",
+    "failedBody": "Det gick inte att söka i kunskapsbasen"
+  },
+  "harness": {
+    "title": "Kunskapsstyrning",
+    "aiLabel": "AI: om kunskapsstyrningen",
+    "aiBadge": "AI",
+    "about": "Texten här läggs till i kunskapsagentens systemprompt vid varje fråga. Den styr hur språkmodellen formulerar svar, hanterar förbehåll och bevarar exakta beteckningar. Poster i ordlistan utökar dessutom sökfrågan vid sökningen. Inbäddningar, uppdelning och grundrankning påverkas inte.",
+    "roleDescription": "Reglage för AI-beteende",
+    "editorLabel": "Redigerare för kunskapsstyrning",
+    "statusOff": "Av",
+    "statusActive": "Aktiv",
+    "srOff": "(av)",
+    "srActive": "(aktiv)",
+    "markdownLabel": "Kunskapsstyrning i Markdown",
+    "placeholder": "# Domänregler\n\n- Återge [Spara] ordagrant\n- Säg inte ”kontakta supporten” när dokumentationen beskriver en procedur",
+    "overBy": "{{over}} tecken för mycket.",
+    "bidiInline": "Ett osynligt tecken som ändrar textriktningen hittades – ta bort det för att kunna spara.",
+    "nothingYet": "(inget än)",
+    "previewRendered": "Förhandsgranska ›",
+    "backToEdit": "‹ Tillbaka till redigering",
+    "bidi": {
+      "title": "Osynligt tecken som ändrar textriktningen",
+      "action": "Ta bort",
+      "body": "Ett känt sätt att smuggla in promptinstruktioner. Ta bort det för att kunna spara."
+    },
+    "contract": {
+      "title": "Avvisades av AI-säkerhetsreglerna",
+      "action": "Hitta",
+      "body": "Ta bort {{phrase}} för att kunna spara."
+    },
+    "controlChar": {
+      "title": "Styrtecken är inte tillåtna",
+      "body": "Kodpunkt {{codepoint}}."
+    },
+    "examples": {
+      "heading": "Exempel",
+      "hint": "Klicka för att lägga till. Du kan redigera efteråt.",
+      "listLabel": "Exempel på kunskapsstyrning",
+      "reset": "Återställ",
+      "nothingToReset": "Inget att återställa",
+      "resetTitle": "Rensa styrningsregler och ordlista",
+      "append": "Lägg till i redigeraren",
+      "appendAgain": "Lägg till i redigeraren (finns redan i dina regler)",
+      "alreadyInserted": "Redan infogat (klicka för att infoga igen)",
+      "added": "Tillagt"
+    },
+    "template": {
+      "tokenPreservation": {
+        "title": "Bevara exakta beteckningar",
+        "description": "Återge etiketter inom hakparentes, menyvägar, koder och versionssträngar ordagrant."
+      },
+      "answerPolicy": {
+        "title": "Svarspolicy (utan förbehåll)",
+        "description": "Kontrasterande FEL/RÄTT-par som övar in vanan att citera ordagrant."
+      },
+      "supportRunbook": {
+        "title": "Citera supportrutiner",
+        "description": "FEL/RÄTT-par för teknisk support – bevara [etiketter], koder och menyvägar."
+      },
+      "emptyContext": {
+        "title": "Disciplin vid tom kontext",
+        "description": "FEL/RÄTT-par för sökningar utan träffar – ärligt, inget påhittat."
+      },
+      "vocabularyHints": {
+        "title": "Ordförrådstips",
+        "description": "Tala om för CUGA vilka termer som ska räknas som likvärdiga vid sökning i kunskapsbasen."
+      },
+      "sourceCitation": {
+        "title": "Källhänvisning",
+        "description": "Ange källfilens namn för varje påstående om tillvägagångssätt, kod eller knappnamn."
+      }
+    },
+    "glossary": {
+      "heading": "Ordlista",
+      "hint": "Synonymer som läggs till i sökfrågan",
+      "tableLabel": "Poster i domänordlistan",
+      "term": "Term",
+      "aliases": "Alias",
+      "definition": "Definition",
+      "actions": "Åtgärder",
+      "addTerm": "Lägg till term",
+      "removeTerm": "Ta bort term",
+      "removeAlias": "Ta bort {{alias}}",
+      "addAliasFor": "Lägg till alias för {{term}}",
+      "addAliasForThis": "Lägg till alias för den här termen",
+      "aliasPlaceholder": "K-3, avgångskod 3 – Enter lägger till",
+      "definitionPlaceholder": "(valfritt)"
+    }
+  },
+  "envPresets": {
+    "heading": "Hittades i din miljö",
+    "info": "Leverantörer som hittades i din .env eller i skalet. Ett klick väljer leverantören; inloggningsuppgifterna stannar på den här datorn.",
+    "category": {
+      "cloud": "Moln",
+      "enterprise": "Företag"
+    },
+    "envKey": {
+      "url": "URL",
+      "projectId": "Projekt-ID",
+      "endpoint": "Slutpunkt",
+      "apiVersion": "API-version",
+      "baseUrl": "Bas-URL"
+    },
+    "defaultModel": "Standardmodell: {{model}}",
+    "modelLabel": "Modell:",
+    "missing": "Saknas: {{list}}",
+    "active": "Aktiv",
+    "use": "Använd",
+    "setUp": "Konfigurera",
+    "runLocally": "Eller kör lokalt med Fastembed eller Ollama – inga nycklar behövs."
+  },
+  "embedding": {
+    "stillSaving": "Sparar fortfarande",
+    "stillSavingSlow": "Sparar fortfarande – nätverket är långsamt",
+    "using": "Använder <strong>{{provider}}</strong>",
+    "usingModel": "Använder <strong>{{provider}}</strong> · {{model}}",
+    "notSetUp": "Inte konfigurerat än – välj en inbäddningsmodell nedan.",
+    "presetApplied": {
+      "title": "{{label}} används nu",
+      "body": "Leverantören är satt till {{provider}} och modellen till {{model}}. Motorn läser inloggningsuppgifterna från miljön."
+    },
+    "guide": {
+      "reindexing": "Indexerar om dina dokument…",
+      "testing": "Testar anslutningen till {{label}}…",
+      "reachable": "Nåbar – {{dim}} dimensioner",
+      "reachableLatency": "Nåbar – {{dim}} dimensioner, {{ms}} ms",
+      "stillOld": "Befintliga dokument använder fortfarande den gamla leverantören – indexera om för att byta.",
+      "nothingToReindex": "Inget att indexera om än – nya uppladdningar använder den här leverantören.",
+      "unreachableTitle": "Kunde inte nå {{label}}",
+      "unreachableBody": "{{error}} Kontrollera inloggningsuppgifterna i din miljö och testa sedan igen.",
+      "noResponse": "Inbäddningsmodellen svarade inte.",
+      "testAgain": "Testa igen",
+      "verifyTitle": "Verifiera {{label}} innan du indexerar om",
+      "verifyBody": "{{embedder}} – testa att inbäddningsmodellen svarar, så att du inte indexerar om mot en trasig anslutning."
+    },
+    "saveFailedTitle": "Kunde inte spara dina ändringar",
+    "provider": {
+      "label": "Leverantör",
+      "custom": "{{provider}} – anpassad leverantör",
+      "auto": "Automatiskt – den bästa tillgängliga väljs åt dig",
+      "groupLocal": "På din dator",
+      "fastembed": "FastEmbed – körs lokalt, ingen nyckel",
+      "ollama": "Ollama – lokal Ollama-server",
+      "huggingface": "HuggingFace – lokalt, använder din GPU",
+      "groupHosted": "Molntjänst via API",
+      "openai": "OpenAI / kompatibel – OpenAI, Together, Fireworks, proxyer",
+      "openrouter": "OpenRouter – en nyckel, många modeller",
+      "litellm": "LiteLLM – dirigerar till många leverantörer"
+    },
+    "model": {
+      "label": "Modell",
+      "placeholder": "t.ex. openai/text-embedding-3-small",
+      "helperRequired": "Obligatoriskt – ta med leverantörsprefixet (t.ex. openai/text-embedding-3-small).",
+      "helperOllama": "Valfritt – standard är nomic-embed-text.",
+      "helperOptional": "Valfritt – väljs automatiskt för den här leverantören.",
+      "invalid": "Obligatoriskt för den här leverantören – ta med leverantörsprefixet."
+    },
+    "apiKey": {
+      "label": "API-nyckel",
+      "labelOptional": "API-nyckel (valfritt)",
+      "placeholderRequired": "Klistra in OPENROUTER_API_KEY",
+      "placeholderOptional": "Lämna tomt för att använda leverantörens miljövariabel",
+      "helperRequired": "Obligatoriskt för OpenRouter.",
+      "helperOptional": "Valfritt – annars används leverantörens miljövariabel.",
+      "invalid": "En API-nyckel krävs för OpenRouter."
+    },
+    "baseUrl": {
+      "label": "Bas-URL (valfritt)",
+      "placeholderOpenai": "t.ex. https://api.together.xyz/v1",
+      "placeholderOllama": "t.ex. http://localhost:11434",
+      "placeholderLitellm": "t.ex. http://localhost:4000",
+      "helperOpenai": "Valfritt – lämna tomt för OpenAI direkt; lägg till /v1 för de flesta proxyer.",
+      "helperOllama": "Valfritt – standard är http://localhost:11434.",
+      "helperLitellm": "Valfritt – för en LiteLLM-proxy i egen drift.",
+      "invalid": "Måste börja med http:// eller https://"
+    },
+    "links": {
+      "openrouter": "Bläddra bland OpenRouters inbäddningsmodeller",
+      "litellm": "Modeller som LiteLLM stöder"
+    },
+    "testConnection": "Testa anslutningen",
+    "testing": "Testar…",
+    "keySource": {
+      "title": "Varifrån API-nyckeln för inbäddning läses.",
+      "ui": "Nyckel: från gränssnittet",
+      "missing": "Nyckel: saknas",
+      "other": "Nyckel: {{source}}"
+    },
+    "testResult": {
+      "connected": "Ansluten – dim={{dim}}, {{ms}} ms",
+      "failed": "Testet misslyckades",
+      "okBody": "Nu kan du ladda upp dokument på fliken Dokument."
+    },
+    "hardware": {
+      "heading": "Genomströmning och hårdvara",
+      "gpu": "GPU-acceleration",
+      "deviceTitle": "Vad den körande motorn faktiskt har läst in för inbäddning.",
+      "fallback": "GPU saknas – CPU används",
+      "detected": "Hittad: {{device}}"
+    },
+    "extraParams": {
+      "label": "Avancerat: extra leverantörsparametrar (valfritt, JSON-objekt)",
+      "placeholder": "lämna tomt för de flesta leverantörer",
+      "helper": "INTE för modellnamnet – modellen har ett eget fält ovan. Använd bara det här för leverantörsspecifika tillägg (Azure: api_version. Bedrock: aws_region_name).",
+      "reserved": "Ange inte {{keys}} här – de hör hemma i fälten ovan. Den här rutan är för leverantörsspecifika tillägg (t.ex. api_version för Azure)."
+    },
+    "batchSize": {
+      "label": "Batchstorlek",
+      "helper": "Textbitar per inbäddningsanrop. Mindre = finare förlopp; större = mindre omkostnad per anrop."
+    },
+    "concurrency": {
+      "label": "Samtidighet",
+      "helper": "Parallella delbatchar för inbäddning hos nätverksleverantörer (OpenAI / Ollama). Påverkar inte lokala leverantörer."
+    },
+    "vectorInsert": {
+      "label": "Batchstorlek för vektorinfogning",
+      "helper": "Textbitar per add_many-transaktion. Begränsar varje transaktion så att ett stort dokument inte överskrider pgvectors command_timeout eller håller HNSW-skrivlåset länge. Standardvärdet 200 fungerar för vanliga dokument."
+    },
+    "reset": "Återställ inbäddningsmodellen till standardvärden"
+  },
+  "settings": {
+    "sectionStatus": {
+      "needsAttention": "Behöver åtgärdas",
+      "warning": "Varning"
+    },
+    "reason": {
+      "baseUrl": "Bas-URL: {{error}}",
+      "modelRequired": "Modell måste anges",
+      "keyRequired": "API-nyckel måste anges",
+      "testFailed": "Anslutningstestet misslyckades",
+      "overlap": "Överlappet måste vara mindre än textbitsstorleken"
+    },
+    "reset": {
+      "failed": "Återställningen misslyckades",
+      "serverReturned": "Servern svarade {{status}} {{statusText}}",
+      "done": "Avsnittet återställdes",
+      "restored": "{{section}} återställdes till fabriksinställningarna.",
+      "unknownError": "okänt fel",
+      "dialogTitle": "Återställa {{section}} till standardvärden?",
+      "dialogBody": "Avsnittet {{section}} återställs till fabriksinställningarna. Dina övriga kunskapsinställningar påverkas inte. Fält som påverkas: {{fields}}",
+      "confirm": "Återställ avsnittet"
+    },
+    "section": {
+      "embeddings": "Inbäddningar",
+      "chunking": "Uppdelning",
+      "documentParsing": "Dokumenttolkning",
+      "limits": "Gränser"
+    },
+    "service": {
+      "label": "Tjänst",
+      "checking": "Kontrollerar",
+      "connected": "Ansluten",
+      "disconnected": "Frånkopplad",
+      "refresh": "Uppdatera status"
+    },
+    "enabled": {
+      "label": "Kunskapsbas",
+      "disabledHint": "Kunskapsbasen är avstängd. Slå på den för att konfigurera sökinställningarna."
+    },
+    "scope": {
+      "agent": {
+        "title": "Kunskap på agentnivå",
+        "description": "Permanenta dokument som delas mellan alla konversationer"
+      },
+      "session": {
+        "title": "Kunskap på sessionsnivå",
+        "description": "Uppladdningar per konversation och avgränsad sökning"
+      },
+      "citations": {
+        "title": "Källhänvisningar",
+        "description": "Numrera kunskapskällor i svaren ([1]) med klickbara utdrag"
+      }
+    },
+    "notice": {
+      "agentOffTitle": "Kunskap på agentnivå är avstängd",
+      "agentOffBody": "Permanenta dokument, indexering och sökning i Hantera är inte tillgängliga förrän du slår på den igen.",
+      "sessionOffTitle": "Kunskap på sessionsnivå är avstängd",
+      "sessionOffBody": "Uppladdningar i konversationer och kunskapssökning inom sessionen är inte tillgängliga i chatten."
+    },
+    "profile": {
+      "heading": "Sökprofil",
+      "description": "Väg träffsäkerhet i sökningen mot svarstid och kostnad.",
+      "modified": "Ändrad",
+      "requiresReindex": "Kräver att befintliga dokument indexeras om.",
+      "overrides": "Avviker från profilens standardvärden – omindexeringen körs vid publicering.",
+      "standard": "Standard"
+    },
+    "advanced": {
+      "label": "Avancerade inställningar",
+      "hint": "Inbäddningsmodell, uppdelning, tolkning, sökbeteende, poäng och mått samt gränser."
+    },
+    "accordion": {
+      "embeddings": "Inbäddningsmodell",
+      "chunking": "Uppdelning",
+      "docling": "Dokumenttolkning (Docling)",
+      "retrieval": "Sökbeteende",
+      "metric": "Poäng och mått",
+      "limits": "Gränser"
+    },
+    "chunking": {
+      "setByProfile": "Värdena kommer från profilen <strong>{{name}}</strong>. Redigera för att åsidosätta dem.",
+      "size": "Textbitsstorlek",
+      "overlap": "Överlapp mellan textbitar",
+      "reset": "Återställ uppdelningen till standardvärden"
+    },
+    "docling": {
+      "level": "Tolkningsnivå",
+      "levelHelper": "Gäller PDF-filer och alla andra format som Docling stöder (DOCX, PPTX, HTML, bilder, …). Avvägning mellan tolkningshastighet och noggrannhet i extraheringen. Sparas med den publicerade konfigurationen.",
+      "fast": "Snabb – OCR av, tabeller av (bara digitala dokument; ca 3–10× snabbare)",
+      "balanced": "Balanserad – OCR av, tabeller på (digitala dokument med tabeller)",
+      "accurate": "Noggrann (standard) – OCR på, tabeller på (stöder skannade dokument)",
+      "scannedWarning": "Läget <strong>Snabb</strong> extraherar lite eller ingen text ur skannade dokument. Använd <strong>Noggrann</strong> för OCR.",
+      "layout": "Layoutmotor",
+      "layoutHelper": "Vilken backend som kör modellen för layoutdetektering. Auto = ONNX (standard; CPU på Mac, CUDA på NVIDIA). Transformers = PyTorch (enda sättet att använda Apples GPU/MPS; ca 500 MB mer RAM).",
+      "layoutAuto": "Auto (standard) – ONNX, snabbast start på CPU och NVIDIA",
+      "layoutOnnx": "ONNX – uttryckligt (samma som Auto i dag; låst)",
+      "layoutTransformers": "Transformers (PyTorch) – använder MPS på Mac / CUDA på NVIDIA",
+      "reset": "Återställ dokumenttolkningen till standardvärden"
+    },
+    "metric": {
+      "distance": "Avståndsmått",
+      "cosine": "Cosinuslikhet"
+    },
+    "limits": {
+      "maxUpload": "Största uppladdning (MB)",
+      "maxFiles": "Högsta antal filer per begäran",
+      "maxUrl": "Största URL-nedladdning (MB)",
+      "maxChunks": "Högsta antal textbitar per dokument",
+      "maxPending": "Högsta antal väntande uppgifter",
+      "reset": "Återställ gränserna till standardvärden"
+    },
+    "retrieval": {
+      "label": "Frågeutökning",
+      "helper": "Skriver om frågan före sökningen för att hitta dokument som uttrycker saken annorlunda. Lägger till ett språkmodellsanrop (ca 0,3–1,5 s) per sökning och förbättrar inte alla dokumentsamlingar – låt det vara Av om du inte har sett att det hjälper. Den ursprungliga frågan körs fortfarande, och om omskrivningen misslyckas eller tar för lång tid används den oförändrade frågan.",
+      "optionOff": "Av – sök på frågan som den skrevs (standard)",
+      "optionMultiQuery": "Omformulera frågan (multi-query) – prova några alternativa formuleringar",
+      "optionHyde": "Skriv först ett idealsvar (HyDE) – matcha mot ett hypotetiskt textavsnitt",
+      "short": {
+        "off": "Av",
+        "multi_query": "Omformulera frågan (multi-query)",
+        "hyde": "Skriv först ett idealsvar (HyDE)"
+      },
+      "profileDefault": "Standard för profilen {{profile}}: {{value}}",
+      "resetToProfile": "Återställ till profilens standard",
+      "extraStepTitle": "Lägger till ett extra AI-steg per sökning",
+      "extraStepBody": "Varje sökning gör nu först ett modellanrop – ungefär 0,3–1,5 s långsammare och med en liten extra kostnad. Håll koll på svarstiden när du har slagit på det, och byt tillbaka till Av om träffarna inte blir bättre."
+    },
+    "unavailable": {
+      "manage": "Kunskapsinställningarna hanteras på sidan Hantera.",
+      "settings": "Kunskapsinställningarna hanteras på sidan Inställningar."
+    }
+  },
+  "reindex": {
+    "bannerTitle": "Indexera om för att tillämpa dina ändringar",
+    "bannerText": "Befintliga dokument använder fortfarande den tidigare inbäddningsmodellen. Nya uppladdningar använder den nya konfigurationen, men redan indexerade dokument måste indexeras om för att byta.",
+    "progressLine_one": "{{finished}} av {{count}} dokument klart · Har pågått i {{elapsed}}",
+    "progressLine_other": "{{finished}} av {{count}} dokument klara · Har pågått i {{elapsed}}",
+    "progressLabel": "Förlopp för omindexeringen",
+    "columnDocument": "Dokument",
+    "columnStatus": "Status",
+    "complete": "Omindexeringen är klar",
+    "finishedWithErrors": "Omindexeringen slutfördes med fel",
+    "succeeded": "{{completed}} lyckades.",
+    "succeededFailed": "{{completed}} lyckades, {{failed}} misslyckades.",
+    "reindexing": "Indexerar om…",
+    "status": {
+      "running": "Indexerar",
+      "completed": "Klart",
+      "failed": "Misslyckades",
+      "pending": "Väntar"
+    },
+    "stage": {
+      "parsed": "Tolkat",
+      "embed": "Bäddar in",
+      "saving": "Sparar"
+    },
+    "phase": {
+      "preparing": "Förbereder din nya läsmodell",
+      "filing": "Lägger allt på sin nya plats",
+      "rereading": "Läser dina dokument på nytt"
+    },
+    "elapsed": {
+      "seconds": "{{seconds}} s",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s",
+      "minutes": "{{minutes}} min"
+    },
+    "toast": {
+      "completeBody": "{{completed}} dokument indexerades om.",
+      "incompleteTitle": "Omindexeringen slutfördes inte",
+      "incompleteBody": "{{completed}}/{{total}} lyckades; {{failed}} misslyckades: {{names}}. Din tidigare konfiguration för inbäddning är fortfarande aktiv. Åtgärda filerna som misslyckades och indexera om igen, eller återställ konfigurationen.",
+      "incompleteBodyMore": "{{completed}}/{{total}} lyckades; {{failed}} misslyckades: {{names}} (+{{more}} till). Din tidigare konfiguration för inbäddning är fortfarande aktiv. Åtgärda filerna som misslyckades och indexera om igen, eller återställ konfigurationen."
+    }
+  },
+  "draftSave": {
+    "tooLong": "Det tog för lång tid att spara – servern kan vara upptagen. Försök igen.",
+    "couldntApply": "Kunde inte tillämpa ändringen – se leverantörens fel nedan",
+    "rejected": "Servern avvisade ändringen",
+    "reindexRunning": "Omindexeringen pågår fortfarande – klicka på Försök igen när den är klar.",
+    "conflict": "Ändringen krockar med serverns aktuella läge. Försök igen.",
+    "conflictToastTitle": "Inställningarna kan inte ändras än",
+    "conflictToastBody": "En omindexering eller en annan konfigurationsändring pågick. Din ändring sparas vid nästa försök.",
+    "failedStatus": "Det gick inte att spara ({{status}})",
+    "failedStatusDetail": "Det gick inte att spara ({{status}}): {{detail}}",
+    "checkConnection": "Kunde inte spara – kontrollera anslutningen"
+  }
+}

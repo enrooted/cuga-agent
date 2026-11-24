@@ -1,0 +1,279 @@
+{
+  "page": {
+    "skipToContent": "Skip to main content",
+    "retry": "Retry",
+    "newChat": "New chat",
+    "navigation": "Navigation",
+    "navigationDescription": "Agent, views and your conversations",
+    "agentDetails": "Agent details",
+    "agentDetailsDescription": "Tools, files, knowledge and skills",
+    "openNavigation": "Open navigation",
+    "openAgentPanel": "Open agent panel",
+    "closeAgentPanel": "Close agent panel",
+    "banner": {
+      "unavailable": "This conversation's saved state can't be loaded. You can still read it, but you'll need to start a new conversation to continue.",
+      "external": "This conversation was started outside the web UI (API or extension) and can't be continued here. Start a new conversation to keep going.",
+      "legacy": "This conversation was created before conversations could be continued. Start a new conversation to keep going."
+    },
+    "removeAll": {
+      "title": "Remove all conversations",
+      "description": "Remove all conversations? This cannot be undone."
+    }
+  },
+  "agent": {
+    "defaultDescription": "A general-purpose assistant with configured tools and workspace access.",
+    "unknownApp": "Unknown App",
+    "noDescription": "No description available"
+  },
+  "error": {
+    "unknown": "Unknown error",
+    "restoreChat": "Cannot restore chat (HTTP {{status}})",
+    "createChat": "Cannot create chat (HTTP {{status}})"
+  },
+  "toast": {
+    "threadsLoadError": "Threads Load Error",
+    "threadsLoadErrorBody": "Network error loading conversation threads",
+    "draftCleanup": "Draft cleanup incomplete",
+    "draftCleanupBody": "The draft knowledge collection could not be removed.",
+    "toolsLoadWarning": "Tools Load Warning",
+    "toolsLoadWarningBody": "Failed to load tools list ({{status}} {{statusText}})",
+    "configLoadError": "Configuration Load Error",
+    "configLoadErrorBody": "Network error loading agent configuration",
+    "workspaceRefreshFailed": "Workspace refresh failed",
+    "uploadUnavailable": "Upload unavailable",
+    "uploadUnavailableBody": "Start a chat before uploading files.",
+    "uploadComplete": "Upload complete",
+    "uploadCompleteBody_one": "{{count}} file uploaded to workspace/uploads/",
+    "uploadCompleteBody_other": "{{count}} files uploaded to workspace/uploads/",
+    "uploadFailed": "Upload failed",
+    "downloadFailed": "Download failed",
+    "previewNotAvailable": "Preview not available",
+    "previewNotAvailableBody": "Only text and markdown files can be previewed.",
+    "fileLoadFailed": "Failed to load file",
+    "fileLoadError": "Error loading file",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableBody": "Failed to load attachment.",
+    "error": "Error",
+    "removeSomeFailed": "Failed to remove {{failed}} of {{total}} conversations.",
+    "removeFailed": "Failed to remove conversations.",
+    "conversationUnavailable": "Conversation unavailable",
+    "conversationUnavailableBody": "This conversation is no longer available.",
+    "responseRunning": "Response still running",
+    "responseRunningBody": "Another response is still running in this conversation. Try again in a moment.",
+    "couldNotSend": "Couldn't send",
+    "couldNotSendBody": "This message could not be sent. Try again in a moment.",
+    "pendingCancelled": "A pending approval was cancelled because the agent’s configuration changed.",
+    "configChanged": "This agent’s configuration was updated since your last message. Replies now use the latest version."
+  },
+  "view": {
+    "readOnly": "Read-only",
+    "restart": "Restart conversation",
+    "loadingHistory": "Loading conversation history…",
+    "recentConversations": "Recent conversations",
+    "recent": "Recent",
+    "dropFiles": "Drop files to attach them to this conversation",
+    "commandsLoadFailed": "Failed to load commands"
+  },
+  "home": {
+    "greeting": "Hello, how can I help you today?",
+    "starter": "Hi, what can you do for me?"
+  },
+  "composer": {
+    "placeholder": "Type something...",
+    "placeholderReadOnly": "This conversation is read-only — start a new conversation to chat",
+    "message": "Message",
+    "slashCommands": "Slash commands",
+    "loadingCommands": "Loading commands…",
+    "noMatchingCommands": "No matching commands",
+    "skill": "skill",
+    "attachFiles": "Attach files",
+    "hint": "Enter to send · Shift+Enter for a new line",
+    "hintWithCommands": "Enter to send · Shift+Enter for a new line · / for commands",
+    "stop": "Stop response",
+    "send": "Send message",
+    "manage": "Manage",
+    "retryUpload": "Retry upload {{name}}",
+    "removeFile": "Remove file {{name}}",
+    "dismiss": "Dismiss {{name}}"
+  },
+  "message": {
+    "thinking": "Thinking…",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "steps_one": "{{count}} step",
+    "steps_other": "{{count}} steps",
+    "youChose": "You chose “{{label}}”",
+    "memoryUsed_one": "{{count}} memory used",
+    "memoryUsed_other": "{{count}} memories used",
+    "memorySaved_one": "{{count}} memory saved",
+    "memorySaved_other": "{{count}} memories saved"
+  },
+  "sources": {
+    "answerSources": "Answer sources",
+    "title": "Sources",
+    "more": "+{{count}} more",
+    "cited_one": "{{count}} source · cited in this answer",
+    "cited_other": "{{count}} sources · cited in this answer",
+    "empty": "This answer didn't cite knowledge-base sources.",
+    "showLess": "Show less ↑",
+    "showMore": "Show more ↓",
+    "foundFor": "Found for: “{{query}}”",
+    "relevance": "retrieval relevance",
+    "documentGone": "Document no longer in the knowledge base",
+    "openDocument": "Open document",
+    "source": "Source {{n}}",
+    "preview": "“{{text}}…”",
+    "clickToView": "Click to view source",
+    "scopeSession": "This conversation",
+    "scopeAgent": "Agent knowledge",
+    "page": "p.{{page}}"
+  },
+  "preview": {
+    "download": "Download"
+  },
+  "panel": {
+    "configVersion": "Config v{{version}}",
+    "sections": "Agent details sections",
+    "loadingDetails": "Loading agent details…",
+    "tab": {
+      "agents": "Agents",
+      "tools": "Tools",
+      "files": "Files",
+      "knowledge": "Knowledge",
+      "skills": "Skills"
+    },
+    "section": {
+      "configuration": {
+        "title": "Tools",
+        "subtitle": "Apps and tools available to this agent"
+      },
+      "supervised": {
+        "title": "Supervised agents",
+        "subtitle": "Published agents available for delegation"
+      },
+      "workspace": {
+        "title": "Workspace",
+        "subtitle": "Files available in the current workspace"
+      },
+      "knowledge": {
+        "title": "Knowledge",
+        "subtitle": "Agent and conversation documents for retrieval"
+      },
+      "skills": {
+        "title": "Skills",
+        "subtitle": "Installed automation workflows"
+      }
+    },
+    "tools": {
+      "empty": "No tools",
+      "emptyHint": "Connect tools to this agent in Manage.",
+      "count_one": "{{count}} tool",
+      "count_other": "{{count}} tools"
+    },
+    "roster": {
+      "empty": "No agents are assigned to this supervisor.",
+      "label": "Supervised agents",
+      "unknownAgent": "Unknown agent",
+      "externalA2a": "External A2A",
+      "agent": "Agent",
+      "unavailable": "Agent unavailable. Update the supervisor configuration.",
+      "chatWith": "Chat with {{name}}"
+    },
+    "workspace": {
+      "download": "Download {{name}}",
+      "upload": "Upload JSON files",
+      "refresh": "Refresh workspace",
+      "loading": "Loading workspace files…",
+      "empty": "No workspace files.",
+      "emptyHint": "Upload JSON files — they appear under workspace/uploads/",
+      "tree": "Workspace",
+      "drop": "Drop JSON files here to upload"
+    },
+    "knowledge": {
+      "notAvailable": "Knowledge isn't available for {{agent}}.",
+      "notAvailableHint": "To turn it back on or update documents, open Manage and change the knowledge settings there.",
+      "scopesOff": "Knowledge scopes are turned off for {{agent}}.",
+      "scopesOffHint": "Re-enable agent-level or session-level knowledge in Manage to make documents available here again.",
+      "loadFailed": "Failed to load documents",
+      "loadFailedStatus": "Failed to load documents ({{status}})",
+      "agentTitle": "Agent Knowledge",
+      "loadingAgent": "Loading agent documents…",
+      "noAgentDocs": "No agent documents",
+      "docMeta_one": "{{count}} chunks · {{time}}",
+      "docMeta_other": "{{count}} chunks · {{time}}",
+      "managedInSettings": "Managed in Settings",
+      "sessionTitle": "This Conversation",
+      "sessionHint": "Only available in this chat session",
+      "citations": "Citations for this chat",
+      "citationsHint": "Show numbered sources under answers",
+      "savingCitations": "Saving citation settings…",
+      "removingDocument": "Removing document…",
+      "loadingSession": "Loading conversation documents…",
+      "noSessionDocs": "No session documents",
+      "removeDocument": "Remove document {{name}}",
+      "dropzone": "Drag and drop files here or click to upload",
+      "dropzoneUnavailable": "Session files are temporarily unavailable",
+      "uploading": "Uploading..."
+    },
+    "skills": {
+      "loading": "Loading skills…",
+      "empty": "No skills installed",
+      "emptyHint": "Skills will appear here once configured",
+      "showLess": "Show less",
+      "showMore": "Show more",
+      "requirements": "Requirements"
+    }
+  },
+  "attachments": {
+    "ingestionFailed": "Ingestion failed",
+    "sessionUnavailable": "Session attachments are unavailable.",
+    "uploadFailed": "Upload failed",
+    "deleteFailed": "Delete failed"
+  },
+  "stream": {
+    "noBody": "No response body",
+    "httpError": "HTTP error! status: {{status}}, message: {{message}}",
+    "connectFailed": "Failed to connect to CUGA backend",
+    "error": "Error: {{message}}",
+    "taskCompleted": "Task completed.",
+    "responseCompleted": "Response completed.",
+    "cancelled": "Request was cancelled.",
+    "failed": "Error: {{message}}. Backend URL: {{url}}. Check that the backend is running and reachable (e.g. CORS, firewall, proxy)."
+  },
+  "step": {
+    "executionOutputHeading": "**Execution Output:**",
+    "task": "Task",
+    "result": "Result",
+    "code": "Code",
+    "executionOutput": "Execution Output",
+    "subAgent": "Sub-Agent: {{name}}",
+    "subAgentWithId": "Sub-Agent: {{name}} ({{id}})",
+    "subAgentFallback": "sub-agent"
+  },
+  "policy": {
+    "notAllowed": "This action is not allowed.",
+    "triggered": "Policy triggered",
+    "fallbackName": "Policy",
+    "playbookIntro": "Following the playbook to guide you through this process.",
+    "playbookInfo": "Playbook Information",
+    "playbookName": "Playbook Name:",
+    "policyInfo": "Policy Information",
+    "policyName": "Policy Name:",
+    "policyType": "Policy Type:",
+    "reasoning": "Reasoning:"
+  },
+  "approval": {
+    "defaultMessage": "This tool requires your approval before execution.",
+    "allTools": "**Tools requiring approval:** All tools",
+    "tools": "**Tools requiring approval:** {{tools}}",
+    "apps": "**Apps requiring approval:** {{apps}}",
+    "codePreview": "**Code Preview:**",
+    "approve": "Approve & Execute",
+    "deny": "Deny",
+    "actionRequired": "Action Required",
+    "requiredTools": "**Required Tools:** {{tools}}",
+    "policy": "**Policy:** {{name}}",
+    "agents": "**Agents to be executed:** {{agents}}",
+    "tasks": "**Tasks:**"
+  }
+}

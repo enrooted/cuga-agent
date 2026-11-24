@@ -4,6 +4,8 @@
  * (Copyright IBM Corp., Apache-2.0).
  */
 
+import i18n from "@/i18n"
+
 export interface MessageSource {
   n: number
   cite_id: string
@@ -23,7 +25,7 @@ export function pageLabel(source: Pick<MessageSource, "filename" | "page">): str
   if (source.page === null || source.page === undefined) return ""
   const lower = source.filename.toLowerCase()
   if (PAGELESS_EXTENSIONS.some((ext) => lower.endsWith(ext))) return ""
-  return `p.${source.page}`
+  return i18n.t("chat:sources.page", { page: source.page })
 }
 
 /** URL fragment that opens a PDF at the cited page; '' for everything else. */
@@ -34,7 +36,7 @@ export function pageFragment(source: Pick<MessageSource, "filename" | "page">): 
 }
 
 export function scopeLabel(scope: string): string {
-  return scope === "session" ? "This conversation" : "Agent knowledge"
+  return scope === "session" ? i18n.t("chat:sources.scopeSession") : i18n.t("chat:sources.scopeAgent")
 }
 
 function escapeAttr(value: string): string {

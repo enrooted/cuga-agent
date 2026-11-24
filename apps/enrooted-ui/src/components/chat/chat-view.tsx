@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { LockIcon, RotateCcwIcon, UploadIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +20,7 @@ import { AssistantMessageView, UserMessageView, type AgentProfile } from "@/comp
 import { SourcesSheet } from "@/components/chat/sources"
 import { useCugaChat } from "@/hooks/use-cuga-chat"
 import { useSessionKnowledgeAttachments } from "@/hooks/use-session-knowledge-attachments"
+import i18n from "@/i18n"
 import * as api from "@/lib/api"
 import type { AttachmentSnapshot } from "@/lib/chat-model"
 import type { MessageSource } from "@/lib/citations"
@@ -37,17 +39,16 @@ export interface HomescreenConfig {
   starters?: string[]
 }
 
-const DEFAULT_HOMESCREEN = {
-  isOn: true,
-  greeting: "Hello, how can I help you today?",
-  starters: ["Hi, what can you do for me?"],
-}
+// The default greeting and starter are translated where they are rendered.
+const DEFAULT_HOMESCREEN: HomescreenConfig = { isOn: true }
 
 export function ChatView({
   agentId,
   threadId,
   title,
   isReadonly,
+  banner,
+  onStreamError,
   headerStart,
   headerEnd,
   recent = [],
@@ -72,6 +73,9 @@ export function ChatView({
   /** Conversation title shown in the chat header (first message, or "New conversation"). */
   title: string
   isReadonly: boolean
+  /** Notice shown under the chat header (why a conversation is read-only). */
+  banner?: React.ReactNode
+  onStreamError?: (status: number, errorCode?: string) => void
   /** Header slots: navigation toggles (left) and panel toggles (right). */
   headerStart?: React.ReactNode
   headerEnd?: React.ReactNode
@@ -95,8 +99,9 @@ export function ChatView({
   onOpenMemoryUsage?: (entityIds: string[], relationship: "used" | "saved") => void
   onPreviewAttachment: (attachment: AttachmentSnapshot) => void
 }) {
+  const { t } = useTranslation("chat")
   const hs = homescreen ?? DEFAULT_HOMESCREEN
-  const starters = (hs.starters ?? DEFAULT_HOMESCREEN.starters).filter(Boolean).slice(0, 4)
+  const starters = (hs.starters ?? [t("home.starter")]).filter(Boolean).slice(0, 4)
 
   const attachments = useSessionKnowledgeAttachments({
     threadId,
@@ -104,7 +109,7 @@ export function ChatView({
     enabled: sessionKnowledgeEnabled,
     sessionDocsVersion,
     onSessionDocsChanged,
-    visibleDocumentMode: "all",
+    visibleDocumentMode: attachmentScope === "agent" ? "tracked" : "all",
   })
   const attachmentsEnabled = knowledgeEnabled && sessionKnowledgeEnabled && attachments.isAvailable
 
@@ -115,23 +120,44 @@ export function ChatView({
     disableHistory,
     onThreadChange,
     getAttachmentSnapshot: attachments.createMessageAttachmentSnapshot,
+    onStreamError,
   })
 
   // Slash commands (also used for pills in sent bubbles).
   const [commands, setCommands] = React.useState<api.SlashCommandInfo[]>([])
   const [commandsLoading, setCommandsLoading] = React.useState(true)
   const [commandsError, setCommandsError] = React.useState<string | null>(null)
-  React.useEffect(() => {
-    let cancelled = false
+  const commandsAlive = React.useRef(true)
+  const fetchCommands = React.useCallback(() => {
+    setCommandsError(null)
     api
       .getCommands()
-      .then((c) => !cancelled && setCommands(c))
-      .catch((e) => !cancelled && setCommandsError(e instanceof Error ? e.message : "Failed to load commands"))
-      .finally(() => !cancelled && setCommandsLoading(false))
-    return () => {
-      cancelled = true
-    }
+      .then((c) => commandsAlive.current && setCommands(c))
+      .catch((e) => {
+        if (!commandsAlive.current) return
+        setCommandsError(e instanceof Error ? e.message : i18n.t("chat:view.commandsLoadFailed"))
+        setCommands([])
+      })
+      .finally(() => commandsAlive.current && setCommandsLoading(false))
   }, [])
+  // Fetched on mount (sent bubbles need the names) and again, debounced, each
+  // time the dropdown opens, so newly installed skills show without a reload.
+  const commandsTimer = React.useRef<number | null>(null)
+  const refreshCommands = React.useCallback(() => {
+    if (commandsTimer.current !== null) window.clearTimeout(commandsTimer.current)
+    commandsTimer.current = window.setTimeout(() => {
+      commandsTimer.current = null
+      fetchCommands()
+    }, 150)
+  }, [fetchCommands])
+  React.useEffect(() => {
+    commandsAlive.current = true
+    fetchCommands()
+    return () => {
+      commandsAlive.current = false
+      if (commandsTimer.current !== null) window.clearTimeout(commandsTimer.current)
+    }
+  }, [fetchCommands])
   const knownCommands = React.useMemo(() => new Set(commands.map((c) => c.name)), [commands])
 
   const [sources, setSources] = React.useState<{ sources: MessageSource[]; activeN: number | null } | null>(null)
@@ -198,7 +224,7 @@ export function ChatView({
         {isReadonly && (
           <Badge variant="outline">
             <LockIcon data-icon="inline-start" />
-            Read-only
+            {t("view.readOnly")}
           </Badge>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
@@ -208,7 +234,7 @@ export function ChatView({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Restart conversation"
+                  aria-label={t("view.restart")}
                   className="text-muted-foreground"
                   disabled={chat.isStreaming}
                   onClick={onRestart}
@@ -217,7 +243,7 @@ export function ChatView({
             >
               <RotateCcwIcon />
             </TooltipTrigger>
-            <TooltipContent>Restart conversation</TooltipContent>
+            <TooltipContent>{t("view.restart")}</TooltipContent>
           </Tooltip>
           {headerEnd}
         </div>
@@ -227,10 +253,12 @@ export function ChatView({
           suggestions sit together in the middle; otherwise the transcript fills
           the space and the composer rests at the bottom. The composer keeps its
           place in the tree in both cases, so it never remounts. */}
+      {banner && <div className="glass-chrome absolute inset-x-0 top-12 z-10 border-b">{banner}</div>}
+
       <div className={cn("flex min-h-0 flex-1 flex-col", showHomescreen && "justify-center overflow-y-auto pt-12 pb-[8vh]")}>
         <div className={cn(!showHomescreen && "relative min-h-0 flex-1")}>
           {busy ? (
-            <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 pt-18" aria-label="Loading conversation history…">
+            <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6 pt-18" aria-label={t("view.loadingHistory")}>
               <Skeleton className="ml-auto h-10 w-1/2" />
               <div className="flex gap-2">
                 <Skeleton className="size-8 rounded-full" />
@@ -244,13 +272,13 @@ export function ChatView({
           ) : showHomescreen ? (
             <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-6 pb-6 text-center">
               <AgentMark className="size-12" />
-              <h2 className="text-2xl font-semibold">{hs.greeting ?? DEFAULT_HOMESCREEN.greeting}</h2>
+              <h2 className="text-2xl font-semibold">{hs.greeting ?? t("home.greeting")}</h2>
             </div>
           ) : (
             <MessageScrollerProvider autoScroll>
               <MessageScroller>
                 <MessageScrollerViewport>
-                  <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 pt-18 pb-[calc(var(--composer-h,9rem)+1.5rem)]">
+                  <MessageScrollerContent className={cn("mx-auto w-full max-w-3xl px-4 pb-[calc(var(--composer-h,9rem)+1.5rem)]", banner ? "pt-36" : "pt-18")}>
                     {chat.messages.map((m) => {
                       if (m.role === "user") userIndex++
                       return (
@@ -298,6 +326,7 @@ export function ChatView({
             commands={commands}
             commandsLoading={commandsLoading}
             commandsError={commandsError}
+            onCommandsOpen={refreshCommands}
             attachmentItems={attachments.attachmentItems}
             attachmentsEnabled={attachmentsEnabled}
             attachmentScope={attachmentScope}
@@ -307,7 +336,7 @@ export function ChatView({
             onDismissUpload={attachments.dismissUpload}
             onPreviewAttachment={onPreviewAttachment}
             onOpenKnowledge={onOpenKnowledge}
-            placeholder={isReadonly ? "This conversation is read-only — start a new conversation to chat" : "Type something..."}
+            placeholder={isReadonly ? t("composer.placeholderReadOnly") : t("composer.placeholder")}
           />
         </div>
 
@@ -323,8 +352,8 @@ export function ChatView({
               </div>
             )}
             {recent.length > 0 && (
-              <section aria-label="Recent conversations">
-                <h3 className="px-2 pb-1 text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">Recent</h3>
+              <section aria-label={t("view.recentConversations")}>
+                <h3 className="px-2 pb-1 text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">{t("view.recent")}</h3>
                 <ul className="flex flex-col gap-px">
                   {recent.map((r) => (
                     <li key={r.id}>
@@ -349,7 +378,7 @@ export function ChatView({
       {dragOver && (
         <div className="pointer-events-none absolute inset-2 z-30 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-background/80 text-sm font-medium">
           <UploadIcon className="mr-2 size-4" />
-          Drop files to attach them to this conversation
+          {t("view.dropFiles")}
         </div>
       )}
 

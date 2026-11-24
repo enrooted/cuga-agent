@@ -11,12 +11,14 @@
  */
 import * as React from "react"
 import { CircleCheckIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/tools-api"
 import type { SandboxSettingsStatus } from "@/lib/manage/tools-types"
 
@@ -37,6 +39,7 @@ async function readError(res: Response): Promise<string> {
 }
 
 export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
+  const { t } = useTranslation("tools")
   const [status, setStatus] = React.useState<SandboxSettingsStatus | null>(null)
   const [checked, setChecked] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
@@ -63,7 +66,7 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
         if (!res.ok) {
           const message = await readError(res)
           setLoadError(message)
-          onErrorRef.current("Code sandbox", message)
+          onErrorRef.current(i18n.t("tools:sandbox.title"), message)
           return null
         }
         const s = (await res.json()) as SandboxSettingsStatus
@@ -72,7 +75,7 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
         return s
       } catch (e) {
         setLoadError(String(e))
-        onErrorRef.current("Code sandbox", String(e))
+        onErrorRef.current(i18n.t("tools:sandbox.title"), String(e))
         return null
       } finally {
         setBusy(false)
@@ -91,9 +94,9 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
 
   if (!status) {
     return loadError ? (
-      <Notice title="Code sandbox">{loadError}</Notice>
+      <Notice title={t("sandbox.title")}>{loadError}</Notice>
     ) : (
-      <div className="flex flex-col gap-2" role="status" aria-label="Loading sandbox settings…">
+      <div className="flex flex-col gap-2" role="status" aria-label={t("sandbox.loading")}>
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-full" />
       </div>
@@ -104,7 +107,7 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
     setChecked(enable)
     const s = await call(
       () => api.putSandboxSettings({ enabled: enable }),
-      enable ? "Sandbox enabled" : "Sandbox disabled"
+      enable ? t("sandbox.enabled") : t("sandbox.disabled")
     )
     // Refused or failed: show the state the server still has.
     if (!s) setChecked(status.enabled)
@@ -121,13 +124,9 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
     <div className="flex flex-col gap-4">
       <Field orientation="horizontal" data-disabled={disabled || undefined}>
         <FieldContent>
-          <FieldLabel htmlFor="sandbox-enabled">Sandbox</FieldLabel>
+          <FieldLabel htmlFor="sandbox-enabled">{t("sandbox.label")}</FieldLabel>
           <FieldDescription>
-            {(status.required_by_config
-              ? 'Required by the deployment (sandbox_mode = "execd"). '
-              : "Run generated code in a remote execd sandbox. Applies to this server process; " +
-                "other replicas pick it up when they restart. ") +
-              "Applies to all agents and users. Conversations are isolated by the sandbox, not by CUGA."}
+            {status.required_by_config ? t("sandbox.descriptionRequired") : t("sandbox.description")}
           </FieldDescription>
         </FieldContent>
         <Switch
@@ -139,7 +138,7 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
       </Field>
 
       {/* Kept while a re-check runs, so the box does not vanish and come back. */}
-      {problem && <Notice title="Sandbox unavailable">{problem}</Notice>}
+      {problem && <Notice title={t("sandbox.unavailable")}>{problem}</Notice>}
 
       {/* One fixed row: the status changes in place instead of boxes appearing around it. */}
       {checked && (
@@ -152,20 +151,20 @@ export function SandboxSettings({ onError, onSaved }: SandboxSettingsProps) {
               disabled={busy}
               onClick={() => void call(() => api.refreshSandboxSettings())}
             >
-              Test again
+              {t("sandbox.testAgain")}
             </Button>
           )}
           {busy ? (
             <span className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
               <Spinner />
-              Checking…
+              {t("sandbox.checking")}
             </span>
           ) : (
             on &&
             ok && (
               <span className="flex items-center gap-1.5 text-sm text-foreground" aria-live="polite">
                 <CircleCheckIcon className="size-4 text-status-ok" aria-hidden="true" />
-                Connected
+                {t("sandbox.connected")}
               </span>
             )
           )}

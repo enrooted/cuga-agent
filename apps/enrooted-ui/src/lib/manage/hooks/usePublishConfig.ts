@@ -1,5 +1,6 @@
 // Ported from cuga-agent/src/frontend_workspaces/frontend/src/manage/hooks/usePublishConfig.ts (Copyright IBM Corp., Apache-2.0). Logic unchanged.
 import { useCallback, useEffect, useRef, useState } from "react";
+import i18n from "@/i18n";
 import * as api from "@/lib/manage/api";
 import { isAbortError, type AddToast } from "./saveHelpers";
 import type { DraftSaveStatus } from "./useKnowledgeDraftSave";
@@ -83,7 +84,7 @@ export function usePublishConfig(opts: {
   const saveConfig = useCallback(async () => {
     setShowReindexConfirm(false);
     if (!agentName.trim()) {
-      addToast("error", "Agent name required", "Please enter an agent name before publishing.");
+      addToast("error", i18n.t("manage:publish.nameRequiredTitle"), i18n.t("manage:publish.nameRequiredBody"));
       return;
     }
     setSaveStatus("saving");
@@ -107,14 +108,18 @@ export function usePublishConfig(opts: {
         if (hasPartialErrors) {
           Object.entries(data.tool_errors as Record<string, { error?: string; message?: string; type?: string }>).forEach(
             ([toolName, errorInfo]) => {
-              const errorMsg = errorInfo.error || errorInfo.message || "Unknown error";
+              const errorMsg = errorInfo.error || errorInfo.message || i18n.t("manage:generic.unknownError");
               const errorType = errorInfo.type ? ` (${errorInfo.type})` : "";
-              addToast("warning", `Tool initialization failed: ${toolName}`, `${errorMsg}${errorType}`);
+              addToast("warning", i18n.t("manage:publish.toolInitFailedTitle", { name: toolName }), `${errorMsg}${errorType}`);
             },
           );
 
           const errorCount = Object.keys(data.tool_errors).length;
-          addToast("info", "Configuration partially saved", data.message || `${errorCount} tool(s) failed to initialize`);
+          addToast(
+            "info",
+            i18n.t("manage:publish.partiallySavedTitle"),
+            data.message || i18n.t("manage:publish.toolsFailedToInit", { count: errorCount }),
+          );
         }
 
         if (data.partial_errors && Array.isArray(data.partial_errors) && data.partial_errors.length > 0) {
@@ -124,8 +129,8 @@ export function usePublishConfig(opts: {
                 ? error
                 : ((error as { message?: string; error?: string }).message ||
                     (error as { error?: string }).error ||
-                    "Unknown error");
-            addToast("warning", "Partial save error", errorMsg);
+                    i18n.t("manage:generic.unknownError"));
+            addToast("warning", i18n.t("manage:publish.partialErrorTitle"), errorMsg);
           });
         }
 
@@ -133,7 +138,7 @@ export function usePublishConfig(opts: {
           const taskIds: string[] = data.reindex.task_ids ?? [];
           const total = data.reindex.count ?? taskIds.length;
           setSaveStatus("saving");
-          addToast("info", "Publishing", `Re-indexing ${total} document(s)...`);
+          addToast("info", i18n.t("manage:reindex.startedTitle"), i18n.t("manage:reindex.startedBody", { count: total }));
 
           if (taskIds.length > 0) {
             await new Promise<void>((resolve) => {
@@ -169,9 +174,17 @@ export function usePublishConfig(opts: {
                   if (completed + failed >= taskIds.length) {
                     cleanup();
                     if (failed === 0) {
-                      addToast("success", "Re-index complete", `All ${completed} document(s) re-indexed.`);
+                      addToast(
+                        "success",
+                        i18n.t("manage:reindex.completeTitle"),
+                        i18n.t("manage:reindex.completeBody", { count: completed }),
+                      );
                     } else {
-                      addToast("warning", "Re-index partial", `${completed} succeeded, ${failed} failed.`);
+                      addToast(
+                        "warning",
+                        i18n.t("manage:reindex.partialTitle"),
+                        i18n.t("manage:reindex.partialBody", { completed, failed }),
+                      );
                     }
                     api
                       .listKnowledgeDocuments()
@@ -192,12 +205,12 @@ export function usePublishConfig(opts: {
               reindexTimeoutRef.current = setTimeout(() => {
                 cleanup();
                 if (ac.signal.aborted) return;
-                addToast("warning", "Re-index timeout", "Still running. Check knowledge health.");
+                addToast("warning", i18n.t("manage:reindex.timeoutTitle"), i18n.t("manage:reindex.timeoutBody"));
               }, 300000);
             });
           }
         } else if (data.reindex && data.reindex.status === "busy") {
-          addToast("warning", "Re-index deferred", "Uploads in progress. Re-publish after uploads complete.");
+          addToast("warning", i18n.t("manage:reindex.deferredTitle"), i18n.t("manage:reindex.deferredBody"));
         }
 
         if (ac.signal.aborted) return;
@@ -224,7 +237,7 @@ export function usePublishConfig(opts: {
         refreshKnowledgeHealth();
         setDraftSaveStatus({ kind: "idle" });
         if (!hasPartialErrors && (!data.partial_errors || data.partial_errors.length === 0)) {
-          addToast("success", "Configuration saved", "Your configuration has been saved successfully");
+          addToast("success", i18n.t("manage:publish.savedTitle"), i18n.t("manage:publish.savedBody"));
         }
         loadHistory();
         setTimeout(() => {
@@ -232,7 +245,7 @@ export function usePublishConfig(opts: {
           setSaveStatus("idle");
         }, 2000);
       } else {
-        let errorMsg = `Failed to save configuration (${res.status} ${res.statusText})`;
+        let errorMsg = i18n.t("manage:publish.failedStatus", { status: res.status, statusText: res.statusText });
         try {
           const errorData = await res.json();
           errorMsg = errorData.detail || errorData.error || errorData.message || errorMsg;
@@ -241,7 +254,7 @@ export function usePublishConfig(opts: {
         }
 
         setSaveStatus("error");
-        addToast("error", "Save Failed", errorMsg);
+        addToast("error", i18n.t("manage:publish.failedTitle"), errorMsg);
         setTimeout(() => {
           if (ac.signal.aborted) return;
           setSaveStatus("idle");
@@ -249,9 +262,9 @@ export function usePublishConfig(opts: {
       }
     } catch (error) {
       if (isAbortError(error) || ac.signal.aborted) return;
-      const errorMsg = error instanceof Error ? error.message : "Network error occurred";
+      const errorMsg = error instanceof Error ? error.message : i18n.t("manage:publish.networkErrorBody");
       setSaveStatus("error");
-      addToast("error", "Network Error", errorMsg);
+      addToast("error", i18n.t("manage:publish.networkErrorTitle"), errorMsg);
       setTimeout(() => {
         if (ac.signal.aborted) return;
         setSaveStatus("idle");

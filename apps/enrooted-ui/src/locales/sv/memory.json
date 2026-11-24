@@ -1,0 +1,447 @@
+{
+  "status": {
+    "current": "Aktuellt",
+    "retained": "Behålls",
+    "needsAttention": "Kräver åtgärd",
+    "protected": "Skyddat",
+    "incomplete": "Ofullständig",
+    "failed": "Misslyckades",
+    "running": "Pågår",
+    "cancelled": "Avbruten",
+    "interrupted": "Avbröts oväntat",
+    "unavailable": "Inte tillgänglig",
+    "statusUnavailable": "Status saknas",
+    "disabled": "Avstängd",
+    "enabled": "Aktiverad",
+    "enabledHealthy": "Aktiverad och fungerar",
+    "completed": "Slutförd"
+  },
+  "type": {
+    "conversationMemory": "Konversationsminne",
+    "preference": "Preferens"
+  },
+  "errors": {
+    "requestFailed": "Minnesbegäran misslyckades",
+    "invalidResponse": "Minnestjänsten gav ett ogiltigt svar. Kontrollera att backend är uppdaterad."
+  },
+  "date": {
+    "today": "I dag",
+    "yesterday": "I går",
+    "daysAgo": "{{count}} dagar sedan"
+  },
+  "record": {
+    "typedTitle": "Minne: {{type}}",
+    "ownerUnavailable": "Ägare saknas",
+    "sourceConversations_one": "{{count}} källkonversation",
+    "sourceConversations_other": "{{count}} källkonversationer",
+    "conversationReference": "Konversation {{reference}}",
+    "noSourceConversation": "Ingen tillgänglig källkonversation",
+    "savedDateUnavailable": "Datum för sparande saknas",
+    "notUsedYet": "Inte använt än",
+    "conversation": "Konversation",
+    "dateUnavailable": "Datum saknas",
+    "legalHold": "Rättsligt bevarandekrav",
+    "flaggedByPolicy": "Flaggat av den publicerade gallringspolicyn",
+    "available": "Tillgängligt",
+    "retentionCompleted": "Gallringen är slutförd.",
+    "schedulingUnavailable": "Schemaläggning är inte tillgänglig"
+  },
+  "protection": {
+    "saveTitle": "Skydd innan minnen sparas",
+    "saveDescription": "Kontrollerar och skyddar minnen innan de sparas.",
+    "sendTitle": "Skydd innan något skickas",
+    "sendDescription": "Kontrollerar meddelanden och indata till verktyg innan de skickas till AI-modellen."
+  },
+  "rule": {
+    "deleteAfterSourceDeleted": "Ta bort minnen {{days}} dagar efter att den sista konversationen som stöder dem har tagits bort.",
+    "deleteOldIfSourceDeleted": "Ta bort minnen som är minst {{days}} dagar gamla om den ursprungliga konversationen har tagits bort.",
+    "deleteWhenSourcesDeleted": "Ta bort minnen när alla konversationer som stöder dem har tagits bort.",
+    "target": {
+      "conversation": "konversationsminnen",
+      "guidelines": "riktlinjer",
+      "typed": "minnen av typen {{type}}",
+      "all": "alla minnen"
+    },
+    "delete": {
+      "always": "Ta bort {{target}}",
+      "afterDays": "Ta bort {{target}} efter {{days}} dagar",
+      "unused": "Ta bort {{target}} efter {{days}} dagar utan användning"
+    },
+    "flag": {
+      "always": "Flagga {{target}}",
+      "afterDays": "Flagga {{target}} efter {{days}} dagar",
+      "unused": "Flagga {{target}} efter {{days}} dagar utan användning"
+    },
+    "other": {
+      "always": "{{action}}: {{target}}",
+      "afterDays": "{{action}}: {{target}} efter {{days}} dagar",
+      "unused": "{{action}}: {{target}} efter {{days}} dagar utan användning"
+    }
+  },
+  "statusDetail": {
+    "unusedTyped": "Flaggat eftersom det här minnet av typen {{type}} inte har använts på {{days}} dagar.",
+    "unusedMatching": "Flaggat eftersom det här matchande minnet inte har använts på {{days}} dagar.",
+    "ageTyped": "Flaggat eftersom det här minnet av typen {{type}} är äldre än {{days}} dagar.",
+    "ageMatching": "Flaggat eftersom det här matchande minnet är äldre än {{days}} dagar.",
+    "matchedRule": "Flaggat eftersom det matchade gallringsregeln {{rule}}."
+  },
+  "pagination": {
+    "label": "Sidnavigering",
+    "range": "{{first}}–{{last}} av {{total}} objekt",
+    "pageOf": "Sida {{page}} av {{totalPages}}",
+    "page": "Sida {{page}}",
+    "previous": "Föregående sida",
+    "next": "Nästa sida"
+  },
+  "detailPanel": {
+    "close": "Stäng detaljer"
+  },
+  "preferences": {
+    "loadFailed": "Minnesinställningarna kunde inte läsas in.",
+    "saveFailed": "Minnesinställningarna kunde inte sparas.",
+    "loading": "Läser in minnesinställningar…",
+    "saving": "Sparar minnesinställningar…",
+    "on": "På",
+    "off": "Av",
+    "service": {
+      "label": "Minne för den här tjänsten",
+      "note": "Aktivera minnesfunktioner för den här tjänsten."
+    },
+    "user": {
+      "label": "Minne för mig",
+      "note": "Låt agenter spara och använda minnen för dina konversationer i hela tjänsten.",
+      "noteServiceOff": "Minne är avstängt för den här tjänsten. Ditt val är sparat."
+    },
+    "episodic": {
+      "label": "Episodiskt minne",
+      "note": "Lär av tidigare konversationer för att ge bättre svar framöver."
+    }
+  },
+  "usage": {
+    "used_one": "Använt {{count}} gång",
+    "used_other": "Använt {{count}} gånger",
+    "notUsedYet": "Inte använt än"
+  },
+  "detail": {
+    "eyebrow": "Valt minne",
+    "sourceConversation": "Konversation {{number}}",
+    "sourceUnavailable": "Källkonversationen är inte tillgänglig",
+    "sourceSuperseded": "Tidigare information",
+    "sourceSupporting": "Stöder det här minnet",
+    "remembered": "Sparad information",
+    "owner": "Ägare",
+    "type": "Typ",
+    "category": "Kategori",
+    "source": "Källa",
+    "saved": "Sparat",
+    "useFrequency": "Användning",
+    "lastUsed": "Senast använt",
+    "status": "Status",
+    "related": "Relaterat",
+    "relatedCount_one": "{{count}} relaterat minne",
+    "relatedCount_other": "{{count}} relaterade minnen",
+    "recentUse": "Senaste användning",
+    "version": "Version {{revision}}",
+    "deletionUnavailable": "Kan inte tas bort",
+    "legalHold": "Det här minnet skyddas av ett rättsligt bevarandekrav.",
+    "contentHidden": "Innehållet är dolt",
+    "contentHiddenBody": "Sparat innehåll visas inte i administratörsvyn.",
+    "deleting": "Tar bort…",
+    "forget": "Glöm",
+    "empty": "Välj ett minne för att se detaljerna."
+  },
+  "settings": {
+    "beforeSaving": "Före sparande",
+    "beforeSending": "Före sändning",
+    "plugin": {
+      "enabled": "Aktiverad",
+      "disabled": "Avstängd",
+      "enabledStatusUnavailable": "Aktiverad · Status saknas",
+      "none": "Inga skyddsplugin har rapporterats."
+    },
+    "protection": {
+      "saveTitle": "Känslig information före sparande",
+      "sendTitle": "Känslig information före sändning",
+      "saveDescription": "Kontrollerar varje minne innan det sparas och stoppar sparanden som de konfigurerade skyddspluginen avvisar.",
+      "sendDescription": "Kontrollerar meddelanden och indata till verktyg innan de skickas till AI-modellen.",
+      "continuous": "Löpande"
+    },
+    "retention": {
+      "intro": "Hantera gallring av minnen för alla som använder tjänsten.",
+      "running": "Kör gallring…",
+      "runNow": "Kör gallring nu",
+      "policyRules": "Policyregler",
+      "noRules": "Inga regler är konfigurerade för den här policyn.",
+      "unavailable": "Gallring är inte tillgänglig.",
+      "latestRun": "Senaste körning",
+      "noneRecorded": "Ingen registrerad",
+      "activityHint": "Markerade minnen och slutförda utfall visas under Aktivitet.",
+      "defaultDescription": "Utvärderar den här publicerade gallringspolicyn på begäran.",
+      "publishedRules_one": "{{count}} publicerad regel",
+      "publishedRules_other": "{{count}} publicerade regler"
+    },
+    "categories": {
+      "label": "Inställningskategorier",
+      "general": "Allmänt",
+      "filters": "Filter"
+    },
+    "filters": {
+      "intro": "Styr vad som sparas i minnet och vad som når AI-modellen.",
+      "scope": "Alla som använder tjänsten · Hanteras av tjänstens operatör",
+      "note": "Sidan visar den aktiva konfigurationen. Ändringar av filter görs av tjänstens operatör."
+    }
+  },
+  "message": {
+    "inventoryUnavailable": "Minneslistan är inte tillgänglig",
+    "referencedUnavailable_one": "{{count}} refererat minne finns inte längre",
+    "referencedUnavailable_other": "{{count}} refererade minnen finns inte längre",
+    "retentionStatusUnavailable": "Gallringsstatus är inte tillgänglig",
+    "retentionPoliciesUnavailable": "Gallringspolicyer är inte tillgängliga",
+    "retentionHistoryUnavailable": "Gallringshistoriken är inte tillgänglig",
+    "protectionStatusUnavailable": "Skyddsstatus är inte tillgänglig",
+    "adminInventoryUnavailable": "Administratörens minneslista är inte tillgänglig",
+    "loadFailed": "Minnena kunde inte läsas in",
+    "loadMoreFailed": "Fler minnen kunde inte läsas in",
+    "legalHold": "Det här minnet skyddas av ett rättsligt bevarandekrav",
+    "deleted": "Minnet har tagits bort",
+    "deleteFailed": "Minnet kunde inte tas bort",
+    "runningRetention": "Kör gallring…",
+    "retentionFinished": "Gallringen är klar. Granska markerade minnen och genomförda utfall under Aktivitet.",
+    "retentionFailed": "Gallringen kunde inte slutföras"
+  },
+  "confirm": {
+    "forget": {
+      "title": "Glöm minnet",
+      "body": "Vill du glömma det här minnet? Källkonversationen finns kvar.",
+      "action": "Glöm"
+    },
+    "retention": {
+      "title": "Kör gallring",
+      "body": "Vill du köra gallring för alla som använder tjänsten? Minnen som uppfyller villkoren markeras och tas bort; gällande rättsliga bevarandekrav respekteras.",
+      "action": "Kör gallring"
+    }
+  },
+  "list": {
+    "title": "Det här minns agenten",
+    "hint": "Välj ett minne för att se dess källa och åtgärder.",
+    "focusUsed": "Visar {{count}} som användes i svaret. Visa alla",
+    "focusSaved": "Visar {{count}} som sparades i svaret. Visa alla",
+    "loading": "Läser in minnen…",
+    "empty": "Inga minnen matchar filtren.",
+    "perPage": "Minnen per sida:",
+    "label": "Dina minnen",
+    "detailLabel": "Minnesdetaljer",
+    "referencedCount": "{{count}} refererade minnen",
+    "pageCount": "{{shown}} på sidan · {{total}} totalt"
+  },
+  "header": {
+    "eyebrow": "Minne",
+    "userSubtitle": "Din vy av agentens minne",
+    "administration": "Administration",
+    "adminTitle": "Minnesadministration",
+    "adminSubtitle": "Administratörsverktyg",
+    "yourMemory": "Ditt minne"
+  },
+  "serviceOff": {
+    "title": "Minne är avstängt för den här tjänsten.",
+    "body": "Du kan se befintliga data och ta bort dina minnen. Agenter kan inte spara eller använda minnen."
+  },
+  "toolbar": {
+    "search": "Sök på den här sidan",
+    "type": "Typ",
+    "allTypes": "Alla typer",
+    "sort": "Sortera sidan",
+    "sortOptions": {
+      "recentlySaved": "Senast sparade",
+      "recentlyUsed": "Senast använda",
+      "mostUsed": "Mest använda",
+      "leastUsed": "Minst använda",
+      "oldest": "Äldst",
+      "name": "Namn"
+    }
+  },
+  "admin": {
+    "tabs": {
+      "settings": "Inställningar",
+      "memory": "Minne",
+      "activity": "Aktivitet"
+    },
+    "memoryAbout": "Minne om",
+    "allOwners": "Alla ägare",
+    "status": "Status",
+    "allStates": "Alla statusar",
+    "showing": "Visar {{shown}} av {{total}}",
+    "listLabel": "Administratörens minneslista",
+    "detailLabel": "Minnesdetaljer för administratör",
+    "loadMore": "Läs in fler",
+    "loadingRuns": "Läser in körningar…",
+    "noRuns": "Inga gallringskörningar har registrerats än."
+  },
+  "run": {
+    "viewAvailable": "Visa minnen som fortfarande finns kvar.",
+    "notViewable": "De här minnena kan inte visas. Registrerade utfall finns i granskningsdetaljerna.",
+    "memoryId": "Minne {{id}}",
+    "unknownMemory": "Okänt minne",
+    "title": "Gallringsgranskning",
+    "deletionRecorded": "Borttagning av minnen registrerad",
+    "activityRecorded": "Gallringsaktivitet registrerad",
+    "outcomeLabel": "Registrerat gallringsutfall",
+    "deletedHidden": "Titlar och innehåll för borttagna minnen visas inte i historiken.",
+    "partial": "Granskningen visar de utfall som har registrerats hittills.",
+    "warning": "Varning",
+    "error": "Fel",
+    "policy": "Policy",
+    "unavailable": "Inte tillgänglig",
+    "requestedBy": "Begärd av",
+    "notRecorded": "Inte registrerat",
+    "started": "Startad",
+    "finished": "Avslutad",
+    "result": "Resultat",
+    "flaggedForReview": "Flaggade för granskning",
+    "skipped": "Överhoppade",
+    "auditDetails": "Administrativa granskningsdetaljer",
+    "auditNote": "Tekniska referenser kopplar ihop registrerade åtgärder. De hämtar inte innehållet i borttagna minnen.",
+    "runId": "Körnings-ID",
+    "policyId": "Policy-ID",
+    "actionsCaption": "Registrerade åtgärder för körningen",
+    "col": {
+      "outcome": "Utfall",
+      "entityReference": "Entitetsreferens",
+      "reason": "Orsak"
+    },
+    "outcome": {
+      "flagged": "Flaggat",
+      "deleted": "Borttaget",
+      "skipped": "Överhoppat"
+    }
+  },
+  "activity": {
+    "candidateStatus": {
+      "held": "Rättsligt bevarandekrav",
+      "review": "Kräver granskning",
+      "pending": "Väntar på borttagning"
+    },
+    "outcome": {
+      "deleted": "Borttaget",
+      "held": "Under rättsligt bevarandekrav",
+      "flagged": "Flaggat för granskning",
+      "marked": "Markerat för borttagning"
+    },
+    "loadFailed": "Gallringsaktiviteten kunde inte läsas in.",
+    "unavailablePolicy": "Policyn är inte tillgänglig",
+    "label": "Gallringsaktivitet",
+    "loading": "Läser in gallringsaktivitet…",
+    "viewsLabel": "Vyer för gallringsaktivitet",
+    "awaiting": "Väntar på åtgärd",
+    "history": "Historik",
+    "awaitingIntro": "Minnen som behålls för granskning eller väntar på borttagning.",
+    "memoryCount_one": "{{count}} minne",
+    "memoryCount_other": "{{count}} minnen",
+    "controlsLabel": "Verktyg för väntande minnen",
+    "search": "Sök bland väntande minnen",
+    "tableRegionLabel": "Tabell över väntande minnen",
+    "tableLabel": "Minnen som väntar på åtgärd",
+    "col": {
+      "memory": "Minne",
+      "status": "Status",
+      "policy": "Policy",
+      "reference": "Referens",
+      "outcome": "Utfall",
+      "requestedBy": "Begärd av",
+      "time": "Tid"
+    },
+    "memoryId": "Minne {{id}}",
+    "detailsUnavailable": "Detaljer saknas",
+    "empty": {
+      "loading": "Läser in väntande minnen…",
+      "failed": "Väntande minnen kunde inte läsas in.",
+      "noMatch": "Inga minnen matchar din sökning.",
+      "none": "Inga minnen väntar på åtgärd."
+    },
+    "rowsPerPage": "Rader per sida:",
+    "recentOutcomes": "Senaste utfall",
+    "recentIntro": "De senaste gallringsåtgärderna.",
+    "noActions": "Inga gallringsåtgärder har registrerats än.",
+    "outcomeSummary_one": "{{count}} minne · {{policy}}",
+    "outcomeSummary_other": "{{count}} minnen · {{policy}}",
+    "runsLabel": "Gallringskörningar",
+    "runs": "Körningar",
+    "runsIntro": "Öppna en körning för att se resultatet.",
+    "auditDetails": "Granskningsdetaljer",
+    "auditLimit": "Visar upp till 1 000 av de senaste kandidaterna och åtgärderna för tjänsten.",
+    "currentMarks": "Aktuella markeringar",
+    "blockedByLegalHold": "Borttagning blockeras av rättsligt bevarandekrav",
+    "committedActions": "Genomförda åtgärder",
+    "notRecorded": "Inte registrerat"
+  },
+  "schedules": {
+    "label": "Gallringsscheman",
+    "title": "Scheman",
+    "refresh": "Uppdatera scheman",
+    "add": "Lägg till schema",
+    "edit": "Redigera schema",
+    "updating": "Uppdaterar scheman…",
+    "loading": "Läser in scheman…",
+    "loadFailed": "Scheman kunde inte läsas in.",
+    "operationFailed": "Schemaåtgärden misslyckades. Uppdatera innan du försöker igen.",
+    "empty": "Inga scheman är konfigurerade för den här policyn.",
+    "stopped": "Stoppat",
+    "active": "Aktivt",
+    "startHint": "Starta schemat för att aktivera kommande körningar.",
+    "nextRun": "Nästa körning: {{time}}",
+    "nextRunUnavailable": "Nästa körning är inte tillgänglig",
+    "agentScope": "Gäller agenten {{agent}}. Om du sparar här gäller schemat alla som använder tjänsten.",
+    "dryRun": "Schemat är konfigurerat för testkörningar. Om du sparar här börjar gallringen tillämpas på riktigt.",
+    "start": "Starta",
+    "stop": "Stoppa",
+    "everyDayAt": "Varje dag kl. {{time}}",
+    "everyWeekdayAt": {
+      "sunday": "Varje söndag kl. {{time}}",
+      "monday": "Varje måndag kl. {{time}}",
+      "tuesday": "Varje tisdag kl. {{time}}",
+      "wednesday": "Varje onsdag kl. {{time}}",
+      "thursday": "Varje torsdag kl. {{time}}",
+      "friday": "Varje fredag kl. {{time}}",
+      "saturday": "Varje lördag kl. {{time}}"
+    },
+    "days": {
+      "sunday": "Söndag",
+      "monday": "Måndag",
+      "tuesday": "Tisdag",
+      "wednesday": "Onsdag",
+      "thursday": "Torsdag",
+      "friday": "Fredag",
+      "saturday": "Lördag"
+    },
+    "deleteDialog": {
+      "title": "Ta bort schemat",
+      "body": "Vill du ta bort schemat ”{{id}}”? Policyn och körningshistoriken finns kvar.",
+      "action": "Ta bort schemat"
+    },
+    "field": {
+      "id": "Schema-ID",
+      "frequency": "Frekvens",
+      "daily": "Varje dag",
+      "weekly": "Varje vecka",
+      "custom": "Eget cron-uttryck",
+      "time": "Tid",
+      "day": "Dag",
+      "cron": "Cron-uttryck",
+      "timeZone": "Tidszon (IANA)",
+      "advanced": "Avancerad tidsstyrning",
+      "concurrency": "Om en tidigare körning fortfarande pågår",
+      "concurrencyForbid": "Hoppa över den nya körningen",
+      "concurrencyAllow": "Tillåt överlappning",
+      "concurrencyReplace": "Ersätt den tidigare körningen",
+      "deadline": "Tidsgräns för start (sekunder, valfritt)"
+    },
+    "preview": {
+      "action": "Förhandsgranska kommande körningar",
+      "title": "De fem närmaste tidpunkterna",
+      "note": "Endast förhandsgranskning. Inget har sparats.",
+      "noteStopped": "Endast förhandsgranskning. Inget har sparats. Schemat är stoppat."
+    },
+    "createdStopped": "Nya scheman skapas stoppade. Starta schemat när du är redo.",
+    "saveChanges": "Spara ändringar"
+  }
+}
