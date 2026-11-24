@@ -8,6 +8,7 @@
  */
 import * as React from "react"
 import { CopyIcon, PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { AlertDialog } from "@/components/confirm-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/tools-api"
 import type { SecretMeta, SecretsConfig } from "@/lib/manage/tools-types"
 
@@ -56,6 +58,7 @@ async function errorDetail(res: Response, fallback: string): Promise<string> {
 }
 
 export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) {
+  const { t } = useTranslation("tools")
   const [allSecrets, setAllSecrets] = React.useState<SecretMeta[]>([])
   const [secretsConfig, setSecretsConfig] = React.useState<SecretsConfig | null>(null)
   const [loading, setLoading] = React.useState(true)
@@ -79,14 +82,14 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
     setError(null)
     try {
       const [secretsRes, configRes] = await Promise.all([api.getSecrets(agentId), api.getSecretsConfig()])
-      if (!secretsRes.ok) throw new Error(`Failed to load secrets (${secretsRes.status})`)
-      if (!configRes.ok) throw new Error(`Failed to load secrets configuration (${configRes.status})`)
+      if (!secretsRes.ok) throw new Error(i18n.t("tools:secrets.errors.loadSecrets", { status: secretsRes.status }))
+      if (!configRes.ok) throw new Error(i18n.t("tools:secrets.errors.loadConfig", { status: configRes.status }))
       const data = (await secretsRes.json()) as { secrets?: SecretMeta[]; overrides?: SecretMeta[] }
       setAllSecrets(data.secrets || data.overrides || [])
       setSecretsConfig((await configRes.json()) as SecretsConfig)
     } catch (e) {
       setLoadFailed(true)
-      setError(e instanceof Error ? e.message : "Failed to load")
+      setError(e instanceof Error ? e.message : i18n.t("tools:secrets.errors.load"))
     } finally {
       setLoading(false)
     }
@@ -116,10 +119,10 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
         setAddDescription("")
         void load()
       } else {
-        setError(await errorDetail(res, "Failed to create"))
+        setError(await errorDetail(res, t("secrets.errors.create")))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create")
+      setError(e instanceof Error ? e.message : t("secrets.errors.create"))
     } finally {
       setSaving(false)
     }
@@ -131,9 +134,9 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
     try {
       const res = await api.deleteSecret(id)
       if (res.ok) await load()
-      else setError(await errorDetail(res, "Failed to delete"))
+      else setError(await errorDetail(res, t("secrets.errors.delete")))
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete")
+      setError(e instanceof Error ? e.message : t("secrets.errors.delete"))
     } finally {
       setDeleting(null)
     }
@@ -150,10 +153,10 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
         setEditValue("")
         void load()
       } else {
-        setError(await errorDetail(res, "Failed to update"))
+        setError(await errorDetail(res, t("secrets.errors.update")))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update")
+      setError(e instanceof Error ? e.message : t("secrets.errors.update"))
     } finally {
       setSaving(false)
     }
@@ -173,7 +176,7 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
         <span className="ml-auto flex items-center gap-0.5">
           {s.source !== "env" && (
             <IconButton
-              label="Edit"
+              label={t("common:action.edit")}
               disabled={busy}
               onClick={() => {
                 setEditingId(s.id)
@@ -183,17 +186,17 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
               <PencilIcon />
             </IconButton>
           )}
-          <IconButton label="Copy reference" onClick={() => copyRef(s)}>
+          <IconButton label={t("secrets.copyRef")} onClick={() => copyRef(s)}>
             <CopyIcon />
           </IconButton>
           {s.source !== "env" &&
             (deleting === s.id ? (
               <span className="flex items-center gap-2 px-1 text-xs text-muted-foreground" aria-live="polite">
                 <Spinner />
-                Deleting secret…
+                {t("secrets.deleting")}
               </span>
             ) : (
-              <IconButton label="Delete" disabled={busy} onClick={() => setConfirmDeleteId(s.id)}>
+              <IconButton label={t("common:action.delete")} disabled={busy} onClick={() => setConfirmDeleteId(s.id)}>
                 <Trash2Icon />
               </IconButton>
             ))}
@@ -210,17 +213,17 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
         >
           <Input
             id={`edit-${s.id}`}
-            aria-label={`New value for ${s.id}`}
+            aria-label={t("secrets.newValueFor", { id: s.id })}
             className="min-w-48 flex-1"
             type="password"
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            placeholder="New value"
+            placeholder={t("secrets.newValue")}
             autoComplete="off"
           />
           <Button type="submit" variant="secondary" disabled={saving || !editValue.trim()}>
             {saving && <Spinner data-icon="inline-start" />}
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("common:state.saving") : t("common:action.save")}
           </Button>
           <Button
             type="button"
@@ -230,7 +233,7 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
               setEditValue("")
             }}
           >
-            Cancel
+            {t("common:action.cancel")}
           </Button>
         </form>
       )}
@@ -250,21 +253,21 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
       >
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Secrets Manager</DialogTitle>
+            <DialogTitle>{t("secrets.title")}</DialogTitle>
             <DialogDescription className="sr-only">
-              Environment variables and stored secrets that tools and models can reference. Values are never shown.
+              {t("secrets.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="-mx-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-1">
             {error && (
               <Notice
-                title="Error"
+                title={t("secrets.error")}
                 action={
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    aria-label="Dismiss error"
+                    aria-label={t("secrets.dismissError")}
                     onClick={() => setError(null)}
                   >
                     <XIcon />
@@ -275,10 +278,10 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
               </Notice>
             )}
             {secretsConfig?.force_env && (
-              <Notice title="force_env is enabled">All secret resolution uses environment variables only.</Notice>
+              <Notice title={t("secrets.forceEnvTitle")}>{t("secrets.forceEnvBody")}</Notice>
             )}
             {loading ? (
-              <div className="flex flex-col gap-2" role="status" aria-label="Loading secrets…">
+              <div className="flex flex-col gap-2" role="status" aria-label={t("secrets.loading")}>
                 <Skeleton className="h-7 w-48" />
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
@@ -287,28 +290,28 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
             ) : loadFailed && allSecrets.length === 0 ? (
               <div>
                 <Button type="button" variant="outline" onClick={() => void load()}>
-                  Retry
+                  {t("secrets.retry")}
                 </Button>
               </div>
             ) : (
               <Tabs defaultValue={initialTab}>
-                <TabsList aria-label="Secrets tabs">
-                  <TabsTrigger value="env">Environment {envSecrets.length > 0 && `(${envSecrets.length})`}</TabsTrigger>
+                <TabsList aria-label={t("secrets.tabsLabel")}>
+                  <TabsTrigger value="env">{t("secrets.tab.env")} {envSecrets.length > 0 && `(${envSecrets.length})`}</TabsTrigger>
                   <TabsTrigger value="stored">
-                    {mode === "vault" ? "Vault" : "Overrides"} {storedSecrets.length > 0 && `(${storedSecrets.length})`}
+                    {mode === "vault" ? t("secrets.tab.vault") : t("secrets.tab.overrides")} {storedSecrets.length > 0 && `(${storedSecrets.length})`}
                   </TabsTrigger>
                 </TabsList>
 
                 {/* Environment tab */}
                 <TabsContent value="env" className="flex flex-col gap-3 pt-2">
                   <p className="text-sm text-muted-foreground">
-                    Environment variables detected at startup. Available as references in local mode.
+                    {t("secrets.envIntro")}
                   </p>
                   {envSecrets.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       {mode === "vault"
-                        ? "Environment variable list is not shown in vault mode."
-                        : "No known LLM environment variables detected."}
+                        ? t("secrets.envHiddenVault")
+                        : t("secrets.envNone")}
                     </p>
                   ) : (
                     <ul className="flex flex-col border-t">{envSecrets.map(renderRow)}</ul>
@@ -325,35 +328,35 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
                     }}
                   >
                     <FieldSet>
-                      <FieldLegend variant="label">Add secret</FieldLegend>
+                      <FieldLegend variant="label">{t("secrets.add.legend")}</FieldLegend>
                       <FieldGroup className="gap-3">
                         <Field>
-                          <FieldLabel htmlFor="secret-id">Name (id)</FieldLabel>
+                          <FieldLabel htmlFor="secret-id">{t("secrets.add.id")}</FieldLabel>
                           <Input
                             id="secret-id"
                             value={addId}
                             onChange={(e) => setAddId(e.target.value)}
-                            placeholder="e.g. my-openai-key"
+                            placeholder={t("secrets.add.idPlaceholder")}
                           />
                         </Field>
                         <Field>
-                          <FieldLabel htmlFor="secret-value">Value</FieldLabel>
+                          <FieldLabel htmlFor="secret-value">{t("secrets.add.value")}</FieldLabel>
                           <Input
                             id="secret-value"
                             type="password"
                             value={addValue}
                             onChange={(e) => setAddValue(e.target.value)}
-                            placeholder="Secret value"
+                            placeholder={t("secrets.add.valuePlaceholder")}
                             autoComplete="off"
                           />
                         </Field>
                         <Field>
-                          <FieldLabel htmlFor="secret-description">Description (optional)</FieldLabel>
+                          <FieldLabel htmlFor="secret-description">{t("secrets.add.description")}</FieldLabel>
                           <Input
                             id="secret-description"
                             value={addDescription}
                             onChange={(e) => setAddDescription(e.target.value)}
-                            placeholder="Optional description"
+                            placeholder={t("secrets.add.descriptionPlaceholder")}
                           />
                         </Field>
                         <div>
@@ -364,16 +367,16 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
                             disabled={busy || !addId.trim() || !addValue.trim()}
                           >
                             {saving ? <Spinner data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
-                            {saving ? "Saving…" : "Add"}
+                            {saving ? t("common:state.saving") : t("common:action.add")}
                           </Button>
                         </div>
                       </FieldGroup>
                     </FieldSet>
                   </form>
                   <section className="flex flex-col gap-1.5">
-                    <h3 className="text-sm font-medium">{mode === "vault" ? "Vault secrets" : "Stored overrides"}</h3>
+                    <h3 className="text-sm font-medium">{mode === "vault" ? t("secrets.vaultSecrets") : t("secrets.storedOverrides")}</h3>
                     {storedSecrets.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No secrets stored yet.</p>
+                      <p className="text-sm text-muted-foreground">{t("secrets.empty")}</p>
                     ) : (
                       <ul className="flex flex-col border-t">{storedSecrets.map(renderRow)}</ul>
                     )}
@@ -384,16 +387,16 @@ export function SecretsManager({ open, onClose, agentId }: SecretsManagerProps) 
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Close
+              {t("common:action.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <AlertDialog
         open={confirmDeleteId !== null}
-        title="Delete secret"
-        description={`Delete secret "${confirmDeleteId ?? ""}"?`}
-        confirmLabel="Delete"
+        title={t("secrets.deleteTitle")}
+        description={t("secrets.deleteConfirm", { id: confirmDeleteId ?? "" })}
+        confirmLabel={t("common:action.delete")}
         onConfirm={() => {
           const id = confirmDeleteId
           setConfirmDeleteId(null)

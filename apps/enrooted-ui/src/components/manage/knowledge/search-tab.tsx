@@ -6,6 +6,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { FileTextIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -51,6 +52,7 @@ function SearchResultCard({
   expanded: boolean
   onToggle: () => void
 }) {
+  const { t } = useTranslation("knowledge")
   const passage = result.text || result.content || ""
   // Limit the preview to 3 lines (handles badly parsed text with many short lines).
   const lines = passage.split("\n")
@@ -78,9 +80,9 @@ function SearchResultCard({
           <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
             <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span className="truncate">{result.filename}</span>
-            {result.page != null && <StatusBadge tone="neutral">p.{result.page}</StatusBadge>}
+            {result.page != null && <StatusBadge tone="neutral">{t("search.page", { page: result.page })}</StatusBadge>}
           </span>
-          <StatusBadge tone={tone} title="Relevance score">
+          <StatusBadge tone={tone} title={t("search.relevance")}>
             {result.score.toFixed(2)}
           </StatusBadge>
         </span>
@@ -97,7 +99,7 @@ function SearchResultCard({
         </span>
         {expandable && (
           <span className="text-xs text-link underline">
-            {expanded ? "Show less" : "Show full passage"}
+            {expanded ? t("search.showLess") : t("search.showFull")}
           </span>
         )}
       </button>
@@ -112,6 +114,7 @@ export function SearchTab({
   agentLevelEnabled: boolean
   onToast?: KnowledgeToast
 }) {
+  const { t } = useTranslation("knowledge")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [searchLimit, setSearchLimit] = React.useState(10)
   const [searchThreshold, setSearchThreshold] = React.useState(0)
@@ -125,8 +128,8 @@ export function SearchTab({
     if (!agentLevelEnabled) {
       onToast?.(
         "warning",
-        "Agent knowledge is disabled",
-        "Enable agent-level knowledge in Settings to search permanent documents."
+        t("panel.agentDisabled.title"),
+        t("panel.agentDisabled.search")
       )
       return
     }
@@ -145,10 +148,10 @@ export function SearchTab({
         setSearchCompleted(true)
         setSearchTime(asNumber(data?.query_time_ms) ?? null)
       } else {
-        onToast?.("error", "Search failed", "Could not search knowledge base")
+        onToast?.("error", t("search.failed"), t("search.failedBody"))
       }
     } catch (e) {
-      onToast?.("error", "Search failed", (e instanceof Error && e.message) || "Network error")
+      onToast?.("error", t("search.failed"), (e instanceof Error && e.message) || t("shared.networkError"))
     } finally {
       setSearching(false)
     }
@@ -156,10 +159,7 @@ export function SearchTab({
 
   if (!agentLevelEnabled) {
     return (
-      <MessageTile title="Agent-level knowledge search is disabled">
-        Search testing in Manage only applies to permanent agent documents. Re-enable agent-level
-        knowledge in Settings to test retrieval here.
-      </MessageTile>
+      <MessageTile title={t("search.disabledTitle")}>{t("search.disabledBody")}</MessageTile>
     )
   }
 
@@ -168,10 +168,10 @@ export function SearchTab({
       <div className="flex items-end gap-3">
         <TextField
           id="knowledge-search-query"
-          label="Search query"
+          label={t("search.queryLabel")}
           hideLabel
           className="flex-1"
-          placeholder="Search your knowledge base..."
+          placeholder={t("search.queryPlaceholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -183,14 +183,14 @@ export function SearchTab({
         />
         <Button type="button" onClick={() => void handleSearch()} disabled={searching || !searchQuery.trim()}>
           {searching ? <Spinner data-icon="inline-start" aria-hidden="true" /> : <SearchIcon data-icon="inline-start" />}
-          {searching ? "Searching..." : "Search"}
+          {searching ? t("search.searching") : t("common:action.search")}
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <NumberField
           id="knowledge-search-limit"
-          label="Limit"
+          label={t("search.limit")}
           value={searchLimit}
           min={1}
           max={100}
@@ -198,7 +198,7 @@ export function SearchTab({
         />
         <NumberField
           id="knowledge-search-threshold"
-          label="Score threshold"
+          label={t("search.threshold")}
           value={searchThreshold}
           min={0}
           max={1}
@@ -210,8 +210,8 @@ export function SearchTab({
       {searchResults.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold">Results ({searchResults.length})</h4>
-            {searchTime !== null && <span className="text-xs text-muted-foreground">{searchTime}ms</span>}
+            <h4 className="text-sm font-semibold">{t("search.results", { total: searchResults.length })}</h4>
+            {searchTime !== null && <span className="text-xs text-muted-foreground">{t("search.time", { ms: searchTime })}</span>}
           </div>
           {searchResults.map((r, i) => (
             <SearchResultCard
@@ -226,7 +226,7 @@ export function SearchTab({
       )}
 
       {searchResults.length === 0 && !searching && searchCompleted && searchQuery && (
-        <MessageTile>No results found. Try a different query.</MessageTile>
+        <MessageTile>{t("search.noResults")}</MessageTile>
       )}
     </div>
   )

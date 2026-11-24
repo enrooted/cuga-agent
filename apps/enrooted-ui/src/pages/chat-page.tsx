@@ -7,7 +7,8 @@ import * as React from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
-import { MenuIcon, PanelLeftOpenIcon, PanelRightCloseIcon, PanelRightOpenIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { LockIcon, MenuIcon, PanelLeftOpenIcon, PanelRightCloseIcon, PanelRightOpenIcon, TriangleAlertIcon } from "lucide-react"
 
 import { AlertDialog } from "@/components/confirm-dialog"
 import { AgentPanel, type AgentConfig, type AppConfig, type ChatAgentOption, type FileNode, type RightPanelSection, type SkillInfo } from "@/components/agent-panel"
@@ -16,9 +17,10 @@ import { NavRail } from "@/components/nav-rail"
 import { ChatView, type HomescreenConfig } from "@/components/chat/chat-view"
 import { FilePreviewDialog, type FilePreview } from "@/components/file-preview-dialog"
 import { Button } from "@/components/ui/button"
-import { MemorySettings } from "@/components/memory-settings"
+import { MemoryWorkspace } from "@/components/memory/memory-workspace"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
+import i18n from "@/i18n"
 import * as api from "@/lib/api"
 import { type AttachmentSnapshot } from "@/lib/chat-model"
 import { cn } from "@/lib/utils"
@@ -37,7 +39,7 @@ async function prepareDraft(agentId: string, storageKey: string) {
   if (saved) {
     const res = await api.apiFetch(`/api/conversations/${encodeURIComponent(saved)}?agent_id=${encodeURIComponent(agentId)}`)
     if (res.ok && (await res.json()).status === "new") return saved
-    if (!res.ok && res.status !== 404) throw new Error(`Cannot restore chat (HTTP ${res.status})`)
+    if (!res.ok && res.status !== 404) throw new Error(i18n.t("chat:error.restoreChat", { status: res.status }))
     sessionStorage.removeItem(storageKey)
   }
   const res = await api.apiFetch("/api/conversations", {
@@ -45,7 +47,7 @@ async function prepareDraft(agentId: string, storageKey: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ agent_id: agentId }),
   })
-  if (!res.ok) throw new Error(`Cannot create chat (HTTP ${res.status})`)
+  if (!res.ok) throw new Error(i18n.t("chat:error.createChat", { status: res.status }))
   return (await res.json()).id as string
 }
 
@@ -60,6 +62,7 @@ function useWindowWidth() {
 }
 
 export function ChatPage() {
+  const { t } = useTranslation("chat")
   const { agentId: routeAgentId } = useParams<{ agentId?: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -114,8 +117,12 @@ export function ChatPage() {
   }, [navigate, routeAgentId])
 
   // ── threads & drafts ────────────────────────────────────────────────────
-  const { user } = useAuth()
-  const storageKey = JSON.stringify(["enrooted-draft", user?.sub, agentId])
+  const { user, ready: authReady, canManage } = useAuth()
+  // Memory workspace: memories a response used or saved, and who may administer.
+  const [focusedMemoryIds, setFocusedMemoryIds] = React.useState<string[]>([])
+  const [focusedMemoryRelationship, setFocusedMemoryRelationship] = React.useState<"used" | "saved">("used")
+  const canManageMemory = authReady && canManage
+  const storageKey =JSON.stringify(["enrooted-draft", user?.sub, agentId])
   const [draft, setDraft] = React.useState<DraftThread>({ threadId: "", hasSentFirstMessage: false })
   const [draftRequest, setDraftRequest] = React.useState(0)
   const [draftError, setDraftError] = React.useState("")
@@ -173,7 +180,7 @@ export function ChatPage() {
         const rows = await api.getConversationThreads(agentId)
         if (!cancelled && gen === threadsGeneration.current) setThreads(rows)
       } catch (e) {
-        if (!cancelled) toast.error("Threads Load Error", { description: e instanceof Error ? e.message : "Network error loading conversation threads" })
+        if (!cancelled) toast.error(i18n.t("chat:toast.threadsLoadError"), { description: e instanceof Error ? e.message : i18n.t("chat:toast.threadsLoadErrorBody") })
       } finally {
         if (!cancelled) setThreadsLoading(false)
       }
@@ -208,9 +215,9 @@ export function ChatPage() {
       if (!knowledgeEnabled || !sessionKnowledgeEnabled) return
       try {
         const res = await api.deleteSessionKnowledgeCollection(tid)
-        if (!res.ok) toast.warning("Draft cleanup incomplete", { description: "The draft knowledge collection could not be removed." })
+        if (!res.ok) toast.warning(i18n.t("chat:toast.draftCleanup"), { description: i18n.t("chat:toast.draftCleanupBody") })
       } catch {
-        toast.warning("Draft cleanup incomplete", { description: "The draft knowledge collection could not be removed." })
+        toast.warning(i18n.t("chat:toast.draftCleanup"), { description: i18n.t("chat:toast.draftCleanupBody") })
       }
     },
     [knowledgeEnabled, sessionKnowledgeEnabled]
@@ -229,7 +236,7 @@ export function ChatPage() {
         ])
         if (cancelled) return
         let name = "CUGA Default Agent"
-        let description = "A general-purpose assistant with configured tools and workspace access."
+        let description = i18n.t("chat:agent.defaultDescription")
         let configVersion: number | string | null = null
         if (ctxRes.ok) {
           const ctx = await ctxRes.json()
@@ -267,14 +274,16 @@ export function ChatPage() {
         if (toolsRes.ok) {
           const tools = (await toolsRes.json()).tools || []
           const byApp = new Map<string, AppConfig["tools"]>()
-          for (const t of tools) {
-            const app = t.app || "Unknown App"
+          for (const tool of tools) {
+            const app = tool.app || i18n.t("chat:agent.unknownApp")
             if (!byApp.has(app)) byApp.set(app, [])
-            byApp.get(app)!.push({ name: t.name, description: t.description || "No description available" })
+            byApp.get(app)!.push({ name: tool.name, description: tool.description || i18n.t("chat:agent.noDescription") })
           }
           apps = [...byApp].map(([appName, tools]) => ({ appName, tools }))
         } else {
-          toast.warning("Tools Load Warning", { description: `Failed to load tools list (${toolsRes.status} ${toolsRes.statusText})` })
+          toast.warning(i18n.t("chat:toast.toolsLoadWarning"), {
+            description: i18n.t("chat:toast.toolsLoadWarningBody", { status: toolsRes.status, statusText: toolsRes.statusText }),
+          })
         }
         if (cancelled) return
         setAgentConfig({
@@ -286,7 +295,7 @@ export function ChatPage() {
           apps,
         })
       } catch (e) {
-        if (!cancelled) toast.error("Configuration Load Error", { description: e instanceof Error ? e.message : "Network error loading agent configuration" })
+        if (!cancelled) toast.error(i18n.t("chat:toast.configLoadError"), { description: e instanceof Error ? e.message : i18n.t("chat:toast.configLoadErrorBody") })
       } finally {
         if (!cancelled) setConfigLoading(false)
       }
@@ -354,10 +363,10 @@ export function ChatPage() {
           const data = await res.json()
           if (isCurrent()) setWorkspaceTree(data.tree || [])
         } else if (force && isCurrent()) {
-          toast.warning("Workspace refresh failed", { description: `${res.status} ${res.statusText}` })
+          toast.warning(i18n.t("chat:toast.workspaceRefreshFailed"), { description: `${res.status} ${res.statusText}` })
         }
       } catch (e) {
-        if (force && isCurrent()) toast.error("Workspace refresh failed", { description: e instanceof Error ? e.message : "Unknown error" })
+        if (force && isCurrent()) toast.error(i18n.t("chat:toast.workspaceRefreshFailed"), { description: e instanceof Error ? e.message : i18n.t("chat:error.unknown") })
       } finally {
         if (isCurrent()) setWorkspaceLoading(false)
       }
@@ -370,13 +379,13 @@ export function ChatPage() {
   }, [threadId])
   React.useEffect(() => {
     void fetchWorkspaceTree()
-    const t = setInterval(() => void fetchWorkspaceTree(), 2500)
-    return () => clearInterval(t)
+    const timer = setInterval(() => void fetchWorkspaceTree(), 2500)
+    return () => clearInterval(timer)
   }, [fetchWorkspaceTree])
 
   const uploadWorkspace = async (files: File[]) => {
     const tid = threadId?.trim()
-    if (!tid) return void toast.warning("Upload unavailable", { description: "Start a chat before uploading files." })
+    if (!tid) return void toast.warning(t("toast.uploadUnavailable"), { description: t("toast.uploadUnavailableBody") })
     try {
       await Promise.all(
         files.map(async (file) => {
@@ -392,20 +401,20 @@ export function ChatPage() {
           }
         })
       )
-      toast.success("Upload complete", { description: `${files.length} file${files.length !== 1 ? "s" : ""} uploaded to workspace/uploads/` })
+      toast.success(t("toast.uploadComplete"), { description: t("toast.uploadCompleteBody", { count: files.length }) })
       await fetchWorkspaceTree()
     } catch (e) {
-      toast.error("Upload failed", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error(t("toast.uploadFailed"), { description: e instanceof Error ? e.message : i18n.t("chat:error.unknown") })
     }
   }
 
   const downloadWorkspace = async (path: string, name: string) => {
     try {
       const res = await api.getWorkspaceDownload(path, threadId || undefined)
-      if (!res.ok) return void toast.error("Download failed", { description: res.statusText || `HTTP ${res.status}` })
+      if (!res.ok) return void toast.error(t("toast.downloadFailed"), { description: res.statusText || `HTTP ${res.status}` })
       await api.saveResponseAsFile(res, name)
     } catch (e) {
-      toast.error("Download failed", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error(t("toast.downloadFailed"), { description: e instanceof Error ? e.message : i18n.t("chat:error.unknown") })
     }
   }
 
@@ -418,22 +427,22 @@ export function ChatPage() {
 
   const openWorkspaceFile = async (node: FileNode) => {
     if (!TEXT_EXTENSIONS.some((ext) => node.name.toLowerCase().endsWith(ext))) {
-      return void toast.info("Preview not available", { description: "Only text and markdown files can be previewed." })
+      return void toast.info(t("toast.previewNotAvailable"), { description: t("toast.previewNotAvailableBody") })
     }
     try {
       const res = await api.getWorkspaceFile(node.path, threadId || undefined)
-      if (!res.ok) return void toast.error("Failed to load file", { description: res.statusText })
+      if (!res.ok) return void toast.error(t("toast.fileLoadFailed"), { description: res.statusText })
       const data = await res.json()
       setPreview({ name: node.name, content: data.content, onDownload: () => void downloadWorkspace(node.path, node.name) })
     } catch (e) {
-      toast.error("Error loading file", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error(t("toast.fileLoadError"), { description: e instanceof Error ? e.message : i18n.t("chat:error.unknown") })
     }
   }
 
   const previewAttachment = async (a: AttachmentSnapshot) => {
     try {
       const res = await api.getKnowledgeDocumentFile(a.scope, a.knowledge_filename, a.scope === "session" ? threadId : undefined)
-      if (!res.ok) return void toast.error("Preview unavailable", { description: res.statusText || "Failed to load attachment." })
+      if (!res.ok) return void toast.error(t("toast.previewUnavailable"), { description: res.statusText || t("toast.previewUnavailableBody") })
       const blob = await res.blob()
       const lower = a.display_name.toLowerCase()
       const url = URL.createObjectURL(blob)
@@ -452,7 +461,7 @@ export function ChatPage() {
       download()
       URL.revokeObjectURL(url)
     } catch (e) {
-      toast.error("Preview unavailable", { description: e instanceof Error ? e.message : "Unknown error" })
+      toast.error(t("toast.previewUnavailable"), { description: e instanceof Error ? e.message : i18n.t("chat:error.unknown") })
     }
   }
 
@@ -500,12 +509,12 @@ export function ChatPage() {
       threadsGeneration.current += 1
       setThreads([])
       createAndActivateDraft()
-      const results = await Promise.allSettled(toDelete.map((t) => api.deleteConversation(t.thread_id, agentId)))
+      const results = await Promise.allSettled(toDelete.map((thread) => api.deleteConversation(thread.thread_id, agentId)))
       const failed = results.filter((r) => r.status === "rejected" || !r.value.ok).length
       await refreshThreads()
-      if (failed) toast.error("Error", { description: `Failed to remove ${failed} of ${toDelete.length} conversations.` })
+      if (failed) toast.error(t("toast.error"), { description: t("toast.removeSomeFailed", { failed, total: toDelete.length }) })
     } catch {
-      toast.error("Error", { description: "Failed to remove conversations." })
+      toast.error(t("toast.error"), { description: t("toast.removeFailed") })
     }
   }
 
@@ -520,6 +529,30 @@ export function ChatPage() {
       void refreshThreads()
     },
     [draft.hasSentFirstMessage, draft.threadId, refreshThreads, storageKey]
+  )
+
+  // The saved state of the selected conversation cannot be loaded (/stream 409 "unavailable").
+  const [unavailableThreadId, setUnavailableThreadId] = React.useState<string | null>(null)
+  const handleStreamError = React.useCallback(
+    (status: number, error?: string) => {
+      if (status === 404) {
+        // The conversation no longer exists: drop it from the list and start fresh.
+        toast.warning(i18n.t("chat:toast.conversationUnavailable"), { description: i18n.t("chat:toast.conversationUnavailableBody") })
+        if (selectedThreadId) setThreads((prev) => prev.filter((thread) => thread.thread_id !== selectedThreadId))
+        createAndActivateDraft()
+      } else if (status === 409) {
+        if (error === "conflict") {
+          toast.warning(i18n.t("chat:toast.responseRunning"), {
+            description: i18n.t("chat:toast.responseRunningBody"),
+          })
+        } else if (error === "unavailable") {
+          setUnavailableThreadId(threadId)
+        } else {
+          toast.warning(i18n.t("chat:toast.couldNotSend"), { description: i18n.t("chat:toast.couldNotSendBody") })
+        }
+      }
+    },
+    [createAndActivateDraft, selectedThreadId, threadId]
   )
 
   const startNew = async () => {
@@ -594,12 +627,14 @@ export function ChatPage() {
     />
   )
 
-  const selectedThread = threads.find((t) => t.thread_id === selectedThreadId)
-  const chatTitle = selectedThread?.first_message?.trim() || "New conversation"
-  const recent = threads.slice(0, 4).map((t) => ({
-    id: t.thread_id,
-    title: t.first_message || "Untitled conversation",
-    time: formatTimestamp(t.updated_at),
+  const selectedThread = threads.find((thread) => thread.thread_id === selectedThreadId)
+  const chatTitle = selectedThread?.first_message?.trim() || t("common:nav.newConversation")
+  const threadReadonly = Boolean(selectedThread && !["new", "active"].includes(selectedThread.status))
+  const threadUnavailable = unavailableThreadId != null && unavailableThreadId === threadId
+  const recent = threads.slice(0, 4).map((thread) => ({
+    id: thread.thread_id,
+    title: thread.first_message || t("common:conversations.untitled"),
+    time: formatTimestamp(thread.updated_at),
   }))
 
   const headerButton = (label: string, icon: React.ReactNode, onClick: () => void, extra?: { expanded?: boolean; controls?: string }) => (
@@ -627,14 +662,14 @@ export function ChatPage() {
   return (
     <div className="app-backdrop flex h-dvh">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-background focus:p-2">
-        Skip to main content
+        {t("page.skipToContent")}
       </a>
       {/* Navigation chrome (rail + list) is one glass surface over the backdrop. */}
       {leftDocked && <div className="glass-chrome flex shrink-0">{rail}</div>}
       {leftDocked && (
         <aside
           id="chat-conversations-panel"
-          aria-label="Conversations"
+          aria-label={t("common:conversations.title")}
           className={cn(
             "glass-chrome shrink-0 overflow-hidden border-r transition-[width] duration-200",
             leftOpen && activeView === "chat" ? "w-68" : "w-0 border-r-0"
@@ -645,8 +680,20 @@ export function ChatPage() {
       )}
 
       {activeView === "memory" && (
-        <main id="main-content" className="flex flex-1 items-center justify-center p-6">
-          <MemorySettings />
+        <main id="main-content" tabIndex={-1} className="min-h-0 min-w-0 flex-1">
+          <MemoryWorkspace
+            agentId={agentId}
+            agentName={agentConfig.name}
+            canManage={canManageMemory}
+            focusEntityIds={focusedMemoryIds}
+            focusRelationship={focusedMemoryRelationship}
+            onClearFocus={() => setFocusedMemoryIds([])}
+            onClose={() => setActiveView("chat")}
+            onOpenConversation={(tid) => {
+              selectThread(tid)
+              setActiveView("chat")
+            }}
+          />
         </main>
       )}
 
@@ -654,23 +701,46 @@ export function ChatPage() {
       <div className={cn("flex min-h-0 min-w-0 flex-1", activeView === "memory" && "hidden")}>
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           {draftError && !threadId && <div role="alert" className="p-4">
-            {draftError} <Button variant="outline" onClick={() => { setDraftError(""); setDraftRequest((n) => n + 1) }}>Retry</Button>
+            {draftError} <Button variant="outline" onClick={() => { setDraftError(""); setDraftRequest((n) => n + 1) }}>{t("page.retry")}</Button>
           </div>}
           {threadId && <ChatView
             key={`${agentId}`}
             agentId={agentId}
             threadId={threadId}
             title={chatTitle}
-            isReadonly={Boolean(selectedThread && !["new", "active"].includes(selectedThread.status))}
+            isReadonly={threadReadonly || threadUnavailable}
+            onStreamError={handleStreamError}
+            banner={
+              threadUnavailable ? (
+                <div role="status" className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2 text-sm">
+                  <TriangleAlertIcon className="size-4 shrink-0 text-status-warn" aria-hidden />
+                  <span className="flex-1">
+                    {t("page.banner.unavailable")}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={createAndActivateDraft}>
+                    {t("page.newChat")}
+                  </Button>
+                </div>
+              ) : selectedThread?.status === "legacy" || selectedThread?.status === "external" ? (
+                <div role="status" className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2 text-sm text-body">
+                  <LockIcon className="size-4 shrink-0" aria-hidden />
+                  <span className="flex-1">
+                    {selectedThread.status === "external"
+                      ? t("page.banner.external")
+                      : t("page.banner.legacy")}
+                  </span>
+                </div>
+              ) : undefined
+            }
             headerStart={
               !leftDocked
-                ? headerButton("Open navigation", <MenuIcon />, toggleLeft, { expanded: leftOpen })
+                ? headerButton(t("page.openNavigation"), <MenuIcon />, toggleLeft, { expanded: leftOpen })
                 : !leftOpen
-                  ? headerButton("Open conversations", <PanelLeftOpenIcon />, toggleLeft, { expanded: false, controls: "chat-conversations-panel" })
+                  ? headerButton(t("common:nav.openConversations"), <PanelLeftOpenIcon />, toggleLeft, { expanded: false, controls: "chat-conversations-panel" })
                   : undefined
             }
             headerEnd={headerButton(
-              rightOpen ? "Close agent panel" : "Open agent panel",
+              rightOpen ? t("page.closeAgentPanel") : t("page.openAgentPanel"),
               rightOpen ? <PanelRightCloseIcon /> : <PanelRightOpenIcon />,
               toggleRight,
               { expanded: rightOpen, controls: "chat-agent-details-panel" }
@@ -686,14 +756,18 @@ export function ChatPage() {
             onThreadChange={handleThreadChange}
             onRestart={createAndActivateDraft}
             onOpenKnowledge={openKnowledge}
-            onOpenMemoryUsage={memoryEnabled ? () => setActiveView("memory") : undefined}
+            onOpenMemoryUsage={memoryEnabled ? (entityIds, relationship) => {
+              setFocusedMemoryRelationship(relationship)
+              setFocusedMemoryIds(entityIds)
+              setActiveView("memory")
+            } : undefined}
             onPreviewAttachment={(a) => void previewAttachment(a)}
           />}
         </main>
         {rightDocked && (
           <aside
             id="chat-agent-details-panel"
-            aria-label="Agent details"
+            aria-label={t("page.agentDetails")}
             className={cn("glass-chrome shrink-0 overflow-hidden border-l transition-[width] duration-200", rightOpen ? "w-[26rem]" : "w-0 border-l-0")}
           >
             <div className="h-full w-[26rem]">{agentPanel}</div>
@@ -705,8 +779,8 @@ export function ChatPage() {
       {!leftDocked && (
         <Sheet open={leftOpen} onOpenChange={setLeftOpen}>
           <SheetContent side="left" showCloseButton={false} initialFocus={false} className="w-[21rem] max-w-[92vw] flex-row gap-0 p-0">
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SheetDescription className="sr-only">Agent, views and your conversations</SheetDescription>
+            <SheetTitle className="sr-only">{t("page.navigation")}</SheetTitle>
+            <SheetDescription className="sr-only">{t("page.navigationDescription")}</SheetDescription>
             {rail}
             <div className="min-w-0 flex-1">{conversations}</div>
           </SheetContent>
@@ -715,8 +789,8 @@ export function ChatPage() {
       {!rightDocked && (
         <Sheet open={rightOpen} onOpenChange={setRightOpen}>
           <SheetContent side="right" showCloseButton={false} className="w-full gap-0 p-0 sm:max-w-[26rem]">
-            <SheetTitle className="sr-only">Agent details</SheetTitle>
-            <SheetDescription className="sr-only">Tools, files, knowledge and skills</SheetDescription>
+            <SheetTitle className="sr-only">{t("page.agentDetails")}</SheetTitle>
+            <SheetDescription className="sr-only">{t("page.agentDetailsDescription")}</SheetDescription>
             {agentPanel}
           </SheetContent>
         </Sheet>
@@ -725,9 +799,9 @@ export function ChatPage() {
       <FilePreviewDialog preview={preview} onClose={closePreview} />
       <AlertDialog
         open={confirmRemoveAll}
-        title="Remove all conversations"
-        description="Remove all conversations? This cannot be undone."
-        confirmLabel="Remove all"
+        title={t("page.removeAll.title")}
+        description={t("page.removeAll.description")}
+        confirmLabel={t("common:conversations.removeAll")}
         onConfirm={() => void removeAll()}
         onCancel={() => setConfirmRemoveAll(false)}
       />

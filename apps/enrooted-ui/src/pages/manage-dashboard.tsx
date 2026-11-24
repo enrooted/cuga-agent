@@ -5,6 +5,7 @@
  */
 import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { BotIcon, FilesIcon, MessageSquareIcon, PlusIcon, SearchIcon, Settings2Icon, Trash2Icon, WorkflowIcon, WrenchIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Notice, TextAreaField, TextField } from "@/components/manage/form"
 import { ManageShell } from "@/components/manage/manage-shell"
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/api"
 
 export interface AgentItem {
@@ -31,6 +33,7 @@ export interface AgentItem {
 }
 
 function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const { t } = useTranslation("manage")
   const [name, setName] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [kind, setKind] = React.useState<"single" | "supervisor">("single")
@@ -39,7 +42,7 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      setError("Name is required")
+      setError(t("generic.nameRequired"))
       return
     }
     setSaving(true)
@@ -53,7 +56,7 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
       const data = await res.json()
       onCreated(data.id)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create agent")
+      setError(e instanceof Error ? e.message : t("dashboard.create.failed"))
     } finally {
       setSaving(false)
     }
@@ -63,8 +66,8 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
     <Dialog open onOpenChange={(o) => !o && !saving && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create agent</DialogTitle>
-          <DialogDescription className="sr-only">Name, description and kind of the new agent</DialogDescription>
+          <DialogTitle>{t("dashboard.createAgent")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("dashboard.create.description")}</DialogDescription>
         </DialogHeader>
         <form
           className="flex flex-col gap-4"
@@ -74,21 +77,21 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
           }}
         >
           {error && (
-            <Notice kind="error" title="Error">
+            <Notice kind="error" title={t("generic.error")}>
               {error}
             </Notice>
           )}
-          <TextField id="create-agent-name" label="Name" placeholder="e.g. Flight Booker" disabled={saving} value={name} onChange={(e) => setName(e.target.value)} />
+          <TextField id="create-agent-name" label={t("generic.name")} placeholder={t("dashboard.create.namePlaceholder")} disabled={saving} value={name} onChange={(e) => setName(e.target.value)} />
           <TextAreaField
             id="create-agent-description"
-            label="Description"
-            placeholder="Optional"
+            label={t("generic.description")}
+            placeholder={t("generic.optional")}
             disabled={saving}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <Field>
-            <FieldLabel id="create-agent-kind-label">Kind</FieldLabel>
+            <FieldLabel id="create-agent-kind-label">{t("dashboard.create.kind")}</FieldLabel>
             <RadioGroup
               aria-labelledby="create-agent-kind-label"
               value={kind}
@@ -97,21 +100,21 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
             >
               <label className="flex items-center gap-2 text-sm">
                 <RadioGroupItem value="single" id="create-agent-kind-single" />
-                Single agent
+                {t("kind.single")}
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <RadioGroupItem value="supervisor" id="create-agent-kind-supervisor" />
-                Supervisor (orchestrates other agents)
+                {t("kind.supervisorOption")}
               </label>
             </RadioGroup>
           </Field>
           <DialogFooter>
             <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
-              Cancel
+              {t("common:action.cancel")}
             </Button>
             <Button type="submit" disabled={saving || !name.trim()}>
               {saving && <Spinner data-icon="inline-start" />}
-              {saving ? "Creating…" : "Create"}
+              {saving ? t("dashboard.create.creating") : t("dashboard.create.submit")}
             </Button>
           </DialogFooter>
         </form>
@@ -121,6 +124,7 @@ function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCrea
 }
 
 export function ManageDashboard() {
+  const { t } = useTranslation("manage")
   const navigate = useNavigate()
   const [agents, setAgents] = React.useState<AgentItem[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -135,8 +139,8 @@ export function ManageDashboard() {
 
   const filtered = agents.filter((a) => `${a.name ?? ""} ${a.id} ${a.description}`.toLowerCase().includes(query.toLowerCase()))
   const groups = [
-    { id: "supervisors", title: "Supervisors", description: "Coordinate other agents to complete tasks.", agents: filtered.filter((a) => a.kind === "supervisor") },
-    { id: "agents", title: "Individual agents", description: "Agents with their own tools and instructions.", agents: filtered.filter((a) => a.kind !== "supervisor") },
+    { id: "supervisors", title: t("dashboard.group.supervisors.title"), description: t("dashboard.group.supervisors.description"), agents: filtered.filter((a) => a.kind === "supervisor") },
+    { id: "agents", title: t("dashboard.group.agents.title"), description: t("dashboard.group.agents.description"), agents: filtered.filter((a) => a.kind !== "supervisor") },
   ].filter((g) => g.agents.length > 0)
 
   const reloadAgents = React.useCallback(() => {
@@ -149,7 +153,7 @@ export function ManageDashboard() {
         return res.json()
       })
       .then((data) => setAgents(data.agents ?? []))
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load agents"))
+      .catch((e) => setError(e instanceof Error ? e.message : i18n.t("manage:dashboard.loadFailed")))
       .finally(() => setLoading(false))
   }, [])
 
@@ -161,12 +165,12 @@ export function ManageDashboard() {
       const res = await api.deleteAgent(pendingDelete.id)
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.detail || "Failed to delete agent")
+        throw new Error(body.detail || t("dashboard.delete.failed"))
       }
       setPendingDelete(null)
       reloadAgents()
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete agent")
+      setDeleteError(err instanceof Error ? err.message : t("dashboard.delete.failed"))
     } finally {
       setDeleting(false)
     }
@@ -190,7 +194,7 @@ export function ManageDashboard() {
   const createButton = agentRegistry && (
     <Button onClick={() => setShowCreate(true)}>
       <PlusIcon data-icon="inline-start" />
-      Create agent
+      {t("dashboard.createAgent")}
     </Button>
   )
 
@@ -198,18 +202,18 @@ export function ManageDashboard() {
     <ManageShell
       agentContext={agentContext ?? undefined}
       onNew={agentRegistry ? () => setShowCreate(true) : undefined}
-      newLabel="Create agent"
-      title={<h1 className="truncate text-sm font-medium">Agents</h1>}
+      newLabel={t("dashboard.createAgent")}
+      title={<h1 className="truncate text-sm font-medium">{t("common:nav.agents")}</h1>}
     >
       <div className="min-h-0 flex-1 overflow-y-auto pt-12">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
           <header className="flex flex-col gap-2">
-            <p className="text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">Workspace</p>
+            <p className="text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">{t("dashboard.eyebrow")}</p>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-semibold">Agent dashboard</h2>
+              <h2 className="text-2xl font-semibold">{t("dashboard.title")}</h2>
               {createButton}
             </div>
-            <p className="text-sm text-body">Select an agent to configure it and try it out.</p>
+            <p className="text-sm text-body">{t("dashboard.intro")}</p>
           </header>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -220,19 +224,19 @@ export function ManageDashboard() {
               <InputGroupInput
                 id="agent-search"
                 type="search"
-                aria-label="Search agents"
-                placeholder="Search agents"
+                aria-label={t("dashboard.search")}
+                placeholder={t("dashboard.search")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </InputGroup>
             <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
-              {loading ? "" : `${filtered.length} of ${agents.length} agents`}
+              {loading ? "" : t("dashboard.count", { shown: filtered.length, count: agents.length })}
             </span>
           </div>
 
           {loading && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading agents">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("dashboard.loading")}>
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-44 rounded-xl" />
               ))}
@@ -240,7 +244,7 @@ export function ManageDashboard() {
           )}
 
           {error && (
-            <Notice kind="error" title="Error">
+            <Notice kind="error" title={t("generic.error")}>
               {error}
             </Notice>
           )}
@@ -263,21 +267,21 @@ export function ManageDashboard() {
                     <article key={agent.id} className="glass-card flex flex-col gap-2 rounded-xl border p-4">
                       <div className="flex items-center justify-between">
                         {agent.kind === "supervisor" ? <WorkflowIcon className="size-5 text-link" aria-hidden /> : <BotIcon className="size-5 text-link" aria-hidden />}
-                        <Badge variant="outline">{agent.kind === "supervisor" ? "Supervisor" : "Single agent"}</Badge>
+                        <Badge variant="outline">{agent.kind === "supervisor" ? t("kind.supervisor") : t("kind.single")}</Badge>
                       </div>
                       <div className="min-w-0">
-                        <h4 className="truncate text-base font-medium">{agent.name?.trim() || "Agent"}</h4>
+                        <h4 className="truncate text-base font-medium">{agent.name?.trim() || t("dashboard.fallbackName")}</h4>
                         <p className="truncate font-mono text-xs text-muted-foreground">{agent.id}</p>
                       </div>
                       <p className="line-clamp-3 min-h-10 text-sm text-body">{agent.description}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <WrenchIcon className="size-3.5" /> {agent.tools_count} tool{agent.tools_count !== 1 ? "s" : ""}
+                          <WrenchIcon className="size-3.5" /> {t("dashboard.tools", { count: agent.tools_count })}
                         </span>
                         {agent.latest_version != null && (
                           <span
                             className="flex items-center gap-1"
-                            title={agent.latest_version_created_at ? new Date(agent.latest_version_created_at).toLocaleString() : undefined}
+                            title={agent.latest_version_created_at ? new Date(agent.latest_version_created_at).toLocaleString(i18n.language) : undefined}
                           >
                             <FilesIcon className="size-3.5" /> v{agent.latest_version}
                           </span>
@@ -286,11 +290,11 @@ export function ManageDashboard() {
                       <div className="mt-auto flex items-center gap-1 border-t pt-3">
                         <Button variant="outline" size="sm" render={<Link to={`/manage/${encodeURIComponent(agent.id)}`} />}>
                           <Settings2Icon data-icon="inline-start" />
-                          Configure &amp; try it out
+                          {t("dashboard.configure")}
                         </Button>
                         <Button variant="ghost" size="sm" render={<Link to={`/chat/${encodeURIComponent(agent.id)}`} />}>
                           <MessageSquareIcon data-icon="inline-start" />
-                          Chat
+                          {t("common:nav.chat")}
                         </Button>
                         {agentRegistry && agent.id !== "cuga-default" && (
                           <Tooltip>
@@ -300,7 +304,7 @@ export function ManageDashboard() {
                                   variant="ghost"
                                   size="icon-sm"
                                   className="ml-auto text-muted-foreground"
-                                  aria-label={`Delete agent ${agent.name?.trim() || agent.id}`}
+                                  aria-label={t("dashboard.deleteAgentNamed", { name: agent.name?.trim() || agent.id })}
                                   onClick={() => {
                                     setDeleteError(null)
                                     setPendingDelete(agent)
@@ -310,7 +314,7 @@ export function ManageDashboard() {
                             >
                               <Trash2Icon />
                             </TooltipTrigger>
-                            <TooltipContent>Delete agent</TooltipContent>
+                            <TooltipContent>{t("dashboard.deleteAgent")}</TooltipContent>
                           </Tooltip>
                         )}
                       </div>
@@ -322,18 +326,18 @@ export function ManageDashboard() {
 
           {!loading && !error && agents.length > 0 && filtered.length === 0 && (
             <div className="glass-card flex flex-col items-start gap-2 rounded-xl border p-6">
-              <h3 className="text-base font-medium">No matching agents</h3>
-              <p className="text-sm text-body">Try a different name or description.</p>
+              <h3 className="text-base font-medium">{t("dashboard.noMatch.title")}</h3>
+              <p className="text-sm text-body">{t("dashboard.noMatch.body")}</p>
               <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
-                Clear search
+                {t("dashboard.noMatch.clear")}
               </Button>
             </div>
           )}
 
           {!loading && !error && agents.length === 0 && (
             <div className="flex flex-col items-start gap-4">
-              <Notice kind="info" title="No agents configured">
-                {agentRegistry ? "Create an agent to get started" : "No agents configured"}
+              <Notice kind="info" title={t("dashboard.empty.title")}>
+                {agentRegistry ? t("dashboard.empty.create") : t("dashboard.empty.none")}
               </Notice>
               {createButton}
             </div>
@@ -344,21 +348,21 @@ export function ManageDashboard() {
       <Dialog open={!!pendingDelete} onOpenChange={(o) => !o && !deleting && setPendingDelete(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete agent “{pendingDelete?.name?.trim() || pendingDelete?.id || ""}”?</DialogTitle>
-            <DialogDescription>This cannot be undone.</DialogDescription>
+            <DialogTitle>{t("dashboard.delete.title", { name: pendingDelete?.name?.trim() || pendingDelete?.id || "" })}</DialogTitle>
+            <DialogDescription>{t("dashboard.delete.body")}</DialogDescription>
           </DialogHeader>
           {deleteError && (
-            <Notice kind="error" title="Error">
+            <Notice kind="error" title={t("generic.error")}>
               {deleteError}
             </Notice>
           )}
           <DialogFooter>
             <Button variant="outline" disabled={deleting} onClick={() => setPendingDelete(null)}>
-              Cancel
+              {t("common:action.cancel")}
             </Button>
             <Button variant="destructive" disabled={deleting} onClick={() => void handleDelete()}>
               {deleting && <Spinner data-icon="inline-start" />}
-              {deleting ? "Deleting…" : "Delete agent"}
+              {deleting ? t("dashboard.delete.deleting") : t("dashboard.deleteAgent")}
             </Button>
           </DialogFooter>
         </DialogContent>

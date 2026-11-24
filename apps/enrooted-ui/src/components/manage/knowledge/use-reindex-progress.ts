@@ -8,6 +8,7 @@
  */
 import * as React from "react"
 
+import i18n from "@/i18n"
 import * as api from "@/lib/manage/knowledge-api"
 import type {
   AutoReindexTrigger,
@@ -165,8 +166,8 @@ export function useReindexProgress({
             if (failed === 0) {
               run.onToast?.(
                 "success",
-                "Re-index complete",
-                `${completed} document(s) re-indexed successfully.`
+                i18n.t("knowledge:reindex.complete"),
+                i18n.t("knowledge:reindex.toast.completeBody", { completed })
               )
               // Tell the page to refresh its saved-config snapshot so the
               // "Re-index needed" banner (snapshot-vs-current diff) clears.
@@ -182,13 +183,15 @@ export function useReindexProgress({
                 .map((t) => t.filename || t.task_id)
                 .slice(0, 3)
                 .join(", ")
-              const more = failed > 3 ? ` (+${failed - 3} more)` : ""
               run.onToast?.(
                 "error",
-                "Re-index didn't complete",
-                `${completed}/${taskIds.length} succeeded; ${failed} failed: ${failedNames}${more}. ` +
-                  `Your previous embedder configuration is still active. ` +
-                  `Fix the failing file(s) and Re-index again, or revert your config.`
+                i18n.t("knowledge:reindex.toast.incompleteTitle"),
+                i18n.t(
+                  failed > 3
+                    ? "knowledge:reindex.toast.incompleteBodyMore"
+                    : "knowledge:reindex.toast.incompleteBody",
+                  { completed, total: taskIds.length, failed, names: failedNames, more: failed - 3 }
+                )
               )
             }
           }

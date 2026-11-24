@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import {
   AppWindowIcon,
@@ -35,6 +36,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useSessionKnowledgeAttachments } from "@/hooks/use-session-knowledge-attachments"
+import i18n from "@/i18n"
 import * as api from "@/lib/api"
 import { cn } from "@/lib/utils"
 
@@ -109,6 +111,7 @@ function IconAction({ label, onClick, disabled, children }: { label: string; onC
 
 // ── tools ──────────────────────────────────────────────────────────────────
 function ToolsSection({ apps }: { apps: AppConfig[] }) {
+  const { t } = useTranslation("chat")
   if (apps.length === 0) {
     return (
       <Empty>
@@ -116,8 +119,8 @@ function ToolsSection({ apps }: { apps: AppConfig[] }) {
           <EmptyMedia variant="icon">
             <WrenchIcon />
           </EmptyMedia>
-          <EmptyTitle>No tools</EmptyTitle>
-          <EmptyDescription>Connect tools to this agent in Manage.</EmptyDescription>
+          <EmptyTitle>{t("panel.tools.empty")}</EmptyTitle>
+          <EmptyDescription>{t("panel.tools.emptyHint")}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     )
@@ -130,9 +133,7 @@ function ToolsSection({ apps }: { apps: AppConfig[] }) {
             <span className="flex flex-1 items-center gap-2">
               <AppWindowIcon className="size-4 text-primary" />
               <span className="flex-1 font-semibold">{app.appName}</span>
-              <Badge variant="secondary">
-                {app.tools.length} tool{app.tools.length !== 1 ? "s" : ""}
-              </Badge>
+              <Badge variant="secondary">{t("panel.tools.count", { count: app.tools.length })}</Badge>
             </span>
           </AccordionTrigger>
           <AccordionContent>
@@ -158,12 +159,13 @@ function ToolsSection({ apps }: { apps: AppConfig[] }) {
 
 // ── supervisor roster ──────────────────────────────────────────────────────
 function SupervisorRoster({ members, agents }: { members: SupervisorMember[]; agents: ChatAgentOption[] }) {
-  if (members.length === 0) return <p className="p-2 text-sm">No agents are assigned to this supervisor.</p>
+  const { t } = useTranslation("chat")
+  if (members.length === 0) return <p className="p-2 text-sm">{t("panel.roster.empty")}</p>
   return (
-    <ItemGroup aria-label="Supervised agents">
+    <ItemGroup aria-label={t("panel.roster.label")}>
       {members.map((member, index) => {
         const agent = member.kind === "internal" ? agents.find((a) => a.id === member.ref) : undefined
-        const name = agent?.name?.trim() || member.name || member.ref || "Unknown agent"
+        const name = agent?.name?.trim() || member.name || member.ref || t("panel.roster.unknownAgent")
         const Icon = agent?.kind === "supervisor" ? WorkflowIcon : BotIcon
         return (
           <Item key={`${member.kind}:${member.ref || member.name}:${index}`} variant="outline" size="sm">
@@ -174,7 +176,7 @@ function SupervisorRoster({ members, agents }: { members: SupervisorMember[]; ag
               <ItemTitle>
                 {name}
                 <Badge variant={member.kind === "a2a" ? "secondary" : "outline"}>
-                  {member.kind === "a2a" ? "External A2A" : "Agent"}
+                  {member.kind === "a2a" ? t("panel.roster.externalA2a") : t("panel.roster.agent")}
                 </Badge>
               </ItemTitle>
               {member.ref && <code className="text-xs">{member.ref}</code>}
@@ -184,11 +186,11 @@ function SupervisorRoster({ members, agents }: { members: SupervisorMember[]; ag
                 (agents.length > 0 && !agent ? (
                   <p role="status" className="flex items-center gap-1 text-xs text-warn-text">
                     <TriangleAlertIcon className="size-3.5 shrink-0 text-status-warn" />
-                    Agent unavailable. Update the supervisor configuration.
+                    {t("panel.roster.unavailable")}
                   </p>
                 ) : (
                   <Link to={`/chat/${encodeURIComponent(member.ref)}`} className="text-xs text-primary underline-offset-4 hover:underline">
-                    Chat with {name}
+                    {t("panel.roster.chatWith", { name })}
                   </Link>
                 ))}
             </ItemContent>
@@ -231,6 +233,7 @@ function TreeNode({
   onOpenFile: (node: FileNode) => void
   onDownload: (node: FileNode) => void
 }) {
+  const { t } = useTranslation("chat")
   const indent = { paddingLeft: `${depth * 0.875 + 0.25}rem` }
   if (node.type === "directory") {
     const open = expanded.has(node.path)
@@ -270,7 +273,7 @@ function TreeNode({
       <Button
         variant="ghost"
         size="icon-xs"
-        aria-label={`Download ${node.name}`}
+        aria-label={t("panel.workspace.download", { name: node.name })}
         className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={() => onDownload(node)}
       >
@@ -295,6 +298,7 @@ function WorkspaceSection({
   onOpenFile: (node: FileNode) => void
   onDownload: (node: FileNode) => void
 }) {
+  const { t } = useTranslation("chat")
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = React.useState(false)
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
@@ -354,27 +358,27 @@ function WorkspaceSection({
             e.target.value = ""
           }}
         />
-        <IconAction label="Upload JSON files" onClick={() => inputRef.current?.click()}>
+        <IconAction label={t("panel.workspace.upload")} onClick={() => inputRef.current?.click()}>
           <UploadIcon />
         </IconAction>
-        <IconAction label="Refresh workspace" onClick={onRefresh}>
+        <IconAction label={t("panel.workspace.refresh")} onClick={onRefresh}>
           <RefreshCwIcon />
         </IconAction>
       </div>
       {loading ? (
-        <ListSkeleton rows={4} label="Loading workspace files…" />
+        <ListSkeleton rows={4} label={t("panel.workspace.loading")} />
       ) : tree.length === 0 ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <FolderIcon />
             </EmptyMedia>
-            <EmptyTitle>No workspace files.</EmptyTitle>
-            <EmptyDescription>Upload JSON files — they appear under workspace/uploads/</EmptyDescription>
+            <EmptyTitle>{t("panel.workspace.empty")}</EmptyTitle>
+            <EmptyDescription>{t("panel.workspace.emptyHint")}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
-        <div role="tree" aria-label="Workspace">
+        <div role="tree" aria-label={t("panel.workspace.tree")}>
           {tree.map((node) => (
             <TreeNode
               key={node.path}
@@ -397,7 +401,7 @@ function WorkspaceSection({
       )}
       {dragOver && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-background/85 text-sm font-medium">
-          Drop JSON files here to upload
+          {t("panel.workspace.drop")}
         </div>
       )}
     </div>
@@ -414,10 +418,10 @@ interface KnowledgeDoc {
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60000) return "Just now"
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  if (diff < 60000) return i18n.t("common:time.justNow")
+  if (diff < 3600000) return i18n.t("common:time.minutesAgo", { count: Math.floor(diff / 60000) })
+  if (diff < 86400000) return i18n.t("common:time.hoursAgo", { count: Math.floor(diff / 3600000) })
+  return new Date(iso).toLocaleDateString(i18n.language, { month: "short", day: "numeric" })
 }
 
 function KnowledgeSection({
@@ -441,6 +445,7 @@ function KnowledgeSection({
   citationsEnabled: boolean
   agentLabel: string
 }) {
+  const { t } = useTranslation("chat")
   const agentScope = knowledgeEnabled && agentKnowledgeEnabled
   const sessionScope = knowledgeEnabled && sessionKnowledgeEnabled
   const [agentDocs, setAgentDocs] = React.useState<KnowledgeDoc[]>([])
@@ -455,11 +460,11 @@ function KnowledgeSection({
     api
       .listKnowledgeDocuments()
       .then(async (res) => {
-        if (!res.ok) throw new Error(`Failed to load documents (${res.status})`)
+        if (!res.ok) throw new Error(i18n.t("chat:panel.knowledge.loadFailedStatus", { status: res.status }))
         const body = await res.json()
         if (!cancelled) setAgentDocs(body?.documents ?? [])
       })
-      .catch((e) => !cancelled && setAgentError(e instanceof Error ? e.message : "Failed to load documents"))
+      .catch((e) => !cancelled && setAgentError(e instanceof Error ? e.message : i18n.t("chat:panel.knowledge.loadFailed")))
       .finally(() => !cancelled && setAgentLoading(false))
     return () => {
       cancelled = true
@@ -523,13 +528,13 @@ function KnowledgeSection({
       <Alert>
         <AlertTitle>
           {!knowledgeEnabled
-            ? `Knowledge isn't available for ${agentLabel}.`
-            : `Knowledge scopes are turned off for ${agentLabel}.`}
+            ? t("panel.knowledge.notAvailable", { agent: agentLabel })
+            : t("panel.knowledge.scopesOff", { agent: agentLabel })}
         </AlertTitle>
         <AlertDescription>
           {!knowledgeEnabled
-            ? "To turn it back on or update documents, open Manage and change the knowledge settings there."
-            : "Re-enable agent-level or session-level knowledge in Manage to make documents available here again."}
+            ? t("panel.knowledge.notAvailableHint")
+            : t("panel.knowledge.scopesOffHint")}
         </AlertDescription>
       </Alert>
     )
@@ -539,15 +544,15 @@ function KnowledgeSection({
     <div className="flex flex-col gap-5">
       {agentScope && (
         <section className="flex flex-col gap-2">
-          <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Agent Knowledge</h4>
+          <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t("panel.knowledge.agentTitle")}</h4>
           {agentLoading && agentDocs.length === 0 ? (
-            <ListSkeleton rows={2} label="Loading agent documents…" />
+            <ListSkeleton rows={2} label={t("panel.knowledge.loadingAgent")} />
           ) : agentError ? (
             <Alert variant="destructive">
               <AlertTitle>{agentError}</AlertTitle>
             </Alert>
           ) : agentDocs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No agent documents</p>
+            <p className="text-sm text-muted-foreground">{t("panel.knowledge.noAgentDocs")}</p>
           ) : (
             <ItemGroup>
               {agentDocs.map((doc) => (
@@ -558,7 +563,7 @@ function KnowledgeSection({
                   <ItemContent>
                     <ItemTitle className="truncate">{doc.filename}</ItemTitle>
                     <ItemDescription>
-                      {doc.chunk_count} chunks · {relativeTime(doc.ingested_at)}
+                      {t("panel.knowledge.docMeta", { count: doc.chunk_count, time: relativeTime(doc.ingested_at) })}
                     </ItemDescription>
                   </ItemContent>
                 </Item>
@@ -566,7 +571,7 @@ function KnowledgeSection({
             </ItemGroup>
           )}
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <LockIcon className="size-3" /> Managed in Settings
+            <LockIcon className="size-3" /> {t("panel.knowledge.managedInSettings")}
           </span>
         </section>
       )}
@@ -574,14 +579,14 @@ function KnowledgeSection({
       {sessionScope && (
         <section className="flex flex-col gap-2">
           <div>
-            <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">This Conversation</h4>
-            <p className="text-xs text-muted-foreground">Only available in this chat session</p>
+            <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t("panel.knowledge.sessionTitle")}</h4>
+            <p className="text-xs text-muted-foreground">{t("panel.knowledge.sessionHint")}</p>
           </div>
           {citationsEnabled && (
             <Field orientation="horizontal" data-disabled={!conversationReady || citationsSaving || undefined}>
               <FieldContent>
-                <FieldLabel htmlFor="session-citations-toggle">Citations for this chat</FieldLabel>
-                <FieldDescription>Show numbered sources under answers</FieldDescription>
+                <FieldLabel htmlFor="session-citations-toggle">{t("panel.knowledge.citations")}</FieldLabel>
+                <FieldDescription>{t("panel.knowledge.citationsHint")}</FieldDescription>
               </FieldContent>
               <Switch
                 id="session-citations-toggle"
@@ -593,17 +598,17 @@ function KnowledgeSection({
           )}
           {(citationsSaving || session.isDeleting) && (
             <span className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Spinner /> {citationsSaving ? "Saving citation settings…" : "Removing document…"}
+              <Spinner /> {citationsSaving ? t("panel.knowledge.savingCitations") : t("panel.knowledge.removingDocument")}
             </span>
           )}
           {session.isLoading && session.documents.length === 0 ? (
-            <ListSkeleton rows={2} label="Loading conversation documents…" />
+            <ListSkeleton rows={2} label={t("panel.knowledge.loadingSession")} />
           ) : session.loadError ? (
             <Alert variant="destructive">
               <AlertTitle>{session.loadError}</AlertTitle>
             </Alert>
           ) : session.documents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No session documents</p>
+            <p className="text-sm text-muted-foreground">{t("panel.knowledge.noSessionDocs")}</p>
           ) : (
             <ItemGroup>
               {session.documents.map((doc) => (
@@ -614,14 +619,17 @@ function KnowledgeSection({
                   <ItemContent>
                     <ItemTitle className="truncate">{doc.display_name}</ItemTitle>
                     <ItemDescription>
-                      {doc.chunk_count ?? 0} chunks · {doc.ingested_at ? relativeTime(doc.ingested_at) : "Just now"}
+                      {t("panel.knowledge.docMeta", {
+                        count: doc.chunk_count ?? 0,
+                        time: doc.ingested_at ? relativeTime(doc.ingested_at) : t("common:time.justNow"),
+                      })}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Remove document ${doc.display_name}`}
+                      aria-label={t("panel.knowledge.removeDocument", { name: doc.display_name })}
                       disabled={session.isDeleting}
                       onClick={() => void session.deleteDocument(doc.knowledge_filename).catch(() => undefined)}
                     >
@@ -653,7 +661,7 @@ function KnowledgeSection({
               dropHover && "border-primary bg-muted"
             )}
           >
-            {conversationReady ? "Drag and drop files here or click to upload" : "Session files are temporarily unavailable"}
+            {conversationReady ? t("panel.knowledge.dropzone") : t("panel.knowledge.dropzoneUnavailable")}
           </button>
           <input
             ref={fileRef}
@@ -668,7 +676,7 @@ function KnowledgeSection({
           />
           {session.isUploading && (
             <span className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Spinner /> Uploading...
+              <Spinner /> {t("panel.knowledge.uploading")}
             </span>
           )}
         </section>
@@ -679,8 +687,9 @@ function KnowledgeSection({
 
 // ── skills ─────────────────────────────────────────────────────────────────
 function SkillsSection({ skills, loading }: { skills: SkillInfo[]; loading: boolean }) {
+  const { t } = useTranslation("chat")
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
-  if (loading) return <ListSkeleton label="Loading skills…" />
+  if (loading) return <ListSkeleton label={t("panel.skills.loading")} />
   if (skills.length === 0) {
     return (
       <Empty>
@@ -688,8 +697,8 @@ function SkillsSection({ skills, loading }: { skills: SkillInfo[]; loading: bool
           <EmptyMedia variant="icon">
             <AppWindowIcon />
           </EmptyMedia>
-          <EmptyTitle>No skills installed</EmptyTitle>
-          <EmptyDescription>Skills will appear here once configured</EmptyDescription>
+          <EmptyTitle>{t("panel.skills.empty")}</EmptyTitle>
+          <EmptyDescription>{t("panel.skills.emptyHint")}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     )
@@ -712,7 +721,7 @@ function SkillsSection({ skills, loading }: { skills: SkillInfo[]; loading: bool
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               <p className="text-xs leading-relaxed text-muted-foreground">
-                {(isOpen || !long ? skill.description : truncate(skill.description || "", 100)) || "No description available"}
+                {(isOpen || !long ? skill.description : truncate(skill.description || "", 100)) || t("agent.noDescription")}
               </p>
               {long && (
                 <Button
@@ -728,12 +737,12 @@ function SkillsSection({ skills, loading }: { skills: SkillInfo[]; loading: bool
                     })
                   }
                 >
-                  {isOpen ? "Show less" : "Show more"}
+                  {isOpen ? t("panel.skills.showLess") : t("panel.skills.showMore")}
                 </Button>
               )}
               {skill.requirements?.length > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[0.7rem] font-bold tracking-wide uppercase">Requirements</span>
+                  <span className="text-[0.7rem] font-bold tracking-wide uppercase">{t("panel.skills.requirements")}</span>
                   <div className="flex flex-wrap gap-1.5">
                     {skill.requirements.map((r) => (
                       <Badge key={r} variant="outline">
@@ -752,11 +761,12 @@ function SkillsSection({ skills, loading }: { skills: SkillInfo[]; loading: bool
 }
 
 // ── panel ──────────────────────────────────────────────────────────────────
-const SECTION_META: Record<RightPanelSection, { title: string; subtitle: string; icon: React.ElementType }> = {
-  configuration: { title: "Tools", subtitle: "Apps and tools available to this agent", icon: WrenchIcon },
-  workspace: { title: "Workspace", subtitle: "Files available in the current workspace", icon: FolderIcon },
-  knowledge: { title: "Knowledge", subtitle: "Agent and conversation documents for retrieval", icon: FileTextIcon },
-  skills: { title: "Skills", subtitle: "Installed automation workflows", icon: AppWindowIcon },
+// `key` selects panel.section.<key>.{title,subtitle}; translated where rendered.
+const SECTION_META: Record<RightPanelSection, { key: string; icon: React.ElementType }> = {
+  configuration: { key: "configuration", icon: WrenchIcon },
+  workspace: { key: "workspace", icon: FolderIcon },
+  knowledge: { key: "knowledge", icon: FileTextIcon },
+  skills: { key: "skills", icon: AppWindowIcon },
 }
 
 export function AgentPanel(props: {
@@ -784,6 +794,7 @@ export function AgentPanel(props: {
   skills: SkillInfo[]
   skillsLoading: boolean
 }) {
+  const { t } = useTranslation("chat")
   const { agentConfig, section } = props
   const isSupervisor = agentConfig.kind === "supervisor"
   const totalTools = agentConfig.apps.reduce((s, a) => s + a.tools.length, 0)
@@ -794,14 +805,14 @@ export function AgentPanel(props: {
     skills: props.skills.length,
   }
   const sections: Array<{ id: RightPanelSection; label: string }> = [
-    { id: "configuration", label: isSupervisor ? "Agents" : "Tools" },
-    { id: "workspace", label: "Files" },
-    { id: "knowledge", label: "Knowledge" },
-    ...(props.skills.length > 0 ? [{ id: "skills" as const, label: "Skills" }] : []),
+    { id: "configuration", label: isSupervisor ? t("panel.tab.agents") : t("panel.tab.tools") },
+    { id: "workspace", label: t("panel.tab.files") },
+    { id: "knowledge", label: t("panel.tab.knowledge") },
+    ...(props.skills.length > 0 ? [{ id: "skills" as const, label: t("panel.tab.skills") }] : []),
   ]
   const meta =
     section === "configuration" && isSupervisor
-      ? { title: "Supervised agents", subtitle: "Published agents available for delegation", icon: WorkflowIcon }
+      ? { key: "supervised", icon: WorkflowIcon }
       : SECTION_META[section]
   const HeaderIcon = isSupervisor ? WorkflowIcon : AppWindowIcon
   const SectionIcon = meta.icon
@@ -816,12 +827,12 @@ export function AgentPanel(props: {
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{agentConfig.description}</p>
             {agentConfig.configVersion != null && (
               <Badge variant="outline" className="mt-2">
-                Config v{agentConfig.configVersion}
+                {t("panel.configVersion", { version: agentConfig.configVersion })}
               </Badge>
             )}
           </div>
         </div>
-        <IconAction label="Close panel" onClick={props.onClose}>
+        <IconAction label={t("common:action.closePanel")} onClick={props.onClose}>
           <PanelRightCloseIcon />
         </IconAction>
       </div>
@@ -832,7 +843,7 @@ export function AgentPanel(props: {
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div className="px-4 pt-3">
-          <TabsList className="w-full" aria-label="Agent details sections">
+          <TabsList className="w-full" aria-label={t("panel.sections")}>
             {sections.map((s) => (
               <TabsTrigger key={s.id} value={s.id}>
                 {s.label}
@@ -848,17 +859,17 @@ export function AgentPanel(props: {
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold">{meta.title}</h3>
+                  <h3 className="text-sm font-semibold">{t(`panel.section.${meta.key}.title`)}</h3>
                   <Badge variant="secondary">{counts[section]}</Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{meta.subtitle}</p>
+                <p className="text-xs text-muted-foreground">{t(`panel.section.${meta.key}.subtitle`)}</p>
               </div>
             </div>
             <Separator />
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {s.id === "configuration" &&
                 (props.configLoading ? (
-                  <ListSkeleton label="Loading agent details…" />
+                  <ListSkeleton label={t("panel.loadingDetails")} />
                 ) : isSupervisor ? (
                   <SupervisorRoster members={agentConfig.supervisedAgents ?? []} agents={props.availableAgents} />
                 ) : (

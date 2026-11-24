@@ -1,0 +1,305 @@
+{
+  "config": {
+    "title": "Policies Configuration",
+    "description": "Intent guards, playbooks, tool guides, tool approvals and output formatters of this agent.",
+    "loading": "Loading policies…",
+    "loadFailedTitle": "Policies could not be loaded",
+    "loadFailedBody": "Saving is disabled so the stored policies are not overwritten with an empty list.",
+    "globalTitle": "Global Policy System",
+    "globalBody_one": "Master switch for all policy enforcement ({{count}} policies configured)",
+    "globalBody_other": "Master switch for all policy enforcement ({{count}} policies configured)",
+    "export": "Export",
+    "import": "Import",
+    "enableSystem": "Enable Policy System",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "policyTypes": "Policy Types",
+    "emptyTitle": "Nothing here yet",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "saved": "Saved!",
+    "saveError": "Error!"
+  },
+  "sections": {
+    "intentGuard": {
+      "tab": "Intent Guards ({{total}})",
+      "heading": "Intent Guards",
+      "add": "Add Intent Guard",
+      "empty": "No intent guards configured. Click \"Add Intent Guard\" to create one.",
+      "namePlaceholder": "Policy Name"
+    },
+    "playbook": {
+      "tab": "Playbooks ({{total}})",
+      "heading": "Playbooks",
+      "add": "Add Playbook",
+      "empty": "No playbooks configured. Click \"Add Playbook\" to create one.",
+      "namePlaceholder": "Playbook Name"
+    },
+    "toolGuide": {
+      "tab": "Tool Guide ({{total}})",
+      "heading": "Tool Guide Policies",
+      "add": "Add Tool Guide",
+      "empty": "No tool guide policies configured. Click \"Add Tool Guide\" to create one.",
+      "namePlaceholder": "Policy Name"
+    },
+    "toolApproval": {
+      "tab": "Tool Approval ({{total}})",
+      "heading": "Tool Approval Policies",
+      "add": "Add Tool Approval",
+      "empty": "No tool approval policies configured. Click \"Add Tool Approval\" to create one.",
+      "namePlaceholder": "Policy Name"
+    },
+    "outputFormatter": {
+      "tab": "Output Formatter ({{total}})",
+      "heading": "Output Formatter Policies",
+      "add": "Add Output Formatter",
+      "empty": "No output formatter policies configured. Click \"Add Output Formatter\" to create one.",
+      "namePlaceholder": "Policy Name"
+    }
+  },
+  "defaults": {
+    "intentGuard": {
+      "name": "New Intent Guard",
+      "description": "Blocks or modifies specific user intents",
+      "response": "This action is not allowed."
+    },
+    "playbook": {
+      "name": "New Playbook",
+      "description": "Step-by-step guidance for a task",
+      "markdown": "# Task Guide\n\n## Steps:\n\n1. First step\n2. Second step\n3. Third step",
+      "stepInstruction": "First step",
+      "stepOutcome": "Step 1 complete"
+    },
+    "toolGuide": {
+      "name": "New Tool Guide",
+      "description": "Add additional context to tool descriptions",
+      "content": "## Additional Guidelines\n\n- Follow best practices\n- Consider security implications"
+    },
+    "toolApproval": {
+      "name": "New Tool Approval",
+      "description": "Require approval before executing specific tools",
+      "message": "This tool requires your approval before execution."
+    },
+    "outputFormatter": {
+      "name": "New Output Formatter",
+      "description": "Format the final AI message output",
+      "config": "Format the response in a clear, structured way with proper headings and bullet points."
+    }
+  },
+  "guardAction": {
+    "generating": "Generating...",
+    "guardsOff": "Guards generated but are disabled",
+    "view": "View tool guards",
+    "policyDisabled": "Policy is disabled",
+    "policiesDisabled": "Policies disabled",
+    "selectTools": "Select specific target tools to generate a guard",
+    "generate": "Generate tool guard"
+  },
+  "toast": {
+    "errorTitle": "Error",
+    "exportFailed": "Failed to export policies. Check console for details.",
+    "readFailed": "Failed to read file",
+    "invalidImportTitle": "Invalid import",
+    "invalidImportBody": "Expected a JSON file with a \"policies\" array.",
+    "importAbortedTitle": "Import aborted",
+    "loadExistingFailed": "Failed to load existing configuration",
+    "importedTitle": "Policies imported",
+    "importedBody_one": "{{count}} policy imported and saved",
+    "importedBody_other": "{{count}} policies imported and saved",
+    "importFailedTitle": "Import failed",
+    "saveImportedFailed": "Failed to save imported policies",
+    "invalidFile": "Invalid JSON or file format",
+    "saveAbortedTitle": "Save aborted",
+    "saveFailedTitle": "Save failed",
+    "saveFailed": "Failed to save policies",
+    "networkError": "Network error occurred",
+    "savedTitle": "Policies saved successfully",
+    "savedBody_one": "{{count}} policy saved",
+    "savedBody_other": "{{count}} policies saved",
+    "cannotGenerateTitle": "Cannot generate guard",
+    "notToolGuide": "Policy not found or not a tool guide",
+    "saveRequiredTitle": "Save required",
+    "saveRequiredBody": "Save the tool guide before generating a guard.",
+    "selectTools": "Select specific target tools to generate a guard.",
+    "generationFailedTitle": "Generation failed",
+    "generationFailed": "Failed to generate tool guard",
+    "generatedTitle": "Guard generated",
+    "generatedUnsyncedTitle": "Guard generated (sync pending)",
+    "generatedBody": "Tool guard created for: {{tools}}",
+    "generatedUnsyncedBody": "{{tools}} generated in policy storage but config sync failed. {{detail}}",
+    "refreshAndSave": "Refresh and save before publishing.",
+    "partialTitle": "Partial success",
+    "partialBody": "Generated for {{succeeded}}. Failed: {{failed}}",
+    "partialUnsyncedBody": "Generated for {{succeeded}}. Failed: {{failed}}. Config sync failed: {{detail}}",
+    "refreshBeforePublishing": "refresh before publishing",
+    "generationFailedFor": "Failed to generate guards for: {{tools}}"
+  },
+  "card": {
+    "enable": "Enable Policy",
+    "name": "Policy Name",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "chat": {
+    "policyId": "Policy ID:",
+    "matchConfidenceLabel": "Match Confidence:",
+    "matchConfidence": "Match Confidence",
+    "blockedTitle": "Intent Blocked by Policy",
+    "blockedBadge": "Security Policy",
+    "policyName": "Policy Name:",
+    "reasoning": "Reasoning",
+    "playbookTitle": "Playbook Activated",
+    "playbookBadge": "Guided Workflow",
+    "playbookFallback": "I'll guide you through this process step by step.",
+    "playbookName": "Playbook Name:",
+    "workflowSteps": "Workflow Steps ({{total}})",
+    "expected": "Expected:",
+    "tools": "Tools:",
+    "guidance": "Guidance"
+  },
+  "editor": {
+    "common": {
+      "description": "Description",
+      "priority": "Priority",
+      "triggerKeywordsOptional": "Trigger Keywords (Optional)",
+      "triggerKeywords": "Trigger Keywords",
+      "keywordPlaceholder": "Type keyword and press Enter or comma",
+      "keywordMatching": "Keyword Matching",
+      "addNlTrigger": "Add Natural Language Trigger",
+      "nlTriggers": "Natural Language Triggers",
+      "nlTriggerPlaceholder": "Type natural language trigger and press Enter",
+      "removeNlTrigger": "Remove Natural Language Trigger",
+      "loadingTools": "Loading tools...",
+      "loadingApps": "Loading apps...",
+      "selectAppsOptional": "Select apps (optional)",
+      "allToolsWildcard": "All tools (*)"
+    },
+    "summary": {
+      "keywords_one": "{{count}} keyword",
+      "keywords_other": "{{count}} keywords",
+      "steps_one": "{{count}} step",
+      "steps_other": "{{count}} steps",
+      "aiTrigger": "AI trigger",
+      "priority": "Priority: {{priority}}",
+      "allTools": "All tools",
+      "tools_one": "{{count}} tool(s)",
+      "tools_other": "{{count}} tool(s)",
+      "apps_one": "{{count}} app(s)",
+      "apps_other": "{{count}} app(s)",
+      "noTools": "No tools selected",
+      "guardsDisabled": "Guards disabled",
+      "guarded": "Guarded"
+    },
+    "intentGuard": {
+      "descriptionPlaceholder": "What this policy does...",
+      "keywordsHelp": "Type keywords and press Enter or comma to add. Click × to remove.",
+      "operatorHelp": "Choose whether all keywords or any keyword should trigger this policy",
+      "nlHelp": "Type natural language triggers and press Enter to add. AI will match similar intents.",
+      "responseMessage": "Response Message",
+      "priorityHelp": "Higher priority policies are checked first",
+      "allowOverride": "Allow Override",
+      "allowOverrideHelp": "User can bypass this policy"
+    },
+    "playbook": {
+      "descriptionPlaceholder": "What this playbook guides the user through...",
+      "triggerType": "Trigger Type",
+      "triggerKeyword": "Keywords (Exact Match)",
+      "triggerNaturalLanguage": "Natural Language (AI Match)",
+      "keywordsHelp": "Type keywords and press Enter or comma to add.",
+      "operatorHelp": "Choose whether all keywords or any keyword should trigger this playbook",
+      "nlPlaceholder": "Type trigger and press Enter",
+      "nlHelp": "Type natural language triggers and press Enter to add. AI will match similar user requests.",
+      "markdownContent": "Markdown Content",
+      "markdownPlaceholder": "# Task Guide\n\n## Steps:\n\n1. First step\n2. Second step",
+      "markdownHelp": "Markdown-formatted guidance that will be shown to the agent",
+      "priorityHelp": "Higher priority playbooks are checked first"
+    },
+    "toolGuide": {
+      "targetTools": "Target Tools",
+      "targetToolsPlaceholder": "Select tools to enrich",
+      "targetToolsHelp": "Select specific tools to enrich, or use * to enrich all tools",
+      "targetApps": "Target Apps (Optional)",
+      "targetAppsHelp": "Optionally filter by app name",
+      "guideContent": "Guide Content (Markdown)",
+      "guidePlaceholder": "## Additional Guidelines\n\n- Follow best practices\n- Consider security",
+      "guideHelp": "Markdown content to add to tool descriptions",
+      "prepend": "Prepend content (add before existing description)",
+      "priorityHelp": "Higher priority guides are applied first"
+    },
+    "toolApproval": {
+      "requiredTools": "Required Tools",
+      "requiredToolsPlaceholder": "Select tools requiring approval",
+      "requiredToolsHelp": "Tools that require approval before execution",
+      "requiredApps": "Required Apps (Optional)",
+      "requiredAppsHelp": "Optionally require approval for all tools from specific apps",
+      "approvalMessage": "Approval Message (optional)",
+      "approvalMessageHelp": "Custom message shown when requesting approval",
+      "showCodePreview": "Show code preview in approval request",
+      "autoApprove": "Auto-approve after (seconds, optional)",
+      "autoApprovePlaceholder": "Leave empty for no auto-approve",
+      "autoApproveHelp": "Automatically approve after N seconds (leave empty to disable)",
+      "priorityHelp": "Higher priority approval policies are checked first"
+    },
+    "outputFormatter": {
+      "keywordsHelp": "Keywords to match against the last AI message content. Leave empty to always format.",
+      "operatorHelp": "Choose whether all keywords or any keyword should trigger this formatter",
+      "nlHelp": "Type natural language triggers and press Enter to add. AI will match similar responses.",
+      "formatType": "Format Type",
+      "priorityHelp": "Higher priority formatters are checked first",
+      "type": {
+        "direct": "Direct Answer (No LLM)",
+        "markdown": "Markdown Instructions (LLM)",
+        "jsonSchema": "JSON Schema (LLM)"
+      },
+      "format": {
+        "direct": {
+          "summary": "Direct",
+          "typeHelp": "Directly replace the response with the provided string (no LLM processing)",
+          "configLabel": "Direct Answer String",
+          "configPlaceholder": "You are not allowed to view this sensitive data",
+          "configHelp": "This exact string will replace the AI response when triggers match (no LLM processing)"
+        },
+        "markdown": {
+          "summary": "Markdown (LLM)",
+          "typeHelp": "Use LLM to reformat the response according to markdown instructions",
+          "configLabel": "Formatting Instructions (Markdown)",
+          "configHelp": "Markdown instructions for how to format the AI response (processed by LLM)"
+        },
+        "jsonSchema": {
+          "summary": "JSON (LLM)",
+          "typeHelp": "Use LLM to extract and format the response as JSON matching the schema",
+          "configLabel": "JSON Schema",
+          "configHelp": "JSON schema that the formatted response must match (processed by LLM)"
+        }
+      }
+    }
+  },
+  "fields": {
+    "rangeBetween": "Enter a number between {{min}} and {{max}}.",
+    "rangeMin": "Enter a number of at least {{min}}.",
+    "invalidNumber": "Enter a valid number.",
+    "matchAll": "Match ALL keywords (AND)",
+    "matchAny": "Match ANY keyword (OR)",
+    "similarityThreshold": "Similarity Threshold:",
+    "removeItem": "Remove {{name}}",
+    "tagPlaceholder": "Type and press enter...",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "filterPlaceholder": "Filter...",
+    "filterLabel": "Filter {{label}}",
+    "nothingAvailable": "Nothing available.",
+    "noMatches": "No matches.",
+    "clearSelection": "Clear selection",
+    "selectedLabel": "Selected: {{label}}"
+  },
+  "guardDialog": {
+    "title": "Tool Guards — {{name}}",
+    "description": "Generated guard examples and policy code for each target tool.",
+    "enforcement": "Guard enforcement",
+    "tabs": "Tool guards",
+    "none": "None.",
+    "violating": "Violating Examples",
+    "compliance": "Compliance Examples",
+    "policyCode": "Policy Code"
+  }
+}

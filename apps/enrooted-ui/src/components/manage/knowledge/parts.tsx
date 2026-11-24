@@ -7,6 +7,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { CheckIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -86,6 +87,7 @@ export function Notice({
   onClose?: () => void
   className?: string
 }) {
+  const { t } = useTranslation("knowledge")
   return (
     <div
       role={kind === "error" ? "alert" : "status"}
@@ -117,7 +119,7 @@ export function Notice({
         </Button>
       )}
       {onClose && (
-        <IconButton label="Dismiss" onClick={onClose} className="-my-0.5 -mr-1 shrink-0">
+        <IconButton label={t("shared.dismiss")} onClick={onClose} className="-my-0.5 -mr-1 shrink-0">
           <XIcon />
         </IconButton>
       )}
@@ -352,6 +354,7 @@ export function NumberField({
   onChange: (value: number) => void
   className?: string
 }) {
+  const { t } = useTranslation("knowledge")
   const [draft, setDraft] = React.useState(String(value))
   const [lastValue, setLastValue] = React.useState(value)
   if (value !== lastValue) {
@@ -366,7 +369,7 @@ export function NumberField({
     (min !== undefined && Number(draft) < min) ||
     (max !== undefined && Number(draft) > max)
   const isInvalid = !!invalid || outOfRange
-  const errorText = invalid && invalidText ? invalidText : outOfRange ? "Number is not valid" : undefined
+  const errorText = invalid && invalidText ? invalidText : outOfRange ? t("shared.invalidNumber") : undefined
 
   return (
     <FieldShell

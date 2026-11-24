@@ -1,5 +1,6 @@
 // Ported from cuga-agent/src/frontend_workspaces/frontend/src/manage/hooks/useToolsDraftSave.ts (Copyright IBM Corp., Apache-2.0). Logic unchanged.
 import { useEffect, useRef, type MutableRefObject } from "react";
+import i18n from "@/i18n";
 import * as api from "@/lib/manage/api";
 import { isAbortError, type AddToast } from "./saveHelpers";
 import type { ToolEntry } from "@/lib/manage/tools-types";
@@ -43,19 +44,23 @@ export function useToolsDraftSave(opts: {
             if (ac.signal.aborted) return;
             if (data.status === "partial" && data.tool_errors) {
               Object.entries(data.tool_errors as Record<string, { error?: string; message?: string }>).forEach(
-                ([toolName, err]) => addToast("warning", `Tool: ${toolName}`, err?.error || err?.message || "Unknown error"),
+                ([toolName, err]) => addToast(
+                  "warning",
+                  i18n.t("manage:draft.toolTitle", { name: toolName }),
+                  err?.error || err?.message || i18n.t("manage:generic.unknownError"),
+                ),
               );
-              addToast("info", "Draft saved with warnings", "Some tools failed to load");
+              addToast("info", i18n.t("manage:draft.savedWithWarningsTitle"), i18n.t("manage:draft.toolsFailedToLoad"));
             } else {
-              addToast("success", "Draft saved", "Tools saved to draft");
+              addToast("success", i18n.t("manage:draft.savedTitle"), i18n.t("manage:draft.toolsSaved"));
             }
           } else {
-            addToast("error", "Draft Save Failed", `Failed to save tools (${res.status} ${res.statusText})`);
+            addToast("error", i18n.t("manage:draft.saveFailedTitle"), i18n.t("manage:draft.toolsFailed", { status: res.status, statusText: res.statusText }));
           }
         } catch (error) {
           if (isAbortError(error)) return;
           setDraftSaving(false);
-          addToast("error", "Draft Save Failed", error instanceof Error ? error.message : "Network error");
+          addToast("error", i18n.t("manage:draft.saveFailedTitle"), error instanceof Error ? error.message : i18n.t("manage:generic.networkError"));
         }
       })();
     }, 500);

@@ -6,6 +6,8 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 import { InfoIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -40,21 +42,21 @@ function providerMonogram(id: string): string {
   }
 }
 
-function providerCategory(id: string): "Cloud" | "Enterprise" {
-  return id === "watsonx" || id === "azure" ? "Enterprise" : "Cloud"
+function providerCategory(id: string): "cloud" | "enterprise" {
+  return id === "watsonx" || id === "azure" ? "enterprise" : "cloud"
 }
 
 // Human-readable label for env var keys shown in the detection tooltip.
-function envKeyLabel(name: string): string {
+function envKeyLabel(name: string, t: TFunction<"knowledge">): string {
   const map: Record<string, string> = {
-    WATSONX_URL: "URL",
-    WATSONX_API_BASE: "URL",
-    WATSONX_PROJECT_ID: "Project ID",
-    AZURE_API_BASE: "Endpoint",
-    AZURE_API_VERSION: "API version",
-    OPENAI_BASE_URL: "Base URL",
+    WATSONX_URL: "envPresets.envKey.url",
+    WATSONX_API_BASE: "envPresets.envKey.url",
+    WATSONX_PROJECT_ID: "envPresets.envKey.projectId",
+    AZURE_API_BASE: "envPresets.envKey.endpoint",
+    AZURE_API_VERSION: "envPresets.envKey.apiVersion",
+    OPENAI_BASE_URL: "envPresets.envKey.baseUrl",
   }
-  return map[name] || name
+  return map[name] ? t(map[name]) : name
 }
 
 // Truncate long values (UUIDs, URLs) for the compact tooltip.
@@ -93,20 +95,21 @@ function InfoTooltip({ label, children }: { label: string; children?: React.Reac
 // value (URL, project ID, region ...). Secrets are filtered server-side and
 // never reach this component, so this is safe to render verbatim.
 function RowInfoTooltip({ model, envValues }: { model: string; envValues?: Record<string, string> }) {
+  const { t } = useTranslation("knowledge")
   const entries = Object.entries(envValues || {})
   const ariaLabel = [
-    `Default model: ${model}`,
-    ...entries.map(([k, v]) => `${envKeyLabel(k)}: ${truncate(v)}`),
+    t("envPresets.defaultModel", { model }),
+    ...entries.map(([k, v]) => `${envKeyLabel(k, t)}: ${truncate(v)}`),
   ].join(" — ")
   return (
     <InfoTooltip label={ariaLabel}>
       <div className="grid gap-0.5 text-left leading-snug">
         <div>
-          <strong>Model:</strong> {model}
+          <strong>{t("envPresets.modelLabel")}</strong> {model}
         </div>
         {entries.map(([k, v]) => (
           <div key={k}>
-            <strong>{envKeyLabel(k)}:</strong> {truncate(v)}
+            <strong>{envKeyLabel(k, t)}:</strong> {truncate(v)}
           </div>
         ))}
       </div>
@@ -127,6 +130,7 @@ export function EnvPresetsPanel({
   onApply: (preset: EnvPreset) => void
   onFocusProviderSelect?: () => void
 }) {
+  const { t } = useTranslation("knowledge")
   // Render nothing when NO preset has any env signal. Local providers never
   // appear here: they live in the Provider select; the link below points there.
   const rows = presets.filter((p) => Object.values(p.env_vars ?? {}).some(Boolean))
@@ -135,13 +139,13 @@ export function EnvPresetsPanel({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1.5">
-        <h5 className="text-xs font-medium text-muted-foreground">Detected in your environment</h5>
-        <InfoTooltip label="Providers found in your .env or shell. One click sets the provider; credentials stay on this machine." />
+        <h5 className="text-xs font-medium text-muted-foreground">{t("envPresets.heading")}</h5>
+        <InfoTooltip label={t("envPresets.info")} />
       </div>
       <ul className="divide-y rounded-lg border bg-card">
         {rows.map((preset) => {
           const active = isPresetActive(preset, currentProvider, currentModel)
-          const missingText = `Missing: ${(preset.missing ?? []).join(", ")}`
+          const missingText = t("envPresets.missing", { list: (preset.missing ?? []).join(", ") })
           return (
             <li key={preset.id} className="flex items-center gap-2.5 px-3 py-1.5">
               <span
@@ -156,19 +160,19 @@ export function EnvPresetsPanel({
                 </span>
                 <RowInfoTooltip model={preset.default_model} envValues={preset.env_values} />
               </span>
-              <StatusBadge tone="active">{providerCategory(preset.id)}</StatusBadge>
+              <StatusBadge tone="active">{t(`envPresets.category.${providerCategory(preset.id)}`)}</StatusBadge>
               {active ? (
-                <StatusBadge tone="ok">Active</StatusBadge>
+                <StatusBadge tone="ok">{t("envPresets.active")}</StatusBadge>
               ) : preset.ready ? (
                 <Button type="button" variant="ghost" size="sm" onClick={() => onApply(preset)}>
-                  Use
+                  {t("envPresets.use")}
                 </Button>
               ) : (
                 <Tooltip>
                   <TooltipTrigger
                     render={<button type="button" className={infoButtonClass} aria-label={missingText} />}
                   >
-                    <StatusBadge tone="neutral">Set up</StatusBadge>
+                    <StatusBadge tone="neutral">{t("envPresets.setUp")}</StatusBadge>
                   </TooltipTrigger>
                   <TooltipContent side="left">{missingText}</TooltipContent>
                 </Tooltip>
@@ -183,7 +187,7 @@ export function EnvPresetsPanel({
           className="w-fit cursor-pointer rounded-sm text-left text-xs text-link underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           onClick={onFocusProviderSelect}
         >
-          Or run locally with Fastembed or Ollama — no keys needed.
+          {t("envPresets.runLocally")}
         </button>
       )}
     </div>

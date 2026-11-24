@@ -9,7 +9,9 @@
  */
 
 import * as React from "react"
+import type { TFunction } from "i18next"
 import { ChevronsUpDownIcon, TriangleAlertIcon, XIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -92,10 +94,11 @@ export function NumberField({
   disabled?: boolean
   helperText?: string
 }) {
+  const { t } = useTranslation("policies")
   const toText = (v: number | undefined) => (v === undefined ? "" : String(v))
   const [text, setText] = React.useState(() => toText(value))
   const [prevValue, setPrevValue] = React.useState(value)
-  const parse = (t: string) => (t === "" ? emptyValue : Number(t))
+  const parse = (raw: string) => (raw === "" ? emptyValue : Number(raw))
   if (value !== prevValue) {
     // Changed from outside (import, reload): show it, unless it is what was typed.
     setPrevValue(value)
@@ -108,10 +111,10 @@ export function NumberField({
     (Number.isNaN(typed) || (min !== undefined && typed < min) || (max !== undefined && typed > max))
   const rangeHint =
     min !== undefined && max !== undefined
-      ? `Enter a number between ${min} and ${max}.`
+      ? t("fields.rangeBetween", { min, max })
       : min !== undefined
-        ? `Enter a number of at least ${min}.`
-        : "Enter a valid number."
+        ? t("fields.rangeMin", { min })
+        : t("fields.invalidNumber")
 
   return (
     <Field data-disabled={disabled || undefined} data-invalid={invalid || undefined} className="max-w-xs">
@@ -191,10 +194,12 @@ export function SelectField<T extends string>({
   )
 }
 
-export const KEYWORD_OPERATOR_OPTIONS = [
-  { value: "and", text: "Match ALL keywords (AND)" },
-  { value: "or", text: "Match ANY keyword (OR)" },
-] as const
+/** Built where rendered, so the labels follow the current language. */
+export const keywordOperatorOptions = (t: TFunction<"policies">) =>
+  [
+    { value: "and", text: t("fields.matchAll") },
+    { value: "or", text: t("fields.matchAny") },
+  ] as const
 
 // ── checkbox ───────────────────────────────────────────────────────────────
 export function CheckboxField({
@@ -234,11 +239,12 @@ export function ThresholdSlider({
   onChange: (threshold: number) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation("policies")
   const value = threshold || 0.7
   return (
     <Field data-disabled={disabled || undefined}>
       <div id={`${id}-label`} className="text-sm font-medium group-data-[disabled=true]/field:opacity-50">
-        Similarity Threshold: <span className="tabular-nums">{value.toFixed(2)}</span>
+        {t("fields.similarityThreshold")} <span className="tabular-nums">{value.toFixed(2)}</span>
       </div>
       <div className="flex max-w-md items-center gap-3 text-xs text-muted-foreground tabular-nums">
         <span aria-hidden="true">0.5</span>
@@ -282,6 +288,7 @@ export function TagInput({
   labelText: string
   helperText?: string
 }) {
+  const { t } = useTranslation("policies")
   const id = React.useId()
   const [inputValue, setInputValue] = React.useState("")
 
@@ -304,7 +311,7 @@ export function TagInput({
                 <button
                   type="button"
                   className="rounded-full p-0.5 outline-none hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
-                  aria-label={`Remove ${tag}`}
+                  aria-label={t("fields.removeItem", { name: tag })}
                   disabled={disabled}
                   onClick={() => removeTag(index)}
                 >
@@ -330,7 +337,7 @@ export function TagInput({
         onBlur={() => {
           if (inputValue.trim()) addTag(inputValue)
         }}
-        placeholder={values.length === 0 ? placeholder : "Type and press enter..."}
+        placeholder={values.length === 0 ? placeholder : t("fields.tagPlaceholder")}
         disabled={disabled}
         aria-describedby={helperText ? `${id}-help` : undefined}
       />
@@ -372,6 +379,7 @@ export function MultiSelectField({
   helperText?: string
   wildcardLabel?: string
 }) {
+  const { t } = useTranslation("policies")
   const [open, setOpen] = React.useState(false)
   const [filter, setFilter] = React.useState("")
 
@@ -387,7 +395,7 @@ export function MultiSelectField({
   const visible = needle ? items.filter((item) => item.text.toLowerCase().includes(needle)) : items
   const summary =
     selected.length > 0
-      ? `${selected.length} selected`
+      ? t("fields.selectedCount", { count: selected.length })
       : wildcardLabel && value.includes("*")
         ? wildcardLabel
         : placeholder
@@ -422,15 +430,15 @@ export function MultiSelectField({
               <Input
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                placeholder="Filter..."
-                aria-label={`Filter ${label}`}
+                placeholder={t("fields.filterPlaceholder")}
+                aria-label={t("fields.filterLabel", { label })}
               />
             </div>
           )}
           <div className="max-h-64 overflow-y-auto p-1" role="group" aria-label={label}>
             {visible.length === 0 ? (
               <p className="px-2 py-3 text-sm text-muted-foreground">
-                {items.length === 0 ? "Nothing available." : "No matches."}
+                {items.length === 0 ? t("fields.nothingAvailable") : t("fields.noMatches")}
               </p>
             ) : (
               visible.map((item) => (
@@ -448,15 +456,17 @@ export function MultiSelectField({
             )}
           </div>
           <div className="flex items-center justify-between gap-2 border-t p-2">
-            <span className="text-xs text-muted-foreground">{selected.length} selected</span>
+            <span className="text-xs text-muted-foreground">
+              {t("fields.selectedCount", { count: selected.length })}
+            </span>
             <Button variant="ghost" size="sm" disabled={selected.length === 0} onClick={() => onChange([])}>
-              Clear selection
+              {t("fields.clearSelection")}
             </Button>
           </div>
         </PopoverContent>
       </Popover>
       {selected.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5" aria-label={`Selected: ${label}`}>
+        <ul className="flex flex-wrap gap-1.5" aria-label={t("fields.selectedLabel", { label })}>
           {selected.map((itemId) => (
             <li key={itemId}>
               <Badge variant="secondary" className="h-6 max-w-full gap-1 pr-1">
@@ -464,7 +474,7 @@ export function MultiSelectField({
                 <button
                   type="button"
                   className="rounded-full p-0.5 outline-none hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
-                  aria-label={`Remove ${textOf(itemId)}`}
+                  aria-label={t("fields.removeItem", { name: textOf(itemId) })}
                   disabled={disabled}
                   onClick={() => toggle(itemId, false)}
                 >

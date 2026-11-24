@@ -37,12 +37,65 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   return authConfigCache
 }
 
+// One login redirect per attempt: a failed callback or userinfo must not loop
+// between this page and the identity provider (Carbon UI auth.ts).
+const LOGIN_IN_PROGRESS_KEY = "cuga_login_in_progress"
+export function isLoginInProgress(): boolean {
+  try {
+    return sessionStorage.getItem(LOGIN_IN_PROGRESS_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+export function markLoginInProgress() {
+  try {
+    sessionStorage.setItem(LOGIN_IN_PROGRESS_KEY, "1")
+  } catch {
+    /* storage unavailable */
+  }
+}
+export function clearLoginInProgress() {
+  try {
+    sessionStorage.removeItem(LOGIN_IN_PROGRESS_KEY)
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+// Set by "Sign out" so the app shows a signed-out page with a Sign in button
+// instead of sending the user straight back to the identity provider.
+const SIGNED_OUT_KEY = "cuga_signed_out"
+export function isSignedOut(): boolean {
+  try {
+    return localStorage.getItem(SIGNED_OUT_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+function setSignedOut(value: boolean) {
+  try {
+    if (value) localStorage.setItem(SIGNED_OUT_KEY, "1")
+    else localStorage.removeItem(SIGNED_OUT_KEY)
+  } catch {
+    /* storage unavailable */
+  }
+}
+export const clearSignedOut = () => setSignedOut(false)
+
+/** Start a sign-in the user asked for (Sign in / Try again buttons). */
+export function login() {
+  setSignedOut(false)
+  clearLoginInProgress()
+  markLoginInProgress()
+  window.location.href = "/auth/login"
+}
+
 let loginRedirecting = false
 export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(url, { ...init, credentials: "include" })
   if (res.status === 401 && !loginRedirecting) {
     const config = await getAuthConfig().catch(() => null)
-    if (config?.enabled) {
+    if (config?.enabled && !isSignedOut()) {
       loginRedirecting = true
       window.location.href = "/auth/login"
     }
@@ -86,8 +139,11 @@ export async function handleOidcCallback(code: string, state: string) {
   return res.ok
 }
 export async function logout(): Promise<void> {
-  await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined)
-  window.location.href = "/"
+  const res = await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined)
+  // End the identity provider's session too, or SSO signs the user straight back in.
+  const data = (await res?.json().catch(() => null)) as { end_session_url?: string } | null
+  setSignedOut(true)
+  window.location.href = data?.end_session_url || "/"
 }
 
 // ── ui config ──────────────────────────────────────────────────────────────
@@ -96,6 +152,8 @@ export type UiConfig = {
   brand_name: string
   agent_registry: boolean
   evolve_memory_enabled: boolean
+  /** Origin of the events service in a split deployment ("" = same origin). */
+  events_api_url: string
 }
 let uiConfigCache: Promise<UiConfig> | null = null
 export function getUiConfig(): Promise<UiConfig> {
@@ -110,8 +168,34 @@ export function getUiConfig(): Promise<UiConfig> {
           : "CUGA Agent",
       agent_registry: !!data.agent_registry,
       evolve_memory_enabled: !!data.evolve_memory_enabled,
+      events_api_url: String(data.events_api_url ?? "").replace(/\/$/, ""),
     }))
   return uiConfigCache
+}
+
+// ── the eventing layer's origin ────────────────────────────────────────────
+// EVENTS_API_URL unset: same origin (also the fallback when /api/ui/config
+// cannot be read). Split deployment: /api/events/*, /api/concierge and /invoke
+// live on the events service, and /api/ui/config says where. Resolved once.
+// The callers are in @/lib/events/api.
+let eventsBaseCache: string | null = null
+export async function getEventsBaseUrl(): Promise<string> {
+  if (eventsBaseCache !== null) return eventsBaseCache
+  const resolved = await getUiConfig()
+    .then((c) => c.events_api_url || getApiBaseUrl())
+    .catch(() => getApiBaseUrl())
+  eventsBaseCache = resolved
+  return resolved
+}
+/**
+ * The resolved events origin, synchronously, for `window.open` inside a click
+ * handler (awaiting first loses the user gesture and the popup is blocked).
+ * A cold cache falls back to same origin and starts the resolution.
+ */
+export function eventsBaseUrlSync(): string {
+  if (eventsBaseCache !== null) return eventsBaseCache
+  void getEventsBaseUrl()
+  return getApiBaseUrl()
 }
 
 

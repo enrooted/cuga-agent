@@ -6,6 +6,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { CheckIcon, CircleAlertIcon, FileTextIcon, RefreshCwIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
@@ -21,12 +22,12 @@ import { IconButton, MessageTile, Notice, StatusBadge, Tile, type StatusTone } f
 
 const ACCEPT = ".pdf,.docx,.txt,.md,.html,.csv,.json,.xml"
 
-// Per-row status of an existing document while a re-index runs.
+// Per-row status of an existing document while a re-index runs (tone + label key).
 const TAG_BY_STATUS: Record<string, [StatusTone, string]> = {
-  completed: ["ok", "Ready"],
-  failed: ["warn", "Failed"],
-  running: ["active", "Upgrading…"],
-  pending: ["neutral", "Queued"],
+  completed: ["ok", "documents.reindexStatus.completed"],
+  failed: ["warn", "documents.reindexStatus.failed"],
+  running: ["active", "documents.reindexStatus.running"],
+  pending: ["neutral", "documents.reindexStatus.pending"],
 }
 
 function UploadRow({
@@ -38,6 +39,7 @@ function UploadRow({
   onCancel: (taskId: string | undefined) => void
   onDismiss: (taskId: string | undefined) => void
 }) {
+  const { t } = useTranslation("knowledge")
   const isUploading = file.status === "uploading"
   const isSuccess = file.status === "success"
   const isError = file.status === "error"
@@ -47,18 +49,18 @@ function UploadRow({
   const isDismissable = isError || isCancelled
 
   const stateLabel = isSuccess
-    ? "Indexed"
+    ? t("documents.upload.indexed")
     : isError
-      ? "Failed"
+      ? t("documents.upload.failed")
       : isCancelled
-        ? "Cancelled"
+        ? t("documents.upload.cancelled")
         : file.finishing
           ? // The cancel arrived too late to stop the insert. Say so rather
             // than let the click look like a no-op.
-            "Finishing…"
+            t("documents.upload.finishing")
           : isQueued
-            ? "Queued"
-            : "Processing"
+            ? t("documents.upload.queued")
+            : t("documents.upload.processing")
 
   // Visual fill driven by the backend's weighted_pct. Clamped 0..1 and
   // monotonic via the poll loop. No numeric label on purpose.
@@ -84,7 +86,7 @@ function UploadRow({
           ) : isError ? (
             <CircleAlertIcon className="size-4 text-status-warn" aria-hidden="true" />
           ) : isQueued ? (
-            <span className="size-2 rounded-full bg-muted-foreground/60" aria-label="Queued" role="img" />
+            <span className="size-2 rounded-full bg-muted-foreground/60" aria-label={t("documents.upload.queued")} role="img" />
           ) : (
             <FileTextIcon className="size-4 text-muted-foreground" aria-hidden="true" />
           )}
@@ -97,14 +99,14 @@ function UploadRow({
         </span>
         {isUploading && file.taskId && (
           <IconButton
-            label={isQueued ? "Remove from queue" : "Cancel upload"}
+            label={isQueued ? t("documents.upload.removeFromQueue") : t("documents.upload.cancel")}
             onClick={() => onCancel(file.taskId)}
           >
             <XIcon />
           </IconButton>
         )}
         {isDismissable && (
-          <IconButton label="Dismiss" onClick={() => onDismiss(file.taskId)}>
+          <IconButton label={t("shared.dismiss")} onClick={() => onDismiss(file.taskId)}>
             <Trash2Icon />
           </IconButton>
         )}
@@ -153,15 +155,13 @@ export function DocumentsTab({
   onDismissUpload: (taskId: string | undefined) => void
   onDeleteRequest: (filename: string) => void
 }) {
+  const { t, i18n } = useTranslation("knowledge")
   const [isDragOver, setIsDragOver] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   if (!agentLevelEnabled) {
     return (
-      <MessageTile title="Agent-level knowledge is disabled">
-        Permanent documents are unavailable while agent-level knowledge is off. Re-enable it in
-        Settings to upload, index, and search documents for this agent.
-      </MessageTile>
+      <MessageTile title={t("documents.disabledTitle")}>{t("documents.disabledBody")}</MessageTile>
     )
   }
 
@@ -173,16 +173,16 @@ export function DocumentsTab({
   const effectiveDocs = reindexActive && documentsBeforeReindex ? documentsBeforeReindex : documents
   const taskByName = new Map<string, ReindexTask>()
   if (reindexActive && reindexProgress) {
-    for (const t of reindexProgress.tasks) {
-      const n = t.filename || Object.values(t.file_tasks ?? {})[0]?.filename
-      if (n) taskByName.set(n, t)
+    for (const reindexTask of reindexProgress.tasks) {
+      const n = reindexTask.filename || Object.values(reindexTask.file_tasks ?? {})[0]?.filename
+      if (n) taskByName.set(n, reindexTask)
     }
   }
 
   let list: React.ReactNode
   if (documentsLoading && effectiveDocs.length === 0) {
     list = (
-      <div className="flex flex-col gap-2" role="status" aria-label="Loading documents…">
+      <div className="flex flex-col gap-2" role="status" aria-label={t("documents.loading")}>
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-10 w-full" />
         ))}
@@ -191,7 +191,7 @@ export function DocumentsTab({
   } else if (documentsError) {
     list = <Notice kind="error" title={documentsError} />
   } else if (effectiveDocs.length === 0 && uploadingFiles.length === 0) {
-    list = <MessageTile>No documents indexed yet. Upload files to get started.</MessageTile>
+    list = <MessageTile>{t("documents.empty")}</MessageTile>
   } else {
     list = (
       <ul className="flex flex-col gap-2">
@@ -204,7 +204,7 @@ export function DocumentsTab({
           )
           .map((doc) => {
             const task = taskByName.get(doc.filename)
-            const [tone, tagLabel] = task ? (TAG_BY_STATUS[task.status] ?? TAG_BY_STATUS.pending) : ["neutral" as const, ""]
+            const [tone, tagLabelKey] = task ? (TAG_BY_STATUS[task.status] ?? TAG_BY_STATUS.pending) : ["neutral" as const, ""]
             return (
               <li key={doc.filename}>
                 <Tile accent={task ? "active" : "ok"} className="flex items-center gap-3 py-1.5">
@@ -214,16 +214,16 @@ export function DocumentsTab({
                   </span>
                   {task ? (
                     <StatusBadge tone={tone} icon={task.status === "running" ? <Spinner aria-hidden="true" /> : undefined}>
-                      {tagLabel}
+                      {t(tagLabelKey)}
                     </StatusBadge>
                   ) : (
                     <>
                       {doc.ingested_at && (
                         <span className="text-[0.6875rem] text-muted-foreground">
-                          {new Date(doc.ingested_at).toLocaleDateString()}
+                          {new Date(doc.ingested_at).toLocaleDateString(i18n.language)}
                         </span>
                       )}
-                      <IconButton label="Delete document" onClick={() => onDeleteRequest(doc.filename)}>
+                      <IconButton label={t("documents.deleteDocument")} onClick={() => onDeleteRequest(doc.filename)}>
                         <Trash2Icon />
                       </IconButton>
                     </>
@@ -259,7 +259,7 @@ export function DocumentsTab({
       >
         <UploadIcon className="size-6 text-muted-foreground" aria-hidden="true" />
         <span className="text-sm font-semibold">
-          {isDragOver ? "Drop files here" : "Drop files here or click to upload"}
+          {isDragOver ? t("documents.dropHere") : t("documents.dropOrClick")}
         </span>
         <span className="text-xs text-muted-foreground">PDF, DOCX, TXT, MD, HTML, CSV, JSON</span>
       </button>
@@ -269,7 +269,7 @@ export function DocumentsTab({
         multiple
         hidden
         tabIndex={-1}
-        aria-label="Upload documents"
+        aria-label={t("documents.uploadLabel")}
         accept={ACCEPT}
         onChange={(e) => {
           if (e.target.files) onUpload(e.target.files)
@@ -280,8 +280,8 @@ export function DocumentsTab({
       {/* Document list */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold">Indexed Documents ({documents.length})</h4>
-          <IconButton label="Refresh" onClick={onRefresh} disabled={documentsLoading}>
+          <h4 className="text-sm font-semibold">{t("documents.heading", { total: documents.length })}</h4>
+          <IconButton label={t("common:action.refresh")} onClick={onRefresh} disabled={documentsLoading}>
             <RefreshCwIcon />
           </IconButton>
         </div>

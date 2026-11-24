@@ -1,0 +1,100 @@
+{
+  "action": {
+    "cancel": "Avbryt",
+    "close": "Stäng",
+    "closePanel": "Stäng panelen",
+    "save": "Spara",
+    "delete": "Ta bort",
+    "remove": "Ta bort",
+    "edit": "Redigera",
+    "add": "Lägg till",
+    "retry": "Försök igen",
+    "refresh": "Uppdatera",
+    "copy": "Kopiera",
+    "copied": "Kopierat",
+    "back": "Tillbaka",
+    "continue": "Fortsätt",
+    "confirm": "Bekräfta",
+    "search": "Sök"
+  },
+  "state": {
+    "loading": "Läser in…",
+    "saving": "Sparar…",
+    "none": "Inga",
+    "yes": "Ja",
+    "no": "Nej"
+  },
+  "app": {
+    "loading": "Läser in {{brand}}…",
+    "loadingStudio": "Läser in Studio…",
+    "notAuthorized": "Behörighet saknas",
+    "notAuthorizedBody": "Ditt konto får inte hantera agenter.",
+    "backToChat": "Tillbaka till chatten"
+  },
+  "account": {
+    "menu": "Konto",
+    "guest": "Gäst",
+    "authOff": "Inloggning är avstängd på servern",
+    "signedInAs": "Inloggad som",
+    "language": "Språk",
+    "signIn": "Logga in",
+    "signOut": "Logga ut",
+    "signedOutTitle": "Du är utloggad",
+    "signedOutBody": "Logga in för att fortsätta.",
+    "signInFailedTitle": "Inloggningen misslyckades",
+    "signInFailedBody": "Vi kunde inte logga in dig. Försök igen, eller kontakta din administratör om det fortsätter."
+  },
+  "nav": {
+    "agent": "Agent: {{name}}",
+    "switchAgent": "Byt agent",
+    "supervisor": "Supervisor",
+    "newConversation": "Ny konversation",
+    "openConversations": "Öppna konversationer",
+    "closeConversations": "Stäng konversationer",
+    "chat": "Chatt",
+    "agents": "Agenter",
+    "studio": "Studio",
+    "memory": "Minne",
+    "theme": "Tema",
+    "themeLight": "Ljust",
+    "themeDark": "Mörkt",
+    "themeSystem": "System"
+  },
+  "conversations": {
+    "title": "Konversationer",
+    "search": "Sök konversationer",
+    "loading": "Läser in konversationer…",
+    "empty": "Inga konversationer än.",
+    "emptyHint": "Starta en ny chatt för att börja.",
+    "noMatch": "Inga konversationer matchar ”{{query}}”.",
+    "untitled": "Namnlös konversation",
+    "count_one": "{{count}} konversation",
+    "count_other": "{{count}} konversationer",
+    "removeAll": "Ta bort alla",
+    "removeAllTooltip": "Ta bort alla konversationer",
+    "group": {
+      "today": "I dag",
+      "yesterday": "I går",
+      "week": "Senaste 7 dagarna",
+      "older": "Äldre"
+    }
+  },
+  "time": {
+    "justNow": "Nyss",
+    "secondsAgo": "{{count}} s sedan",
+    "minutesAgo": "{{count}} min sedan",
+    "hoursAgo": "{{count}} tim sedan",
+    "daysAgo": "{{count}} d sedan",
+    "now": "nu",
+    "minutes": "{{count}} min",
+    "hours": "{{count}} tim",
+    "days": "{{count}} d"
+  },
+  "ui": {
+    "breadcrumb": "länkstig",
+    "more": "Mer",
+    "loading": "Läser in",
+    "scrollToEnd": "Rulla till slutet",
+    "scrollToStart": "Rulla till början"
+  }
+}

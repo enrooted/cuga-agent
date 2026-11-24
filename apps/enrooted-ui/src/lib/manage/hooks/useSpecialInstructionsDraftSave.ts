@@ -1,5 +1,6 @@
 // Ported from cuga-agent/src/frontend_workspaces/frontend/src/manage/hooks/useSpecialInstructionsDraftSave.ts (Copyright IBM Corp., Apache-2.0). Logic unchanged.
 import { useCallback, useEffect, useRef } from "react";
+import i18n from "@/i18n";
 import * as api from "@/lib/manage/api";
 import { isAbortError, type AddToast } from "./saveHelpers";
 
@@ -32,14 +33,14 @@ export function useSpecialInstructionsDraftSave(opts: {
         if (showToast) setDraftSaving(false);
         if (res.ok) {
           setCurrentVersion("draft");
-          if (showToast) addToast("success", "Draft saved", "Special instructions saved to draft");
+          if (showToast) addToast("success", i18n.t("manage:draft.savedTitle"), i18n.t("manage:draft.instructionsSaved"));
         } else {
-          addToast("error", "Draft Save Failed", `Failed to save (${res.status} ${res.statusText})`);
+          addToast("error", i18n.t("manage:draft.saveFailedTitle"), i18n.t("manage:draft.instructionsFailed", { status: res.status, statusText: res.statusText }));
         }
       } catch (err) {
         if (isAbortError(err)) return;
         if (showToast) setDraftSaving(false);
-        addToast("error", "Draft Save Failed", err instanceof Error ? err.message : "Network error");
+        addToast("error", i18n.t("manage:draft.saveFailedTitle"), err instanceof Error ? err.message : i18n.t("manage:generic.networkError"));
       }
     },
     [effectiveAgentId, addToast, setCurrentVersion, setDraftSaving],

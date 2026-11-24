@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { ArrowUpRightIcon, FileTextIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -12,12 +13,13 @@ const MAX_VISIBLE = 8
 
 /** Row of source cards under an answer (Carbon UI: MessageSources). */
 export function MessageSources({ sources, onOpen }: { sources: MessageSource[]; onOpen: (n: number) => void }) {
+  const { t } = useTranslation("chat")
   if (!sources?.length) return null
   const visible = sources.slice(0, MAX_VISIBLE)
   const hidden = sources.length - visible.length
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="list" aria-label="Answer sources">
-      <span className="text-xs font-medium text-muted-foreground">Sources</span>
+    <div className="flex flex-wrap items-center gap-1.5" role="list" aria-label={t("sources.answerSources")}>
+      <span className="text-xs font-medium text-muted-foreground">{t("sources.title")}</span>
       {visible.map((s) => (
         <Button
           key={s.n}
@@ -39,7 +41,7 @@ export function MessageSources({ sources, onOpen }: { sources: MessageSource[]; 
       ))}
       {hidden > 0 && (
         <Button variant="outline" size="xs" onClick={() => onOpen(visible.length + 1)}>
-          +{hidden} more
+          {t("sources.more", { count: hidden })}
         </Button>
       )}
     </div>
@@ -60,6 +62,7 @@ export function SourcesSheet({
   onOpenChange: (open: boolean) => void
   onOpenDocument: (source: MessageSource) => Promise<boolean>
 }) {
+  const { t } = useTranslation("chat")
   const activeRef = React.useRef<HTMLDivElement | null>(null)
   const [unavailable, setUnavailable] = React.useState<Record<number, boolean>>({})
   const [expanded, setExpanded] = React.useState<Record<number, boolean>>({})
@@ -72,16 +75,14 @@ export function SourcesSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Sources</SheetTitle>
-          <SheetDescription>
-            {sources.length} source{sources.length === 1 ? "" : "s"} · cited in this answer
-          </SheetDescription>
+          <SheetTitle>{t("sources.title")}</SheetTitle>
+          <SheetDescription>{t("sources.cited", { count: sources.length })}</SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4">
           {sources.length === 0 && (
             <Empty>
               <EmptyHeader>
-                <EmptyDescription>This answer didn&apos;t cite knowledge-base sources.</EmptyDescription>
+                <EmptyDescription>{t("sources.empty")}</EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
@@ -133,15 +134,15 @@ export function SourcesSheet({
                   aria-expanded={!!expanded[s.n]}
                   onClick={() => setExpanded((e) => ({ ...e, [s.n]: !e[s.n] }))}
                 >
-                  {expanded[s.n] ? "Show less ↑" : "Show more ↓"}
+                  {expanded[s.n] ? t("sources.showLess") : t("sources.showMore")}
                 </Button>
               )}
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                {s.query && <span>Found for: “{s.query}”</span>}
+                {s.query && <span>{t("sources.foundFor", { query: s.query })}</span>}
                 {typeof s.score === "number" && (
                   <span
                     className="h-1.5 w-16 overflow-hidden rounded-full bg-muted"
-                    title="retrieval relevance"
+                    title={t("sources.relevance")}
                   >
                     <span
                       className="block h-full bg-primary"
@@ -154,13 +155,13 @@ export function SourcesSheet({
                   size="xs"
                   className="ml-auto"
                   disabled={!!unavailable[s.n]}
-                  title={unavailable[s.n] ? "Document no longer in the knowledge base" : undefined}
+                  title={unavailable[s.n] ? t("sources.documentGone") : undefined}
                   onClick={async () => {
                     const ok = await onOpenDocument(s).catch(() => false)
                     if (!ok) setUnavailable((u) => ({ ...u, [s.n]: true }))
                   }}
                 >
-                  Open document
+                  {t("sources.openDocument")}
                   <ArrowUpRightIcon data-icon="inline-end" />
                 </Button>
               </div>

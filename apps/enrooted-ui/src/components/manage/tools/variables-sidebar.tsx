@@ -10,6 +10,7 @@
  */
 import * as React from "react"
 import { ChevronLeftIcon, DownloadIcon, Table2Icon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Markdown } from "@/components/markdown"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import i18n from "@/i18n"
 import type { VariableInfo, VariablesHistoryItem } from "@/lib/manage/tools-types"
 
 import { IconButton } from "./shared"
@@ -59,7 +61,7 @@ function toVariable(name: string, raw: unknown): SelectedVariable {
 }
 
 function formatTimestamp(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return new Date(timestamp).toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" })
 }
 
 function downloadBlob(content: string, mime: string, filename: string) {
@@ -80,6 +82,7 @@ export function VariablesSidebar({
   selectedAnswerId,
   onSelectAnswer,
 }: VariablesSidebarProps) {
+  const { t } = useTranslation("tools")
   const [isExpanded, setIsExpanded] = React.useState(true)
   const [selectedVariable, setSelectedVariable] = React.useState<SelectedVariable | null>(null)
   const variableKeys = Object.keys(variables)
@@ -91,14 +94,14 @@ export function VariablesSidebar({
   return (
     <>
       {isExpanded ? (
-        <section className="flex min-h-0 flex-col gap-3" aria-label="Variables">
+        <section className="flex min-h-0 flex-col gap-3" aria-label={t("variables.title")}>
           <header className="flex flex-wrap items-center gap-2">
-            <IconButton label="Collapse variables panel" onClick={() => setIsExpanded(false)}>
+            <IconButton label={t("variables.collapse")} onClick={() => setIsExpanded(false)}>
               <ChevronLeftIcon />
             </IconButton>
             <h3 className="flex items-center gap-2 text-sm font-medium">
               <Table2Icon className="size-4" aria-hidden="true" />
-              Variables
+              {t("variables.title")}
               <Badge variant="secondary">{variableKeys.length}</Badge>
             </h3>
             {history.length > 0 && (
@@ -106,8 +109,8 @@ export function VariablesSidebar({
                 id="variables-history-select"
                 size="sm"
                 className="w-full"
-                aria-label="Select which conversation turn to view variables from"
-                title="Select which conversation turn to view variables from"
+                aria-label={t("variables.selectTurn")}
+                title={t("variables.selectTurn")}
                 value={selectedAnswerId || ""}
                 onChange={(e) => onSelectAnswer?.(e.target.value)}
               >
@@ -115,7 +118,7 @@ export function VariablesSidebar({
                   const count = Object.keys(item.variables).length
                   return (
                     <NativeSelectOption key={item.id} value={item.id}>
-                      {`${item.title} - ${count} variable${count !== 1 ? "s" : ""} (${formatTimestamp(item.timestamp)})`}
+                      {t("variables.historyOption", { title: item.title, count, time: formatTimestamp(item.timestamp) })}
                     </NativeSelectOption>
                   )
                 })}
@@ -125,15 +128,19 @@ export function VariablesSidebar({
 
           {history.length > 0 && (
             <p className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span>Viewing: {history.find((h) => h.id === selectedAnswerId)?.title || "Latest turn"}</span>
-              <span>{history.length} turns total</span>
+              <span>
+                {t("variables.viewing", {
+                  title: history.find((h) => h.id === selectedAnswerId)?.title || t("variables.latestTurn"),
+                })}
+              </span>
+              <span>{t("variables.turnsTotal", { count: history.length })}</span>
             </p>
           )}
 
           {variableKeys.length === 0 && history.length > 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-              <p>No variables in current turn.</p>
-              <p>Select a previous turn from the dropdown above to view its variables.</p>
+              <p>{t("variables.emptyTurn")}</p>
+              <p>{t("variables.emptyTurnHint")}</p>
             </div>
           ) : (
             <ul className="flex min-h-0 flex-col gap-2 overflow-y-auto">
@@ -157,7 +164,9 @@ export function VariablesSidebar({
                         <span className="text-xs text-muted-foreground">{variable.description}</span>
                       )}
                       {variable.count_items !== undefined && variable.count_items > 1 && (
-                        <span className="text-xs text-muted-foreground">{variable.count_items} items</span>
+                        <span className="text-xs text-muted-foreground">
+                          {t("variables.items", { count: variable.count_items })}
+                        </span>
                       )}
                       {preview && (
                         <span className="font-mono text-xs break-all text-muted-foreground">
@@ -178,12 +187,12 @@ export function VariablesSidebar({
             type="button"
             variant="outline"
             size="sm"
-            aria-label={`Show variables panel (${variableKeys.length})`}
+            aria-label={t("variables.showPanel", { count: variableKeys.length })}
             aria-expanded={false}
             onClick={() => setIsExpanded(true)}
           >
             <Table2Icon data-icon="inline-start" />
-            Variables
+            {t("variables.title")}
             <Badge variant="secondary">{variableKeys.length}</Badge>
           </Button>
         </div>
@@ -200,6 +209,7 @@ export interface VariablePopupProps {
 }
 
 export function VariablePopup({ variable, onClose }: VariablePopupProps) {
+  const { t } = useTranslation("tools")
   const handleDownload = () => {
     // Check if variable is a dict type and try to download as JSON
     if (variable.type === "dict") {
@@ -215,29 +225,29 @@ export function VariablePopup({ variable, onClose }: VariablePopupProps) {
     }
 
     // Default to markdown download
-    const content = `# Variable: ${variable.name}\n\n**Type:** ${variable.type}\n\n${variable.description ? `**Description:** ${variable.description}\n\n` : ""}**Value:**\n\`\`\`\n${variable.value_preview}\n\`\`\``
+    const content = `# ${t("variables.popup.heading", { name: variable.name })}\n\n**${t("variables.popup.type")}:** ${variable.type}\n\n${variable.description ? `**${t("variables.popup.description")}:** ${variable.description}\n\n` : ""}**${t("variables.popup.value")}:**\n\`\`\`\n${variable.value_preview}\n\`\`\``
     downloadBlob(content, "text/markdown", `${variable.name}.md`)
   }
 
-  const formattedContent = `## ${variable.name}\n\n**Type:** \`${variable.type}\`${variable.count_items ? ` (${variable.count_items} items)` : ""}\n\n${variable.description ? `**Description:** ${variable.description}\n\n` : ""}**Value:**\n\`\`\`\n${variable.value_preview}\n\`\`\``
+  const formattedContent = `## ${variable.name}\n\n**${t("variables.popup.type")}:** \`${variable.type}\`${variable.count_items ? ` (${t("variables.items", { count: variable.count_items })})` : ""}\n\n${variable.description ? `**${t("variables.popup.description")}:** ${variable.description}\n\n` : ""}**${t("variables.popup.value")}:**\n\`\`\`\n${variable.value_preview}\n\`\`\``
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-3xl">
         <DialogHeader>
           <DialogDescription className="font-mono text-xs">{variable.name}</DialogDescription>
-          <DialogTitle>Variable Details</DialogTitle>
+          <DialogTitle>{t("variables.popup.title")}</DialogTitle>
         </DialogHeader>
         <div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4 py-1">
           <Markdown>{formattedContent}</Markdown>
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Close
+            {t("common:action.close")}
           </Button>
           <Button type="button" onClick={handleDownload}>
             <DownloadIcon data-icon="inline-start" />
-            Download {variable.type === "dict" ? "JSON" : "MD"}
+            {t("variables.popup.download", { format: variable.type === "dict" ? "JSON" : "MD" })}
           </Button>
         </DialogFooter>
       </DialogContent>

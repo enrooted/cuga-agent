@@ -9,6 +9,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { CheckIcon, CircleAlertIcon, PlusIcon, RotateCcwIcon, Trash2Icon, XIcon } from "lucide-react"
 
 import { Markdown } from "@/components/markdown"
@@ -44,17 +45,17 @@ const EDITOR_ID = "knowledge-client-adaptation"
 // Curated starting templates. Each one is an editable seed: picking a template
 // appends it to the textarea; the result is plain editable text. `marker` is
 // the substring used to detect "already added" (the body's section heading).
+// `key` names the title/description in the locale files (harness.template.<key>);
+// the body is prompt text for the model and stays in English.
 const TEMPLATES: Array<{
   id: string
-  title: string
-  description: string
+  key: string
   body: string
   marker: string
 }> = [
   {
     id: "token-preservation",
-    title: "Token preservation",
-    description: "Echo bracketed labels, menu paths, codes, and version strings verbatim.",
+    key: "tokenPreservation",
     marker: "## Token preservation",
     body:
       "## Token preservation\n\nWhen retrieval contains literal tokens shaped as `[Bracketed]`\n" +
@@ -63,8 +64,7 @@ const TEMPLATES: Array<{
   },
   {
     id: "answer-policy",
-    title: "Answer policy (anti-hedging)",
-    description: "Contrastive WRONG/RIGHT pairs that drill the verbatim-quote habit.",
+    key: "answerPolicy",
     marker: "## Answer policy",
     body:
       "## Answer policy\n\nWhen retrieval contains a procedure, answer with the procedure.\n\n" +
@@ -78,8 +78,7 @@ const TEMPLATES: Array<{
   },
   {
     id: "support-runbook",
-    title: "Support runbook quoting",
-    description: "WRONG/RIGHT pairs for tech support — preserve [labels], codes, and menu paths.",
+    key: "supportRunbook",
     marker: "## Support runbook",
     body:
       "## Support runbook — verbatim discipline\n\n" +
@@ -92,8 +91,7 @@ const TEMPLATES: Array<{
   },
   {
     id: "empty-context",
-    title: "Empty-context discipline",
-    description: "WRONG/RIGHT pairs for zero-result retrieval — honest, no fabrication.",
+    key: "emptyContext",
     marker: "## Empty-context discipline",
     body:
       "## Empty-context discipline\n\n" +
@@ -107,8 +105,7 @@ const TEMPLATES: Array<{
   },
   {
     id: "vocabulary-hints",
-    title: "Vocabulary hints",
-    description: "Tell CUGA which terms to treat as equivalent when searching the knowledge base.",
+    key: "vocabularyHints",
     marker: "## Vocabulary hints",
     body:
       "## Vocabulary hints\n\n" +
@@ -121,8 +118,7 @@ const TEMPLATES: Array<{
   },
   {
     id: "source-citation",
-    title: "Source citation",
-    description: "Cite the source filename for every procedural claim, code, or button name.",
+    key: "sourceCitation",
     marker: "## Source citation",
     body:
       "## Source citation\n\n" +
@@ -178,27 +174,23 @@ export interface ClientAdaptationPanelProps {
  * (stands in for Carbon's AILabel).
  */
 function AdaptationAILabel() {
+  const { t } = useTranslation("knowledge")
   return (
     <Popover>
       <PopoverTrigger
         render={
           <button
             type="button"
-            aria-label="AI: about the Knowledge harness"
+            aria-label={t("harness.aiLabel")}
             className="cursor-pointer rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         }
       >
-        <Badge variant="outline">AI</Badge>
+        <Badge variant="outline">{t("harness.aiBadge")}</Badge>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80">
-        <h6 className="text-sm font-semibold">Knowledge harness</h6>
-        <p className="text-[0.8125rem] text-muted-foreground">
-          Text on this surface is appended to the knowledge-agent system prompt for every query. It
-          steers how the LLM phrases answers, handles hedging, and preserves literal tokens. Glossary
-          entries additionally expand the search query at retrieval time. Embeddings, chunking, and
-          base ranking are unaffected.
-        </p>
+        <h6 className="text-sm font-semibold">{t("harness.title")}</h6>
+        <p className="text-[0.8125rem] text-muted-foreground">{t("harness.about")}</p>
       </PopoverContent>
     </Popover>
   )
@@ -213,6 +205,7 @@ export function ClientAdaptationPanel({
   saveState = "idle",
   serverError,
 }: ClientAdaptationPanelProps) {
+  const { t } = useTranslation("knowledge")
   const [mode, setMode] = React.useState<0 | 1>(0) // 0 = Edit, 1 = Rendered preview
   const entries: GlossaryEntry[] = glossary ?? []
 
@@ -254,11 +247,11 @@ export function ClientAdaptationPanel({
 
   const saveText =
     saveState === "saving"
-      ? "Saving…"
+      ? t("common:state.saving")
       : saveState === "error"
-        ? "Couldn't save"
+        ? t("shared.couldntSave")
         : saveState === "saved"
-          ? "Saved"
+          ? t("shared.saved")
           : ""
 
   const hasNotification =
@@ -269,26 +262,26 @@ export function ClientAdaptationPanel({
   const invalid = localValidation.kind !== "ok" || !!serverError
   const invalidText =
     localValidation.kind === "length"
-      ? `Over by ${localValidation.length - localValidation.max} chars.`
+      ? t("harness.overBy", { over: localValidation.length - localValidation.max })
       : localValidation.kind === "bidi"
-        ? "Invisible direction-override character detected — strip it to save."
+        ? t("harness.bidiInline")
         : (serverError?.message ?? "")
 
   return (
     <section
-      aria-roledescription="AI behavior controls"
-      aria-label="Knowledge harness editor"
+      aria-roledescription={t("harness.roleDescription")}
+      aria-label={t("harness.editorLabel")}
       className="flex max-w-[780px] flex-col gap-3"
     >
       {/* One calm header line: dot · title · AI label · save text */}
       <div className="flex items-center gap-2">
-        <StatusDot state={isEmpty ? "off" : "ok"} title={isEmpty ? "Off" : "Active"} />
-        <h5 className="text-sm font-semibold">Knowledge harness</h5>
-        <span className="sr-only">{isEmpty ? "(off)" : "(active)"}</span>
+        <StatusDot state={isEmpty ? "off" : "ok"} title={isEmpty ? t("harness.statusOff") : t("harness.statusActive")} />
+        <h5 className="text-sm font-semibold">{t("harness.title")}</h5>
+        <span className="sr-only">{isEmpty ? t("harness.srOff") : t("harness.srActive")}</span>
         <AdaptationAILabel />
         <span className="flex-1" />
         {saveState === "saving" ? (
-          <InlineLoading>Saving…</InlineLoading>
+          <InlineLoading>{t("common:state.saving")}</InlineLoading>
         ) : (
           saveText && (
             <span aria-live="polite" className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -305,14 +298,10 @@ export function ClientAdaptationPanel({
       <div className={cn("flex flex-col gap-1", mode === 1 && "hidden")}>
         <Textarea
           id={EDITOR_ID}
-          aria-label="Knowledge harness markdown"
+          aria-label={t("harness.markdownLabel")}
           aria-invalid={invalid || undefined}
           aria-describedby={`${EDITOR_ID}-meta`}
-          placeholder={
-            "# Domain rules\n\n" +
-            "- Preserve [Save] verbatim\n" +
-            "- Don't say 'contact support' when the docs describe a procedure"
-          }
+          placeholder={t("harness.placeholder")}
           value={value}
           rows={10}
           className="min-h-56 font-mono"
@@ -337,7 +326,7 @@ export function ClientAdaptationPanel({
       {mode === 1 && (
         <Tile className="min-h-44 p-4">
           {isEmpty ? (
-            <em className="text-[0.8125rem] text-muted-foreground">(nothing yet)</em>
+            <em className="text-[0.8125rem] text-muted-foreground">{t("harness.nothingYet")}</em>
           ) : (
             <Markdown size="sm">{value}</Markdown>
           )}
@@ -352,7 +341,7 @@ export function ClientAdaptationPanel({
           className="-ml-2.5"
           onClick={() => setMode((m) => (m === 0 ? 1 : 0))}
         >
-          {mode === 0 ? "Preview rendered ›" : "‹ Back to edit"}
+          {mode === 0 ? t("harness.previewRendered") : t("harness.backToEdit")}
         </Button>
       </div>
 
@@ -362,18 +351,18 @@ export function ClientAdaptationPanel({
           {localValidation.kind === "bidi" && (
             <Notice
               kind="warning"
-              title="Invisible direction-override character"
-              actionLabel="Strip"
+              title={t("harness.bidi.title")}
+              actionLabel={t("harness.bidi.action")}
               onAction={() => onChange(stripInvisibleChars(value))}
             >
-              A known prompt-smuggling vector. Strip to save.
+              {t("harness.bidi.body")}
             </Notice>
           )}
           {serverError?.error === "contract_override_phrase" && (
             <Notice
               kind="error"
-              title="Rejected by AI safety contract"
-              actionLabel="Find"
+              title={t("harness.contract.title")}
+              actionLabel={t("harness.contract.action")}
               onAction={() => {
                 const el = document.getElementById(EDITOR_ID) as HTMLTextAreaElement | null
                 const phrase = serverError.phrase
@@ -389,12 +378,12 @@ export function ClientAdaptationPanel({
                 }
               }}
             >
-              {`Remove ${JSON.stringify(serverError.phrase)} to save.`}
+              {t("harness.contract.body", { phrase: JSON.stringify(serverError.phrase) })}
             </Notice>
           )}
           {serverError?.error === "control_char" && (
-            <Notice kind="error" title="Control character not allowed">
-              {`Codepoint ${serverError.codepoint}.`}
+            <Notice kind="error" title={t("harness.controlChar.title")}>
+              {t("harness.controlChar.body", { codepoint: String(serverError.codepoint) })}
             </Notice>
           )}
         </div>
@@ -404,8 +393,8 @@ export function ClientAdaptationPanel({
           current text; the "Added" mark is a passive hint, not a lock. */}
       <div className="mt-4 flex flex-col gap-2">
         <div className="flex items-baseline gap-2">
-          <h6 className="text-[0.8125rem] font-semibold">Examples</h6>
-          <span className="text-xs text-muted-foreground">Click to append. You can edit afterwards.</span>
+          <h6 className="text-[0.8125rem] font-semibold">{t("harness.examples.heading")}</h6>
+          <span className="text-xs text-muted-foreground">{t("harness.examples.hint")}</span>
           <span className="flex-1" />
           <Button
             type="button"
@@ -413,36 +402,40 @@ export function ClientAdaptationPanel({
             size="sm"
             disabled={isEmpty}
             onClick={onResetClick}
-            title={isEmpty ? "Nothing to reset" : "Clear harness rules and glossary"}
+            title={isEmpty ? t("harness.examples.nothingToReset") : t("harness.examples.resetTitle")}
           >
             <RotateCcwIcon data-icon="inline-start" />
-            Reset
+            {t("harness.examples.reset")}
           </Button>
         </div>
-        <ul aria-label="Knowledge harness examples" className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
-          {TEMPLATES.map((t) => {
-            const added = value.includes(t.marker)
+        <ul aria-label={t("harness.examples.listLabel")} className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
+          {TEMPLATES.map((template) => {
+            const added = value.includes(template.marker)
             return (
-              <li key={t.id} className="flex">
+              <li key={template.id} className="flex">
                 <button
                   type="button"
-                  onClick={() => onTemplateClick(t.body)}
-                  title={`Append to the editor${added ? " (already in your rules)" : ""}`}
+                  onClick={() => onTemplateClick(template.body)}
+                  title={added ? t("harness.examples.appendAgain") : t("harness.examples.append")}
                   className="flex w-full cursor-pointer flex-col gap-0.5 rounded-lg border bg-card px-3 py-2.5 text-left transition-colors outline-none hover:bg-foreground/5 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   <span className="flex items-center gap-1.5">
-                    <span className="text-[0.8125rem] font-semibold">{t.title}</span>
+                    <span className="text-[0.8125rem] font-semibold">
+                      {t(`harness.template.${template.key}.title`)}
+                    </span>
                     {added && (
                       <span
                         className="inline-flex items-center gap-0.5 text-[0.6875rem] text-muted-foreground"
-                        title="Already inserted (click to insert again)"
+                        title={t("harness.examples.alreadyInserted")}
                       >
                         <CheckIcon className="size-3 text-status-ok" aria-hidden="true" />
-                        Added
+                        {t("harness.examples.added")}
                       </span>
                     )}
                   </span>
-                  <span className="text-xs leading-snug text-muted-foreground">{t.description}</span>
+                  <span className="text-xs leading-snug text-muted-foreground">
+                    {t(`harness.template.${template.key}.description`)}
+                  </span>
                 </button>
               </li>
             )
@@ -454,8 +447,8 @@ export function ClientAdaptationPanel({
       {onGlossaryChange && (
         <div className="mt-5 flex flex-col gap-2">
           <div className="flex items-baseline gap-2">
-            <h6 className="text-[0.8125rem] font-semibold">Glossary</h6>
-            <span className="text-xs text-muted-foreground">Synonyms appended to the retrieval query</span>
+            <h6 className="text-[0.8125rem] font-semibold">{t("harness.glossary.heading")}</h6>
+            <span className="text-xs text-muted-foreground">{t("harness.glossary.hint")}</span>
             <span className="flex-1" />
             {entries.length > 0 && (
               <span className="text-xs text-muted-foreground tabular-nums">
@@ -465,13 +458,13 @@ export function ClientAdaptationPanel({
           </div>
 
           {entries.length > 0 && (
-            <div role="table" aria-label="Domain glossary entries" className="overflow-x-auto">
+            <div role="table" aria-label={t("harness.glossary.tableLabel")} className="overflow-x-auto">
               <div role="row" className={cn(GLOSSARY_GRID, "pb-1")}>
-                <ColumnHeader>Term</ColumnHeader>
-                <ColumnHeader>Aliases</ColumnHeader>
-                <ColumnHeader>Definition</ColumnHeader>
+                <ColumnHeader>{t("harness.glossary.term")}</ColumnHeader>
+                <ColumnHeader>{t("harness.glossary.aliases")}</ColumnHeader>
+                <ColumnHeader>{t("harness.glossary.definition")}</ColumnHeader>
                 <span role="columnheader" className="sr-only">
-                  Actions
+                  {t("harness.glossary.actions")}
                 </span>
               </div>
               {entries.map((e, i) => (
@@ -497,7 +490,7 @@ export function ClientAdaptationPanel({
               disabled={entries.length >= GLOSSARY_MAX_ENTRIES}
             >
               <PlusIcon data-icon="inline-start" />
-              Add term
+              {t("harness.glossary.addTerm")}
             </Button>
           </div>
         </div>
@@ -536,6 +529,7 @@ function GlossaryRow({
   onDefinitionChange: (v: string) => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation("knowledge")
   // The draft is local so typing an alias does not re-render the parent.
   const [aliasDraft, setAliasDraft] = React.useState("")
   const aliasInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -560,7 +554,7 @@ function GlossaryRow({
       <div role="cell">
         <Input
           id={`gloss-term-${index}`}
-          aria-label="Term"
+          aria-label={t("harness.glossary.term")}
           placeholder="K3"
           value={entry.term}
           maxLength={GLOSSARY_MAX_TERM_LEN}
@@ -577,8 +571,8 @@ function GlossaryRow({
             {a}
             <button
               type="button"
-              aria-label={`Remove ${a}`}
-              title={`Remove ${a}`}
+              aria-label={t("harness.glossary.removeAlias", { alias: a })}
+              title={t("harness.glossary.removeAlias", { alias: a })}
               className="inline-flex size-4 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50"
               onClick={(ev) => {
                 ev.stopPropagation()
@@ -591,7 +585,11 @@ function GlossaryRow({
         ))}
         <input
           ref={aliasInputRef}
-          aria-label={`Add alias for ${entry.term || "this term"}`}
+          aria-label={
+            entry.term
+              ? t("harness.glossary.addAliasFor", { term: entry.term })
+              : t("harness.glossary.addAliasForThis")
+          }
           value={aliasDraft}
           maxLength={GLOSSARY_MAX_ALIAS_LEN}
           onChange={(e) => setAliasDraft(e.target.value)}
@@ -605,22 +603,22 @@ function GlossaryRow({
             }
           }}
           onBlur={commitChip}
-          placeholder={aliases.length === 0 ? "K-3, severance code 3 — Enter to add" : ""}
+          placeholder={aliases.length === 0 ? t("harness.glossary.aliasPlaceholder") : ""}
           className="min-w-32 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
       </div>
       <div role="cell">
         <Input
           id={`gloss-def-${index}`}
-          aria-label="Definition"
-          placeholder="(optional)"
+          aria-label={t("harness.glossary.definition")}
+          placeholder={t("harness.glossary.definitionPlaceholder")}
           value={entry.definition ?? ""}
           maxLength={GLOSSARY_MAX_DEFINITION_LEN}
           onChange={(ev) => onDefinitionChange(ev.target.value)}
         />
       </div>
       <div role="cell">
-        <IconButton label="Remove term" onClick={onRemove}>
+        <IconButton label={t("harness.glossary.removeTerm")} onClick={onRemove}>
           <Trash2Icon />
         </IconButton>
       </div>

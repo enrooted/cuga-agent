@@ -1,5 +1,6 @@
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,28 +19,29 @@ import {
  * "system" follows the OS setting.
  */
 export function ThemeToggle({ side = "bottom" }: { side?: "bottom" | "right" }) {
+  const { t } = useTranslation()
   const { theme = "system", setTheme } = useTheme()
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size={side === "right" ? "icon-lg" : "icon-sm"} aria-label="Theme" className="text-muted-foreground" />}>
+      <DropdownMenuTrigger render={<Button variant="ghost" size={side === "right" ? "icon-lg" : "icon-sm"} aria-label={t("nav.theme")} className="text-muted-foreground" />}>
         <SunIcon className="dark:hidden" />
         <MoonIcon className="hidden dark:block" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side={side} align="end" className="w-40">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Theme</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("nav.theme")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(String(v))}>
             <DropdownMenuRadioItem value="light">
               <SunIcon />
-              Light
+              {t("nav.themeLight")}
             </DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="dark">
               <MoonIcon />
-              Dark
+              {t("nav.themeDark")}
             </DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="system">
               <MonitorIcon />
-              System
+              {t("nav.themeSystem")}
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>

@@ -6,6 +6,7 @@
  * (Copyright IBM Corp., Apache-2.0)
  */
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { CheckIcon, CircleAlertIcon, MinusIcon } from "lucide-react"
 
 import { Spinner } from "@/components/ui/spinner"
@@ -20,10 +21,6 @@ import {
 } from "./knowledge-helpers"
 import { Notice, StatusBadge, Tile, type StatusTone } from "./parts"
 
-const REINDEX_BANNER_TITLE = "Re-index to apply your changes"
-const REINDEX_BANNER_TEXT =
-  "Existing documents still use the previous embedder. New uploads use the new configuration, but already-indexed documents need a re-index to switch."
-
 function taskTone(status: ReindexTask["status"]): StatusTone {
   if (status === "completed") return "ok"
   if (status === "failed") return "warn"
@@ -32,6 +29,9 @@ function taskTone(status: ReindexTask["status"]): StatusTone {
 }
 
 function ReindexProgressTile({ progress }: { progress: ReindexProgress }) {
+  // The labels from knowledge-helpers are translated at render time; this hook
+  // re-renders the tile when the language changes.
+  const { t } = useTranslation("knowledge")
   // Ticks once per second so the elapsed-time label advances between polls.
   const [now, setNow] = React.useState(() => Date.now())
   React.useEffect(() => {
@@ -48,14 +48,16 @@ function ReindexProgressTile({ progress }: { progress: ReindexProgress }) {
             has not started per-file work yet, so lead with what is happening. */}
         <h4 className="text-sm font-semibold">{getReindexPhaseHeadline(progress.tasks)}</h4>
         <p className="text-xs text-muted-foreground">
-          {finished} of {progress.total} document{progress.total === 1 ? "" : "s"} ready
-          {" · "}
-          Running for {formatElapsedSeconds(elapsed)}
+          {t("reindex.progressLine", {
+            count: progress.total,
+            finished,
+            elapsed: formatElapsedSeconds(elapsed),
+          })}
         </p>
       </div>
       <div
         role="progressbar"
-        aria-label="Re-index progress"
+        aria-label={t("reindex.progressLabel")}
         aria-valuemin={0}
         aria-valuemax={progress.total}
         aria-valuenow={finished}
@@ -72,8 +74,8 @@ function ReindexProgressTile({ progress }: { progress: ReindexProgress }) {
       {/* Per-file status list */}
       <div className="flex flex-col">
         <div className="flex justify-between border-b pb-1.5 text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
-          <span>Document</span>
-          <span>Status</span>
+          <span>{t("reindex.columnDocument")}</span>
+          <span>{t("reindex.columnStatus")}</span>
         </div>
         <ul className="max-h-60 divide-y overflow-y-auto">
           {progress.tasks.map((task) => {
@@ -134,6 +136,7 @@ export function ReindexStatus({
   knowledgeReindexing?: boolean
   onReindexNow: () => void
 }) {
+  const { t } = useTranslation("knowledge")
   if (!agentLevelEnabled) return null
 
   if (reindexProgress && !reindexProgress.done) {
@@ -145,12 +148,14 @@ export function ReindexStatus({
     return (
       <Notice
         kind={failed ? "warning" : "success"}
-        title={failed ? "Re-index finished with errors" : "Re-index complete"}
+        title={failed ? t("reindex.finishedWithErrors") : t("reindex.complete")}
         // No close button on success: the notice dismisses itself. On failure
         // the user closes it after reading the count.
         onClose={failed ? onDismissProgress : undefined}
       >
-        {`${reindexProgress.completed} succeeded${failed ? `, ${reindexProgress.failed} failed` : ""}.`}
+        {failed
+          ? t("reindex.succeededFailed", { completed: reindexProgress.completed, failed: reindexProgress.failed })
+          : t("reindex.succeeded", { completed: reindexProgress.completed })}
       </Notice>
     )
   }
@@ -162,15 +167,15 @@ export function ReindexStatus({
     return canReindex ? (
       <Notice
         kind="info"
-        title={REINDEX_BANNER_TITLE}
-        actionLabel={knowledgeReindexing ? "Re-indexing…" : "Re-index now"}
+        title={t("reindex.bannerTitle")}
+        actionLabel={knowledgeReindexing ? t("reindex.reindexing") : t("shared.reindexNow")}
         onAction={onReindexNow}
       >
-        {REINDEX_BANNER_TEXT}
+        {t("reindex.bannerText")}
       </Notice>
     ) : (
-      <Notice kind="info" title={REINDEX_BANNER_TITLE}>
-        {REINDEX_BANNER_TEXT}
+      <Notice kind="info" title={t("reindex.bannerTitle")}>
+        {t("reindex.bannerText")}
       </Notice>
     )
   }

@@ -3,7 +3,11 @@
  * CarbonChat.tsx + customSendMessage.ts, minus the Carbon widget.
  */
 import * as React from "react"
+import { toast } from "sonner"
+
+import i18n from "@/i18n"
 import * as api from "@/lib/api"
+import { useEventsInbox } from "@/hooks/use-events-inbox"
 import {
   LiveTurn,
   historyFromBasicMessages,
@@ -25,6 +29,20 @@ interface Options {
   onThreadChange?: (threadId: string) => void
   /** Snapshot of session documents attached to the next message. */
   getAttachmentSnapshot?: () => AttachmentSnapshot[]
+  /** A conversation that is gone (404) or busy/unavailable (409): the page decides what to show. */
+  onStreamError?: (status: number, errorCode?: string) => void
+}
+
+/** /stream refused the turn for a reason the page handles (customSendMessage StreamHttpError). */
+class StreamHttpError extends Error {
+  readonly status: number
+  readonly errorCode?: string
+  constructor(status: number, errorCode?: string) {
+    super(`HTTP ${status}`)
+    this.name = "StreamHttpError"
+    this.status = status
+    this.errorCode = errorCode
+  }
 }
 
 export function useCugaChat({
@@ -34,6 +52,7 @@ export function useCugaChat({
   disableHistory = false,
   onThreadChange,
   getAttachmentSnapshot,
+  onStreamError,
 }: Options) {
   const [messages, setMessages] = React.useState<ChatMessage[]>([])
   const [historyLoading, setHistoryLoading] = React.useState(false)
@@ -44,8 +63,8 @@ export function useCugaChat({
   const scopeRef = React.useRef(scope)
   scopeRef.current = scope
   const abortRef = React.useRef<AbortController | null>(null)
-  const ctxRef = React.useRef({ onThreadChange, getAttachmentSnapshot })
-  ctxRef.current = { onThreadChange, getAttachmentSnapshot }
+  const ctxRef = React.useRef({ onThreadChange, getAttachmentSnapshot, onStreamError })
+  ctxRef.current = { onThreadChange, getAttachmentSnapshot, onStreamError }
 
   const refreshMessageAttachments = React.useCallback(
     async (tid: string) => {
@@ -110,6 +129,7 @@ export function useCugaChat({
       const isCurrent = () => scopeRef.current === sentScope
       const turn = new LiveTurn(threadId)
       const controller = new AbortController()
+      let refused = false
       abortRef.current = controller
       setIsStreaming(true)
       setMessages((ms) => [...ms, { ...turn.message }])
@@ -127,11 +147,33 @@ export function useCugaChat({
           signal: controller.signal,
         })
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}, message: ${await res.text()}`)
+          const errorText = await res.text().catch(() => "")
+          let errorCode: string | undefined
+          let detail: string | undefined
+          try {
+            const parsed = JSON.parse(errorText) as { error?: string; detail?: string }
+            errorCode = parsed?.error
+            detail = parsed?.detail
+          } catch {
+            /* not JSON */
+          }
+          if (res.status === 409 || (res.status === 404 && threadId && detail === "Conversation not found")) {
+            throw new StreamHttpError(res.status, errorCode)
+          }
+          throw new Error(i18n.t("chat:stream.httpError", { status: res.status, message: errorText }))
         }
         let terminated = false
         for await (const event of parseCugaStream(res)) {
           if (controller.signal.aborted) break
+          // Notices about the agent's configuration are shown outside the transcript.
+          if (event.name === "config_changed" || event.name === "pending_cancelled") {
+            toast.info(
+              event.name === "pending_cancelled"
+                ? i18n.t("chat:toast.pendingCancelled")
+                : i18n.t("chat:toast.configChanged")
+            )
+            continue
+          }
           const outcome = turn.handle(event)
           publish()
           if (outcome.kind === "card") {
@@ -162,14 +204,23 @@ export function useCugaChat({
           publish()
         }
       } catch (error) {
-        if ((error as Error)?.name === "AbortError") turn.cancelled()
-        else turn.failed((error as Error)?.message || "Failed to connect to CUGA backend")
-        publish()
+        if (error instanceof StreamHttpError) {
+          // Nothing was answered: drop the empty reply and let the page explain.
+          if (isCurrent()) {
+            setMessages((ms) => ms.filter((m) => m.id !== turn.message.id))
+            ctxRef.current.onStreamError?.(error.status, error.errorCode)
+          }
+          refused = true
+        } else {
+          if ((error as Error)?.name === "AbortError") turn.cancelled()
+          else turn.failed((error as Error)?.message || i18n.t("chat:stream.connectFailed"))
+          publish()
+        }
       } finally {
         if (abortRef.current === controller) abortRef.current = null
         if (isCurrent()) setIsStreaming(false)
       }
-      if (isCurrent()) {
+      if (isCurrent() && !refused) {
         // The thread id does not change on send, so the history effect does not
         // re-run: the live transcript (and its citation state) is kept.
         ctxRef.current.onThreadChange?.(threadId)
@@ -223,6 +274,25 @@ export function useCugaChat({
     void api.postStop(threadId).catch(() => undefined)
     abortRef.current?.abort()
   }, [threadId])
+
+  // Armed-flow fires land at the end of the transcript (Carbon UI: useEventsInbox in CarbonChat).
+  useEventsInbox(threadId, (fires) => {
+    setMessages((ms) => {
+      const seen = new Set(ms.map((m) => m.id))
+      const added: AssistantMessage[] = fires
+        .filter((f) => !seen.has(f.id))
+        .map((f) => ({
+          id: f.id,
+          role: "assistant",
+          time: new Date().toISOString(),
+          status: "done",
+          steps: [],
+          text: f.text,
+          sources: [],
+        }))
+      return added.length ? [...ms, ...added] : ms
+    })
+  })
 
   return {
     messages,

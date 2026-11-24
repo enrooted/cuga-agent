@@ -10,6 +10,7 @@
 
 import * as React from "react"
 import { BookOpenIcon, CircleAlertIcon, InfoIcon, LightbulbIcon, ShieldIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
@@ -89,19 +90,20 @@ function Details({
   id: string
   confidence: number
 }) {
+  const { t } = useTranslation("policies")
   const percent = Math.round(confidence * 100)
   return (
     <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
       <dt className="text-muted-foreground">{nameLabel}</dt>
       <dd className="font-semibold">{name}</dd>
-      <dt className="text-muted-foreground">Policy ID:</dt>
+      <dt className="text-muted-foreground">{t("chat.policyId")}</dt>
       <dd className="font-mono text-xs break-all">{id}</dd>
       <dt className="text-muted-foreground" aria-hidden="true">
-        Match Confidence:
+        {t("chat.matchConfidenceLabel")}
       </dt>
       <dd>
         <Progress value={percent} className="max-w-xs items-center gap-x-3 gap-y-1">
-          <ProgressLabel className="sr-only">Match Confidence</ProgressLabel>
+          <ProgressLabel className="sr-only">{t("chat.matchConfidence")}</ProgressLabel>
           <ProgressValue className="order-last ml-0 w-10 text-right" />
         </Progress>
       </dd>
@@ -122,25 +124,26 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 }
 
 export function PolicyBlock({ data }: { data: PolicyBlockData }) {
+  const { t } = useTranslation("policies")
   const { content, metadata } = data
   return (
     <CardShell
       tone="warn"
       icon={<ShieldIcon className="size-6 shrink-0 text-status-warn" aria-hidden="true" />}
-      title="Intent Blocked by Policy"
-      badge="Security Policy"
+      title={t("chat.blockedTitle")}
+      badge={t("chat.blockedBadge")}
     >
       <div className="flex items-start gap-2">
         <CircleAlertIcon className="mt-0.5 size-4.5 shrink-0 text-status-warn" aria-hidden="true" />
         <p className="text-sm text-warn-text">{content}</p>
       </div>
       <Details
-        nameLabel="Policy Name:"
+        nameLabel={t("chat.policyName")}
         name={metadata.policy_name}
         id={metadata.policy_id}
         confidence={metadata.policy_confidence}
       />
-      <SubSection title="Reasoning">
+      <SubSection title={t("chat.reasoning")}>
         <p className="text-sm text-body">{metadata.policy_reasoning}</p>
       </SubSection>
     </CardShell>
@@ -148,27 +151,28 @@ export function PolicyBlock({ data }: { data: PolicyBlockData }) {
 }
 
 export function PolicyPlaybook({ data }: { data: PolicyPlaybookData }) {
+  const { t } = useTranslation("policies")
   const { content, metadata } = data
   const steps = metadata.playbook_steps || []
   return (
     <CardShell
       tone="neutral"
       icon={<BookOpenIcon className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />}
-      title="Playbook Activated"
-      badge="Guided Workflow"
+      title={t("chat.playbookTitle")}
+      badge={t("chat.playbookBadge")}
     >
       <div className="flex items-start gap-2">
         <LightbulbIcon className="mt-0.5 size-4.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <p className="text-sm">{content || "I'll guide you through this process step by step."}</p>
+        <p className="text-sm">{content || t("chat.playbookFallback")}</p>
       </div>
       <Details
-        nameLabel="Playbook Name:"
+        nameLabel={t("chat.playbookName")}
         name={metadata.policy_name}
         id={metadata.policy_id}
         confidence={metadata.policy_confidence}
       />
       {steps.length > 0 && (
-        <SubSection title={`Workflow Steps (${steps.length})`}>
+        <SubSection title={t("chat.workflowSteps", { total: steps.length })}>
           <ol className="flex flex-col gap-2">
             {steps.map((step, index) => (
               <li key={index} className="flex gap-3 text-sm">
@@ -179,12 +183,12 @@ export function PolicyPlaybook({ data }: { data: PolicyPlaybookData }) {
                   <span>{step.instruction}</span>
                   {step.expected_outcome && (
                     <span className="text-xs text-muted-foreground">
-                      <span className="font-semibold">Expected:</span> {step.expected_outcome}
+                      <span className="font-semibold">{t("chat.expected")}</span> {step.expected_outcome}
                     </span>
                   )}
                   {step.tools_allowed && step.tools_allowed.length > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      <span className="font-semibold">Tools:</span> {step.tools_allowed.join(", ")}
+                      <span className="font-semibold">{t("chat.tools")}</span> {step.tools_allowed.join(", ")}
                     </span>
                   )}
                 </div>
@@ -194,7 +198,7 @@ export function PolicyPlaybook({ data }: { data: PolicyPlaybookData }) {
         </SubSection>
       )}
       {metadata.playbook_guidance && (
-        <SubSection title="Guidance">
+        <SubSection title={t("chat.guidance")}>
           <div className="text-sm whitespace-pre-wrap text-body">{metadata.playbook_guidance}</div>
         </SubSection>
       )}

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { MessagesSquareIcon, PanelLeftCloseIcon, SearchIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -6,8 +7,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import lockupOnDark from "@/assets/brand/enrooted-logotyp-mork-bakgrund.svg"
-import lockupOnLight from "@/assets/brand/enrooted-logotyp-ljus-bakgrund.svg"
+import i18n from "@/i18n"
 import { cn } from "@/lib/utils"
 
 export interface ConversationThread {
@@ -26,40 +26,40 @@ export function formatTimestamp(isoString: string): string {
   const m = Math.floor(diffMs / 60000)
   const h = Math.floor(diffMs / 3600000)
   const d = Math.floor(diffMs / 86400000)
-  if (s < 10) return "Just now"
-  if (s < 60) return `${s}s ago`
-  if (m < 60) return `${m}m ago`
-  if (h < 24) return `${h}h ago`
-  if (d < 7) return `${d}d ago`
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  if (s < 10) return i18n.t("time.justNow")
+  if (s < 60) return i18n.t("time.secondsAgo", { count: s })
+  if (m < 60) return i18n.t("time.minutesAgo", { count: m })
+  if (h < 24) return i18n.t("time.hoursAgo", { count: h })
+  if (d < 7) return i18n.t("time.daysAgo", { count: d })
+  return date.toLocaleDateString(i18n.language, { month: "short", day: "numeric" })
 }
 
 /** Compact time for the right edge of a row: "now", "5m", "3h", "2d", "Nov 3". */
 function shortTime(isoString: string): string {
   const date = toDate(isoString)
   const m = Math.floor((Date.now() - date.getTime()) / 60000)
-  if (m < 1) return "now"
-  if (m < 60) return `${m}m`
-  if (m < 1440) return `${Math.floor(m / 60)}h`
-  if (m < 10080) return `${Math.floor(m / 1440)}d`
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  if (m < 1) return i18n.t("time.now")
+  if (m < 60) return i18n.t("time.minutes", { count: m })
+  if (m < 1440) return i18n.t("time.hours", { count: Math.floor(m / 60) })
+  if (m < 10080) return i18n.t("time.days", { count: Math.floor(m / 1440) })
+  return date.toLocaleDateString(i18n.language, { month: "short", day: "numeric" })
 }
 
-const GROUPS = ["Today", "Yesterday", "Previous 7 days", "Older"] as const
+const GROUPS = ["today", "yesterday", "week", "older"] as const
 
 function groupOf(isoString: string): (typeof GROUPS)[number] {
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
   const days = Math.ceil((startOfToday.getTime() - toDate(isoString).getTime()) / 86400000)
-  if (days <= 0) return "Today"
-  if (days === 1) return "Yesterday"
-  if (days <= 7) return "Previous 7 days"
-  return "Older"
+  if (days <= 0) return "today"
+  if (days === 1) return "yesterday"
+  if (days <= 7) return "week"
+  return "older"
 }
 
 /**
  * Conversation list next to the rail (layout after OpenClaw's session list):
- * brand on top, a title filter, one-line rows grouped by day. Same data and
+ * a heading on top (the brand mark is in the rail beside it), a title filter, one-line rows grouped by day. Same data and
  * actions as the Carbon UI's left panel.
  */
 export function ConversationsPanel({
@@ -77,6 +77,7 @@ export function ConversationsPanel({
   onRemoveAll: () => void
   onClose: () => void
 }) {
+  const { t: tr } = useTranslation()
   const [filter, setFilter] = React.useState("")
   const q = filter.trim().toLowerCase()
   const visible = q ? threads.filter((t) => (t.first_message || "").toLowerCase().includes(q)) : threads
@@ -86,19 +87,16 @@ export function ConversationsPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* enrooted lockup: original files, one per background (UTF-1), ≥120 px (MIN-1). */}
-      <div className="flex h-12 shrink-0 items-center justify-between gap-2 pr-2 pl-3">
-        <a href="/" aria-label="enrooted, home" className="flex shrink-0 items-center">
-          <img src={lockupOnLight} alt="enrooted" className="h-[22px] w-auto min-w-[120px] dark:hidden" />
-          <img src={lockupOnDark} alt="enrooted" className="hidden h-[22px] w-auto min-w-[120px] dark:block" />
-        </a>
+      {/* A heading, not the enrooted lockup: the trilogin already sits in the rail right beside this panel. */}
+      <div className="flex h-12 shrink-0 items-center justify-between gap-2 pr-2 pl-4">
+        <h2 className="truncate font-heading text-sm font-semibold text-foreground">{tr("conversations.title")}</h2>
         <Tooltip>
           <TooltipTrigger
-            render={<Button variant="ghost" size="icon-sm" aria-label="Close panel" className="text-muted-foreground" onClick={onClose} />}
+            render={<Button variant="ghost" size="icon-sm" aria-label={tr("action.closePanel")} className="text-muted-foreground" onClick={onClose} />}
           >
             <PanelLeftCloseIcon />
           </TooltipTrigger>
-          <TooltipContent>Close panel</TooltipContent>
+          <TooltipContent>{tr("action.closePanel")}</TooltipContent>
         </Tooltip>
       </div>
 
@@ -110,8 +108,8 @@ export function ConversationsPanel({
           <InputGroupInput
             type="search"
             value={filter}
-            placeholder="Search conversations"
-            aria-label="Search conversations"
+            placeholder={tr("conversations.search")}
+            aria-label={tr("conversations.search")}
             onChange={(e) => setFilter(e.target.value)}
           />
         </InputGroup>
@@ -119,7 +117,7 @@ export function ConversationsPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {loading ? (
-          <div className="flex flex-col gap-2 p-2" aria-label="Loading conversations…">
+          <div className="flex flex-col gap-2 p-2" aria-label={tr("conversations.loading")}>
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-5" style={{ width: `${85 - i * 9}%` }} />
             ))}
@@ -130,21 +128,21 @@ export function ConversationsPanel({
               <EmptyMedia variant="icon">
                 <MessagesSquareIcon />
               </EmptyMedia>
-              <EmptyTitle>No conversations yet.</EmptyTitle>
-              <EmptyDescription>Start a new chat to begin.</EmptyDescription>
+              <EmptyTitle>{tr("conversations.empty")}</EmptyTitle>
+              <EmptyDescription>{tr("conversations.emptyHint")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : grouped.length === 0 ? (
-          <p className="px-2 py-4 text-sm text-muted-foreground">No conversations match “{filter.trim()}”.</p>
+          <p className="px-2 py-4 text-sm text-muted-foreground">{tr("conversations.noMatch", { query: filter.trim() })}</p>
         ) : (
           grouped.map((group) => (
-            <section key={group.label} aria-label={group.label} className="mb-3">
+            <section key={group.label} aria-label={tr(`conversations.group.${group.label}`)} className="mb-3">
               {/* enrooted eyebrow: Poppins medium, capitals, 0.1 em, turquoise link tone. */}
-              <h3 className="px-2 pt-2 pb-1 text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">{group.label}</h3>
+              <h3 className="px-2 pt-2 pb-1 text-[0.6875rem] font-medium tracking-[0.1em] text-link uppercase">{tr(`conversations.group.${group.label}`)}</h3>
               <ul className="flex flex-col gap-px">
                 {group.items.map((t) => {
                   const active = selectedThreadId === t.thread_id
-                  const title = t.first_message || "Untitled conversation"
+                  const title = t.first_message || tr("conversations.untitled")
                   return (
                     <li key={t.thread_id}>
                       <button
@@ -171,14 +169,14 @@ export function ConversationsPanel({
       </div>
 
       <div className="flex h-10 shrink-0 items-center justify-between border-t pr-2 pl-4 text-xs text-muted-foreground">
-        <span>{loading ? "Loading…" : `${threads.length} conversation${threads.length !== 1 ? "s" : ""}`}</span>
+        <span>{loading ? tr("state.loading") : tr("conversations.count", { count: threads.length })}</span>
         <Tooltip>
           <TooltipTrigger
             render={
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Remove all"
+                aria-label={tr("conversations.removeAll")}
                 className="text-muted-foreground"
                 disabled={threads.length === 0}
                 onClick={onRemoveAll}
@@ -187,7 +185,7 @@ export function ConversationsPanel({
           >
             <Trash2Icon />
           </TooltipTrigger>
-          <TooltipContent>Remove all conversations</TooltipContent>
+          <TooltipContent>{tr("conversations.removeAllTooltip")}</TooltipContent>
         </Tooltip>
       </div>
     </div>

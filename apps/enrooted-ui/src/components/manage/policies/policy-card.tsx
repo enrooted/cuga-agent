@@ -8,6 +8,7 @@
 
 import * as React from "react"
 import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -83,20 +84,21 @@ export function PolicyCard({
   summary: React.ReactNode
   children: React.ReactNode
 }) {
+  const { t } = useTranslation("policies")
   const bodyId = `policy-body-${domId}`
   return (
     <li className="overflow-hidden rounded-xl border bg-card">
       <div className={cn("p-3", expanded && "bg-muted/50")}>
         <div className="flex items-center gap-3">
           <Checkbox
-            aria-label="Enable Policy"
+            aria-label={t("card.enable")}
             checked={enabled}
             onCheckedChange={(checked) => onEnabledChange(checked)}
             disabled={disabled}
           />
           <Input
             id={`name-${domId}`}
-            aria-label="Policy Name"
+            aria-label={t("card.name")}
             className="max-w-sm min-w-0 flex-1"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
@@ -106,14 +108,14 @@ export function PolicyCard({
           <div className="ml-auto flex shrink-0 items-center gap-1">
             {actions}
             <IconAction
-              label={expanded ? "Collapse" : "Expand"}
+              label={expanded ? t("card.collapse") : t("card.expand")}
               expanded={expanded}
               controls={expanded ? bodyId : undefined}
               onClick={onToggleExpanded}
             >
               {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
             </IconAction>
-            <IconAction label="Delete" onClick={onRemove} disabled={disabled}>
+            <IconAction label={t("common:action.delete")} onClick={onRemove} disabled={disabled}>
               <Trash2Icon />
             </IconAction>
           </div>

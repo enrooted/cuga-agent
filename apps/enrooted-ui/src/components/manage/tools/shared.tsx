@@ -6,6 +6,7 @@
  */
 import * as React from "react"
 import { TriangleAlertIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,29 @@ export function IconButton({
             aria-label={label}
             disabled={disabled}
             onClick={onClick}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** Icon-only ghost link that opens in a new tab, with the label as both aria-label and tooltip. */
+export function IconLink({ label, href, children }: { label: string; href: string; children: React.ReactNode }) {
+  const { t } = useTranslation("tools")
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            nativeButton={false}
+            aria-label={t("shared.opensInNewTab", { label })}
+            render={<a href={href} target="_blank" rel="noopener noreferrer" />}
           />
         }
       >

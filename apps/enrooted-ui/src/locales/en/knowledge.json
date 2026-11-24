@@ -1,0 +1,495 @@
+{
+  "shared": {
+    "on": "On",
+    "off": "Off",
+    "dismiss": "Dismiss",
+    "retry": "Retry",
+    "saved": "Saved",
+    "couldntSave": "Couldn't save",
+    "invalidNumber": "Number is not valid",
+    "unknownError": "Unknown error",
+    "networkError": "Network error",
+    "noDetail": "No detail returned.",
+    "reindexNow": "Re-index now"
+  },
+  "panel": {
+    "title": "Knowledge Base",
+    "description": "Documents, search test, knowledge harness and settings of this agent's knowledge base.",
+    "tabsLabel": "Knowledge sections",
+    "tab": {
+      "documents": "Documents ({{total}})",
+      "search": "Search Test",
+      "behavior": "Knowledge harness",
+      "settings": "Settings"
+    },
+    "loadFailed": "Failed to load documents",
+    "loadFailedStatus": "Failed to load documents ({{status}})",
+    "agentDisabled": {
+      "title": "Agent knowledge is disabled",
+      "manage": "Enable agent-level knowledge in Settings to manage permanent documents.",
+      "search": "Enable agent-level knowledge in Settings to search permanent documents.",
+      "upload": "Enable agent-level knowledge in Settings to upload permanent documents."
+    },
+    "delete": {
+      "title": "Delete document?",
+      "description": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "done": "Document deleted",
+      "failed": "Delete failed"
+    }
+  },
+  "documents": {
+    "disabledTitle": "Agent-level knowledge is disabled",
+    "disabledBody": "Permanent documents are unavailable while agent-level knowledge is off. Re-enable it in Settings to upload, index, and search documents for this agent.",
+    "loading": "Loading documents…",
+    "empty": "No documents indexed yet. Upload files to get started.",
+    "heading": "Indexed Documents ({{total}})",
+    "deleteDocument": "Delete document",
+    "dropHere": "Drop files here",
+    "dropOrClick": "Drop files here or click to upload",
+    "uploadLabel": "Upload documents",
+    "reindexStatus": {
+      "completed": "Ready",
+      "failed": "Failed",
+      "running": "Upgrading…",
+      "pending": "Queued"
+    },
+    "upload": {
+      "indexed": "Indexed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "finishing": "Finishing…",
+      "queued": "Queued",
+      "processing": "Processing",
+      "removeFromQueue": "Remove from queue",
+      "cancel": "Cancel upload"
+    },
+    "uploadError": {
+      "taskNotFound": "Task not found",
+      "ingestionFailed": "Ingestion failed",
+      "timedOut": "Timed out waiting for ingest",
+      "failed": "Failed",
+      "uploadFailed": "Upload failed"
+    }
+  },
+  "search": {
+    "disabledTitle": "Agent-level knowledge search is disabled",
+    "disabledBody": "Search testing in Manage only applies to permanent agent documents. Re-enable agent-level knowledge in Settings to test retrieval here.",
+    "queryLabel": "Search query",
+    "queryPlaceholder": "Search your knowledge base...",
+    "searching": "Searching...",
+    "limit": "Limit",
+    "threshold": "Score threshold",
+    "results": "Results ({{total}})",
+    "time": "{{ms}}ms",
+    "page": "p.{{page}}",
+    "relevance": "Relevance score",
+    "showLess": "Show less",
+    "showFull": "Show full passage",
+    "noResults": "No results found. Try a different query.",
+    "failed": "Search failed",
+    "failedBody": "Could not search knowledge base"
+  },
+  "harness": {
+    "title": "Knowledge harness",
+    "aiLabel": "AI: about the Knowledge harness",
+    "aiBadge": "AI",
+    "about": "Text on this surface is appended to the knowledge-agent system prompt for every query. It steers how the LLM phrases answers, handles hedging, and preserves literal tokens. Glossary entries additionally expand the search query at retrieval time. Embeddings, chunking, and base ranking are unaffected.",
+    "roleDescription": "AI behavior controls",
+    "editorLabel": "Knowledge harness editor",
+    "statusOff": "Off",
+    "statusActive": "Active",
+    "srOff": "(off)",
+    "srActive": "(active)",
+    "markdownLabel": "Knowledge harness markdown",
+    "placeholder": "# Domain rules\n\n- Preserve [Save] verbatim\n- Don't say 'contact support' when the docs describe a procedure",
+    "overBy": "Over by {{over}} chars.",
+    "bidiInline": "Invisible direction-override character detected — strip it to save.",
+    "nothingYet": "(nothing yet)",
+    "previewRendered": "Preview rendered ›",
+    "backToEdit": "‹ Back to edit",
+    "bidi": {
+      "title": "Invisible direction-override character",
+      "action": "Strip",
+      "body": "A known prompt-smuggling vector. Strip to save."
+    },
+    "contract": {
+      "title": "Rejected by AI safety contract",
+      "action": "Find",
+      "body": "Remove {{phrase}} to save."
+    },
+    "controlChar": {
+      "title": "Control character not allowed",
+      "body": "Codepoint {{codepoint}}."
+    },
+    "examples": {
+      "heading": "Examples",
+      "hint": "Click to append. You can edit afterwards.",
+      "listLabel": "Knowledge harness examples",
+      "reset": "Reset",
+      "nothingToReset": "Nothing to reset",
+      "resetTitle": "Clear harness rules and glossary",
+      "append": "Append to the editor",
+      "appendAgain": "Append to the editor (already in your rules)",
+      "alreadyInserted": "Already inserted (click to insert again)",
+      "added": "Added"
+    },
+    "template": {
+      "tokenPreservation": {
+        "title": "Token preservation",
+        "description": "Echo bracketed labels, menu paths, codes, and version strings verbatim."
+      },
+      "answerPolicy": {
+        "title": "Answer policy (anti-hedging)",
+        "description": "Contrastive WRONG/RIGHT pairs that drill the verbatim-quote habit."
+      },
+      "supportRunbook": {
+        "title": "Support runbook quoting",
+        "description": "WRONG/RIGHT pairs for tech support — preserve [labels], codes, and menu paths."
+      },
+      "emptyContext": {
+        "title": "Empty-context discipline",
+        "description": "WRONG/RIGHT pairs for zero-result retrieval — honest, no fabrication."
+      },
+      "vocabularyHints": {
+        "title": "Vocabulary hints",
+        "description": "Tell CUGA which terms to treat as equivalent when searching the knowledge base."
+      },
+      "sourceCitation": {
+        "title": "Source citation",
+        "description": "Cite the source filename for every procedural claim, code, or button name."
+      }
+    },
+    "glossary": {
+      "heading": "Glossary",
+      "hint": "Synonyms appended to the retrieval query",
+      "tableLabel": "Domain glossary entries",
+      "term": "Term",
+      "aliases": "Aliases",
+      "definition": "Definition",
+      "actions": "Actions",
+      "addTerm": "Add term",
+      "removeTerm": "Remove term",
+      "removeAlias": "Remove {{alias}}",
+      "addAliasFor": "Add alias for {{term}}",
+      "addAliasForThis": "Add alias for this term",
+      "aliasPlaceholder": "K-3, severance code 3 — Enter to add",
+      "definitionPlaceholder": "(optional)"
+    }
+  },
+  "envPresets": {
+    "heading": "Detected in your environment",
+    "info": "Providers found in your .env or shell. One click sets the provider; credentials stay on this machine.",
+    "category": {
+      "cloud": "Cloud",
+      "enterprise": "Enterprise"
+    },
+    "envKey": {
+      "url": "URL",
+      "projectId": "Project ID",
+      "endpoint": "Endpoint",
+      "apiVersion": "API version",
+      "baseUrl": "Base URL"
+    },
+    "defaultModel": "Default model: {{model}}",
+    "modelLabel": "Model:",
+    "missing": "Missing: {{list}}",
+    "active": "Active",
+    "use": "Use",
+    "setUp": "Set up",
+    "runLocally": "Or run locally with Fastembed or Ollama — no keys needed."
+  },
+  "embedding": {
+    "stillSaving": "Still saving",
+    "stillSavingSlow": "Still saving — network is slow",
+    "using": "Using <strong>{{provider}}</strong>",
+    "usingModel": "Using <strong>{{provider}}</strong> · {{model}}",
+    "notSetUp": "Not set up yet — pick an embedder below.",
+    "presetApplied": {
+      "title": "{{label}} applied",
+      "body": "Provider set to {{provider}}; model set to {{model}}. The engine will read credentials from the environment."
+    },
+    "guide": {
+      "reindexing": "Re-indexing your documents…",
+      "testing": "Testing {{label}} connection…",
+      "reachable": "Reachable — {{dim}}-dim",
+      "reachableLatency": "Reachable — {{dim}}-dim, {{ms}} ms",
+      "stillOld": "Existing documents still use the old provider — re-index to switch them over.",
+      "nothingToReindex": "Nothing to re-index yet — new uploads will use this provider.",
+      "unreachableTitle": "Couldn't reach {{label}}",
+      "unreachableBody": "{{error}} Check credentials in your environment, then test again.",
+      "noResponse": "The embedder didn't respond.",
+      "testAgain": "Test again",
+      "verifyTitle": "Verify {{label}} before re-indexing",
+      "verifyBody": "{{embedder}} — test the embedder responds so you don't re-index against a broken connection."
+    },
+    "saveFailedTitle": "Couldn't save your changes",
+    "provider": {
+      "label": "Provider",
+      "custom": "{{provider}} — custom provider",
+      "auto": "Auto-detect — best available, chosen for you",
+      "groupLocal": "On your machine",
+      "fastembed": "FastEmbed — runs locally, no key",
+      "ollama": "Ollama — local Ollama server",
+      "huggingface": "HuggingFace — local, uses your GPU",
+      "groupHosted": "Hosted API",
+      "openai": "OpenAI / compatible — OpenAI, Together, Fireworks, proxies",
+      "openrouter": "OpenRouter — one key, many models",
+      "litellm": "LiteLLM — routes to many providers"
+    },
+    "model": {
+      "label": "Model",
+      "placeholder": "e.g. openai/text-embedding-3-small",
+      "helperRequired": "Required — include the provider prefix (e.g. openai/text-embedding-3-small).",
+      "helperOllama": "Optional — defaults to nomic-embed-text.",
+      "helperOptional": "Optional — auto-detected for this provider.",
+      "invalid": "Required for this provider — include the provider prefix."
+    },
+    "apiKey": {
+      "label": "API key",
+      "labelOptional": "API key (optional)",
+      "placeholderRequired": "Paste OPENROUTER_API_KEY",
+      "placeholderOptional": "Leave empty to use the provider's env var",
+      "helperRequired": "Required for OpenRouter.",
+      "helperOptional": "Optional — falls back to the provider's environment variable.",
+      "invalid": "API key is required for OpenRouter."
+    },
+    "baseUrl": {
+      "label": "Base URL (optional)",
+      "placeholderOpenai": "e.g. https://api.together.xyz/v1",
+      "placeholderOllama": "e.g. http://localhost:11434",
+      "placeholderLitellm": "e.g. http://localhost:4000",
+      "helperOpenai": "Optional — leave empty for OpenAI direct; append /v1 for most proxies.",
+      "helperOllama": "Optional — defaults to http://localhost:11434.",
+      "helperLitellm": "Optional — for a self-hosted LiteLLM proxy.",
+      "invalid": "Must start with http:// or https://"
+    },
+    "links": {
+      "openrouter": "Browse OpenRouter embedding models",
+      "litellm": "Supported LiteLLM models"
+    },
+    "testConnection": "Test connection",
+    "testing": "Testing…",
+    "keySource": {
+      "title": "Where the embedding API key is being read from.",
+      "ui": "Key: from UI",
+      "missing": "Key: missing",
+      "other": "Key: {{source}}"
+    },
+    "testResult": {
+      "connected": "Connected — dim={{dim}}, {{ms}} ms",
+      "failed": "Test failed",
+      "okBody": "You can now upload documents on the Documents tab."
+    },
+    "hardware": {
+      "heading": "Throughput & hardware",
+      "gpu": "GPU Acceleration",
+      "deviceTitle": "What the running engine actually loaded for embedding inference.",
+      "fallback": "GPU fallback to CPU",
+      "detected": "Detected: {{device}}"
+    },
+    "extraParams": {
+      "label": "Advanced: Extra provider kwargs (optional, JSON dict)",
+      "placeholder": "leave empty for most providers",
+      "helper": "NOT for the model name — model has its own field above. Use this only for provider-specific extras (Azure: api_version. Bedrock: aws_region_name).",
+      "reserved": "Don't put {{keys}} here — those go in the named fields above. This box is for provider-specific extras (e.g. api_version for Azure)."
+    },
+    "batchSize": {
+      "label": "Batch Size",
+      "helper": "Chunks per embed call. Smaller = finer progress; larger = lower per-call overhead."
+    },
+    "concurrency": {
+      "label": "Concurrency",
+      "helper": "Parallel embed sub-batches for network providers (OpenAI / Ollama). No effect on local providers."
+    },
+    "vectorInsert": {
+      "label": "Vector Insert Batch Size",
+      "helper": "Chunks per add_many transaction. Caps each transaction so a large document does not blow past pgvector's command_timeout or hold the HNSW write lock for long. Default 200 works for typical docs."
+    },
+    "reset": "Reset Embedder to defaults"
+  },
+  "settings": {
+    "sectionStatus": {
+      "needsAttention": "Needs attention",
+      "warning": "Warning"
+    },
+    "reason": {
+      "baseUrl": "Base URL: {{error}}",
+      "modelRequired": "Model is required",
+      "keyRequired": "API Key is required",
+      "testFailed": "Test connection failed",
+      "overlap": "Overlap must be less than chunk size"
+    },
+    "reset": {
+      "failed": "Reset failed",
+      "serverReturned": "Server returned {{status}} {{statusText}}",
+      "done": "Section reset",
+      "restored": "Restored {{section}} to factory defaults.",
+      "unknownError": "unknown error",
+      "dialogTitle": "Reset {{section}} to defaults?",
+      "dialogBody": "This restores the {{section}} section to factory defaults. Your other knowledge settings are untouched. Fields affected: {{fields}}",
+      "confirm": "Reset section"
+    },
+    "section": {
+      "embeddings": "Embeddings",
+      "chunking": "Chunking",
+      "documentParsing": "Document Parsing",
+      "limits": "Limits"
+    },
+    "service": {
+      "label": "Service",
+      "checking": "Checking",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "refresh": "Refresh status"
+    },
+    "enabled": {
+      "label": "Knowledge Base",
+      "disabledHint": "Knowledge base is disabled. Enable it to configure retrieval settings."
+    },
+    "scope": {
+      "agent": {
+        "title": "Agent-level knowledge",
+        "description": "Permanent documents shared across all conversations"
+      },
+      "session": {
+        "title": "Session-level knowledge",
+        "description": "Per-conversation uploads and scoped search"
+      },
+      "citations": {
+        "title": "Citations",
+        "description": "Number knowledge sources in answers ([1]) with clickable snippets"
+      }
+    },
+    "notice": {
+      "agentOffTitle": "Agent-level knowledge is off",
+      "agentOffBody": "Permanent documents, indexing, and Manage search are unavailable until you turn it back on.",
+      "sessionOffTitle": "Session-level knowledge is off",
+      "sessionOffBody": "Conversation uploads and session-scoped knowledge search are unavailable in chat."
+    },
+    "profile": {
+      "heading": "Retrieval Profile",
+      "description": "Balance retrieval accuracy against response speed and cost.",
+      "modified": "Modified",
+      "requiresReindex": "Requires re-indexing existing documents.",
+      "overrides": "Overrides the profile defaults — re-indexing runs on Publish.",
+      "standard": "Standard"
+    },
+    "advanced": {
+      "label": "Advanced settings",
+      "hint": "Embedding model, chunking, parsing, retrieval behavior, score & metric, and limits."
+    },
+    "accordion": {
+      "embeddings": "Embedding model",
+      "chunking": "Chunking",
+      "docling": "Document Parsing (Docling)",
+      "retrieval": "Retrieval behavior",
+      "metric": "Score & Metric",
+      "limits": "Limits"
+    },
+    "chunking": {
+      "setByProfile": "Values set by the <strong>{{name}}</strong> profile. Edit to override.",
+      "size": "Chunk Size",
+      "overlap": "Chunk Overlap",
+      "reset": "Reset Chunking to defaults"
+    },
+    "docling": {
+      "level": "Parsing Level",
+      "levelHelper": "Applies to PDFs and every other Docling-supported format (DOCX, PPTX, HTML, images, …). Trades parse speed for extraction fidelity. Saved with the published config snapshot.",
+      "fast": "Fast — OCR off, tables off (digital docs only; ~3–10× faster)",
+      "balanced": "Balanced — OCR off, tables on (digital docs with tables)",
+      "accurate": "Accurate (default) — OCR on, tables on (scanned docs supported)",
+      "scannedWarning": "<strong>Fast</strong> mode will extract little or no text from scanned documents. Use <strong>Accurate</strong> for OCR.",
+      "layout": "Layout Engine",
+      "layoutHelper": "Which backend runs the layout-detection model. Auto = ONNX (default; CPU on Mac, CUDA on NVIDIA). Transformers = PyTorch (only way to engage Apple GPU/MPS; ~500 MB more RAM).",
+      "layoutAuto": "Auto (default) — ONNX, fastest startup on CPU & NVIDIA",
+      "layoutOnnx": "ONNX — explicit (same as Auto today; pinned)",
+      "layoutTransformers": "Transformers (PyTorch) — engages MPS on Mac / CUDA on NVIDIA",
+      "reset": "Reset Document Parsing to defaults"
+    },
+    "metric": {
+      "distance": "Distance Metric",
+      "cosine": "Cosine Similarity"
+    },
+    "limits": {
+      "maxUpload": "Max Upload Size (MB)",
+      "maxFiles": "Max Files per Request",
+      "maxUrl": "Max URL Download (MB)",
+      "maxChunks": "Max Chunks per Document",
+      "maxPending": "Max Pending Tasks",
+      "reset": "Reset Limits to defaults"
+    },
+    "retrieval": {
+      "label": "Query expansion",
+      "helper": "Rewrites the query before searching to catch documents that word things differently. Adds one LLM call (~0.3–1.5s) per search and may not improve every corpus — leave Off unless you've seen it help. The original query still runs, and if the rewrite errors or times out the plain query is used.",
+      "optionOff": "Off — search the query as typed (default)",
+      "optionMultiQuery": "Reword the query (multi-query) — try a few alternate phrasings",
+      "optionHyde": "Draft an ideal answer first (HyDE) — match against a hypothetical passage",
+      "short": {
+        "off": "Off",
+        "multi_query": "Reword the query (multi-query)",
+        "hyde": "Draft an ideal answer first (HyDE)"
+      },
+      "profileDefault": "Default for the {{profile}} profile: {{value}}",
+      "resetToProfile": "Reset to profile default",
+      "extraStepTitle": "Adds an extra AI step per search",
+      "extraStepBody": "Every search now makes one model call first — about 0.3–1.5s slower, with a small added cost. Watch latency after enabling and switch back to Off if recall doesn't improve."
+    },
+    "unavailable": {
+      "manage": "Knowledge settings are managed from the Manage page.",
+      "settings": "Knowledge settings are managed from the Settings page."
+    }
+  },
+  "reindex": {
+    "bannerTitle": "Re-index to apply your changes",
+    "bannerText": "Existing documents still use the previous embedder. New uploads use the new configuration, but already-indexed documents need a re-index to switch.",
+    "progressLine_one": "{{finished}} of {{count}} document ready · Running for {{elapsed}}",
+    "progressLine_other": "{{finished}} of {{count}} documents ready · Running for {{elapsed}}",
+    "progressLabel": "Re-index progress",
+    "columnDocument": "Document",
+    "columnStatus": "Status",
+    "complete": "Re-index complete",
+    "finishedWithErrors": "Re-index finished with errors",
+    "succeeded": "{{completed}} succeeded.",
+    "succeededFailed": "{{completed}} succeeded, {{failed}} failed.",
+    "reindexing": "Re-indexing…",
+    "status": {
+      "running": "Indexing",
+      "completed": "Completed",
+      "failed": "Failed",
+      "pending": "Pending"
+    },
+    "stage": {
+      "parsed": "Parsed",
+      "embed": "Embedding",
+      "saving": "Saving"
+    },
+    "phase": {
+      "preparing": "Preparing your new reading model",
+      "filing": "Filing everything in its new place",
+      "rereading": "Re-reading your documents"
+    },
+    "elapsed": {
+      "seconds": "{{seconds}}s",
+      "minutesSeconds": "{{minutes}}m {{seconds}}s",
+      "minutes": "{{minutes}}m"
+    },
+    "toast": {
+      "completeBody": "{{completed}} document(s) re-indexed successfully.",
+      "incompleteTitle": "Re-index didn't complete",
+      "incompleteBody": "{{completed}}/{{total}} succeeded; {{failed}} failed: {{names}}. Your previous embedder configuration is still active. Fix the failing file(s) and Re-index again, or revert your config.",
+      "incompleteBodyMore": "{{completed}}/{{total}} succeeded; {{failed}} failed: {{names}} (+{{more}} more). Your previous embedder configuration is still active. Fix the failing file(s) and Re-index again, or revert your config."
+    }
+  },
+  "draftSave": {
+    "tooLong": "Save took too long — server may be busy. Try again.",
+    "couldntApply": "Couldn't apply — see provider error below",
+    "rejected": "Save rejected by server",
+    "reindexRunning": "Re-index still running — click Retry once it finishes.",
+    "conflict": "Save conflicts with current server state. Try again.",
+    "conflictToastTitle": "Can't change settings yet",
+    "conflictToastBody": "A re-index or other config update was in progress. Your change will save on the next attempt.",
+    "failedStatus": "Save failed ({{status}})",
+    "failedStatusDetail": "Save failed ({{status}}): {{detail}}",
+    "checkConnection": "Couldn't save — check your connection"
+  }
+}

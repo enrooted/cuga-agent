@@ -8,7 +8,15 @@
 
 export type ToolType = "mcp" | "openapi"
 
-export type AuthType = "none" | "header" | "bearer" | "api-key" | "basic" | "query"
+export type AuthType =
+  | "none"
+  | "header"
+  | "bearer"
+  | "api-key"
+  | "basic"
+  | "query"
+  /** MCP gateway instance API key, exchanged by the registry for an instance token. */
+  | "account_iam_apikey"
 
 export interface ToolAuth {
   type: AuthType
@@ -17,6 +25,44 @@ export interface ToolAuth {
 }
 
 export type McpTransport = "sse" | "stdio" | "http"
+
+/** Who the gateway sees on a tool call: the signed-in user, or the instance API key's service ID. */
+export type GatewayRunAs = "user" | "service"
+
+/** A tool definition as the gateway lists it (saved with signed-in user entries). */
+export interface GatewayToolDef {
+  name: string
+  description: string
+  inputSchema?: Record<string, unknown>
+}
+
+/** MCP gateway instance entry. `url` holds the instance URL (https://<gateway>/?instance=<id>). */
+export interface ToolGateway {
+  instance_url: string
+  run_as: GatewayRunAs
+  /** Signed-in user mode: the selected tools' definitions, so the registry needs no API key. */
+  tools?: GatewayToolDef[]
+}
+
+/** A tool the gateway instance exposes, grouped by the gateway's MCP server. */
+export interface GatewayServer {
+  name: string
+  tools: GatewayToolDef[]
+}
+
+const GATEWAY_INSTANCE_RE = /^[A-Za-z0-9][A-Za-z0-9-]{0,127}$/
+
+/** The instance ID of a gateway instance URL, or null when the URL is not one. */
+export function parseGatewayInstanceUrl(url: string): string | null {
+  try {
+    const u = new URL(url.trim())
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null
+    const id = (u.searchParams.get("instance") ?? "").trim()
+    return GATEWAY_INSTANCE_RE.test(id) ? id : null
+  } catch {
+    return null
+  }
+}
 
 export interface ToolEntry {
   name: string
@@ -32,15 +78,18 @@ export interface ToolEntry {
   /** Environment variables for command-based (stdio) MCP servers. Values may be literal strings or secret refs. */
   env?: Record<string, string>
   transport?: McpTransport
+  /** Set for an MCP gateway instance; `include` then lists the selected gateway tools. */
+  gateway?: ToolGateway
 }
 
-export const AUTH_TYPE_OPTIONS: { value: AuthType; label: string; needsKey: boolean }[] = [
-  { value: "none", label: "No auth", needsKey: false },
-  { value: "header", label: "Header", needsKey: true },
-  { value: "bearer", label: "Bearer token", needsKey: false },
-  { value: "api-key", label: "API key (query)", needsKey: true },
-  { value: "basic", label: "Basic (user:pass)", needsKey: false },
-  { value: "query", label: "Query parameter", needsKey: true },
+/** `labelKey` is a translation key in the "tools" namespace; translate it where it is rendered. */
+export const AUTH_TYPE_OPTIONS: { value: AuthType; labelKey: string; needsKey: boolean }[] = [
+  { value: "none", labelKey: "authType.none", needsKey: false },
+  { value: "header", labelKey: "authType.header", needsKey: true },
+  { value: "bearer", labelKey: "authType.bearer", needsKey: false },
+  { value: "api-key", labelKey: "authType.apiKey", needsKey: true },
+  { value: "basic", labelKey: "authType.basic", needsKey: false },
+  { value: "query", labelKey: "authType.query", needsKey: true },
 ]
 
 export interface ConnectedTool {
@@ -139,6 +188,14 @@ export function normalizeTools(raw: unknown): ToolEntry[] {
         )
       }
       entry.transport = (t.transport as McpTransport) || "stdio"
+    } else if (type === "mcp" && t.gateway != null && typeof t.gateway === "object") {
+      const gw = t.gateway as Record<string, unknown>
+      entry.gateway = {
+        instance_url: String(gw.instance_url ?? entry.url ?? ""),
+        run_as: gw.run_as === "user" ? "user" : "service",
+        ...(Array.isArray(gw.tools) ? { tools: gw.tools as GatewayToolDef[] } : {}),
+      }
+      entry.transport = "http"
     } else if (type === "mcp" && entry.url) {
       entry.transport = (t.transport as McpTransport) || "sse"
     }
