@@ -93,7 +93,7 @@
     "policyDisabled": "Policyn är avstängd",
     "policiesDisabled": "Policyer är avstängda",
     "selectTools": "Välj specifika målverktyg för att generera ett skydd",
-    "generate": "Generera verktygsskydd"
+    "generate": "Skapa verktygsskydd med AI"
   },
   "toast": {
     "errorTitle": "Fel",
