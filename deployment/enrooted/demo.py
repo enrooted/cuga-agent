@@ -26,6 +26,7 @@ def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scenario", choices=SCENARIOS)
     actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--stop", action="store_true", help="Stop this demo pod and keep its data")
     actions.add_argument(
         "--cleanup", action="store_true", help="Remove this deployment, credentials and all its volumes"
     )
@@ -70,7 +71,7 @@ def arguments():
     rag.add_argument("--ca", type=Path, help="Additional trusted PEM roots for the issuer and MCP")
     rag.add_argument("--network", help="Existing Podman network with access to external services")
     args = parser.parse_args()
-    if args.cleanup:
+    if args.cleanup or args.stop:
         return args
     if args.build and (args.api_image or args.ui_image or args.pull_policy not in (None, "Never")):
         parser.error("--build supplies both local images and uses pull policy Never")
@@ -280,16 +281,28 @@ def remove_local_files(directory):
         directory.rmdir()
 
 
-def cleanup(directory, manifest, prefix):
+def manage_existing_deployment(directory, manifest, scenario, *, stop_only):
+    prefix = (directory / "prefix").read_text()
+    if not re.fullmatch(rf"cuga-{scenario}-[a-f0-9]{{8}}", prefix):
+        sys.exit("Unrecognized local demo identity")
     docs = list(yaml.safe_load_all(manifest.read_text()))
     pod = next(d for d in docs if d["kind"] == "Pod")
     if pod["metadata"]["name"] != prefix + "-pod" or any(
         not d["metadata"]["name"].startswith(prefix + "-") for d in docs
     ):
         sys.exit("The saved manifest contains resources outside this demo.")
-    if exists("pod", prefix + "-pod"):
-        podman("pod", "stop", prefix + "-pod")
-        podman("pod", "rm", prefix + "-pod")
+    pod_name = pod["metadata"]["name"]
+    pod_exists = exists("pod", pod_name)
+    if pod_exists:
+        podman("pod", "stop", pod_name)
+    if stop_only:
+        if pod_exists:
+            print(f"Stopped {pod_name}. Resume with: podman pod start {pod_name}")
+        else:
+            print(f"Pod {pod_name} does not exist. Saved deployment files are in {directory}.")
+        return
+    if pod_exists:
+        podman("pod", "rm", pod_name)
     # Also cover interrupted kube play/down and a pod that was manually removed.
     for doc in docs:
         name = doc["metadata"]["name"]
@@ -325,12 +338,11 @@ def run(args):
     # Concurrent CLI invocations for different scenarios may proceed independently.
     with (root / (args.scenario + ".lock")).open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if args.cleanup:
+        if args.cleanup or args.stop:
             if manifest.exists():
-                prefix = (directory / "prefix").read_text()
-                if not re.fullmatch(rf"cuga-{args.scenario}-[a-f0-9]{{8}}", prefix):
-                    sys.exit("Unrecognized local demo identity")
-                cleanup(directory, manifest, prefix)
+                manage_existing_deployment(directory, manifest, args.scenario, stop_only=args.stop)
+            elif args.stop:
+                print(f"No deployed {args.scenario} demo in {directory}.")
             elif (directory / "preview.yaml").exists():
                 (directory / "preview.yaml").unlink()
                 if not any(directory.iterdir()):
