@@ -13,6 +13,7 @@ import * as React from "react"
 import { Trans, useTranslation } from "react-i18next"
 import { SendIcon, ZapIcon } from "lucide-react"
 
+import { AiDisclosure } from "@/components/ai-disclosure"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
 import { Button } from "@/components/ui/button"
 import { Message, MessageContent, MessageHeader } from "@/components/ui/message"
@@ -50,6 +51,7 @@ const THREAD_ID = "web:studio"
 
 export function ConciergeChat({ draft, setDraft }: { draft: string; setDraft: (v: string) => void }) {
   const { t } = useTranslation("studio")
+  const disclosureId = React.useId()
   const [messages, setMessages] = React.useState<ConciergeMessage[]>([])
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -190,8 +192,10 @@ export function ConciergeChat({ draft, setDraft }: { draft: string; setDraft: (v
       )}
 
       <div className="flex flex-col gap-2">
+        <AiDisclosure id={disclosureId} />
         <Textarea
           aria-label={t("concierge.inputLabel")}
+          aria-describedby={disclosureId}
           placeholder={t("concierge.placeholder")}
           rows={2}
           className="glass-card"
