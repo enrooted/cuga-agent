@@ -90,13 +90,16 @@ Sign in to Manage as a `ServiceOwner`. Register a Streamable HTTP MCP tool at th
 
 Add `--render-only` to a launch command to inspect `.demo/<scenario>/preview.yaml` without starting Podman. A real launch saves `manifest.yaml` in the same directory. It sends database credentials, encryption keys, OIDC credentials and private TLS material to Podman's secret store. Local deployment files are excluded from Git and image build contexts.
 
-To stop the demo temporarily and retain both volumes, stop and start its pod. For example:
+Use `--stop` to shut down the selected demo and keep its conversations, database, credentials and deployment files. All three scenarios support it. If you deployed with a custom `--state-dir`, pass the same directory when stopping.
 
 ```sh
-prefix=$(cat .demo/keycloak/prefix)
-podman pod stop "$prefix-pod"
-podman pod start "$prefix-pod"
-podman logs -f "$prefix-pod-api"
+./demo.sh basic --stop
+```
+
+The launcher prints the exact `podman pod start` command to resume with the same data and UI port. From the default state directory setup, you can also resume with:
+
+```sh
+podman pod start "$(cat .demo/basic/prefix)-pod"
 ```
 
 Cleanup permanently removes the selected pod, PostgreSQL and CUGA data volumes, generated configuration volumes, local credentials, and the network created by the launcher. An operator-supplied network and external services retain their data. Keep the local deployment directory until cleanup finishes. Repeat the same launch command to create a fresh demo.
