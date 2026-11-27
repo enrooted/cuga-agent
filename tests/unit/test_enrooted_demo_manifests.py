@@ -112,6 +112,8 @@ def test_demo_preview(tmp_path, scenario, build):
             nginx = next(d["data"]["default.conf"] for d in docs if d["metadata"]["name"].endswith("-nginx"))
             assert "proxy_pass http://127.0.0.1:9444;" in nginx
             assert f"listen {containers['ui']['ports'][0]['containerPort']};" in nginx
+    subprocess.run([script, scenario, "--state-dir", tmp_path, "--stop"], check=True, env=env)
+    assert preview.read_text() == source
     subprocess.run([script, scenario, "--state-dir", tmp_path, "--cleanup"], check=True, env=env)
     assert not preview.exists()
 
@@ -157,7 +159,7 @@ def test_source_deploy_builds_both_images_before_play(tmp_path):
         "args = sys.argv[1:]\n"
         "with open(os.environ['TEST_CALLS'], 'a') as log: print(json.dumps(args), file=log)\n"
         "if args[0] == 'info': print('arm64')\n"
-        "if args[:2] == ['image', 'exists']: sys.exit(0)\n"
+        "if args[:2] in (['image', 'exists'], ['pod', 'exists']): sys.exit(0)\n"
         "if args[1:2] == ['exists']: sys.exit(1)\n"
         "if args[0] == 'build' and 'cuga-ui:' in args[args.index('-t') + 1] and os.getenv('FAIL_BUILD'): sys.exit(1)\n"
     )
@@ -202,6 +204,14 @@ def test_source_deploy_builds_both_images_before_play(tmp_path):
         root / "apps/enrooted-ui/Containerfile.containerignore"
     )
     assert commands[-1][-1] == str(manifest)
+    saved_manifest = manifest.read_bytes()
+    pod_name = pod["metadata"]["name"]
+    for _ in range(2):
+        result = subprocess.run(demo + ["--stop"], check=True, env=env, capture_output=True, text=True)
+        assert f"podman pod start {pod_name}" in result.stdout
+    lifecycle = list(map(json.loads, calls.read_text().splitlines()))[len(commands) :]
+    assert lifecycle == [["pod", "exists", pod_name], ["pod", "stop", pod_name]] * 2
+    assert manifest.read_bytes() == saved_manifest
     subprocess.run(demo + ["--cleanup"], check=True, env=env)
     untags = [cmd for cmd in map(json.loads, calls.read_text().splitlines()) if cmd[0] == "untag"]
     assert untags == [["untag", images[name], images[name]] for name in ("api", "ui")]
@@ -218,6 +228,7 @@ def test_source_deploy_builds_both_images_before_play(tmp_path):
         ["--ui-port", "8543"],
         ["--build", "--api-image", "localhost/custom:dev"],
         ["--build", "--pull-policy", "Always"],
+        ["--stop"],
     ],
 )
 def test_demo_rejects_conflicting_options(tmp_path, options):
