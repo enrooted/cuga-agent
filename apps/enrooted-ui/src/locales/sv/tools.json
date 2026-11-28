@@ -3,6 +3,7 @@
     "opensInNewTab": "{{label}} (öppnas i en ny flik)"
   },
   "authType": {
+    "keycloak": "Tokenutbyte för inloggad användare via Keycloak",
     "none": "Ingen autentisering",
     "header": "Header",
     "bearer": "Bearer-token",
@@ -116,6 +117,8 @@
       "unknownError": "fel"
     },
     "auth": {
+      "profile": "Delegeringsprofil",
+      "profileHelp": "Anrop görs med den inloggade användarens identitet. Ange profilnamnet som konfigurerats på servern och profilens exakta HTTPS-adress till MCP-servern.",
       "legend": "Autentisering",
       "type": "Autentiseringstyp",
       "key": "Header- eller query-nyckel"
