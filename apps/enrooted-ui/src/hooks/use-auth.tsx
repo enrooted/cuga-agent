@@ -44,8 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) setState((s) => ({ ...s, signInFailed: true }))
         return
       }
-      api.markLoginInProgress()
-      window.location.href = "/auth/login"
+      api.login()
     }
     ;(async () => {
       try {
@@ -59,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const params = new URLSearchParams(window.location.search)
         const code = params.get("code")
         const st = params.get("state")
-        if (code && st && !(await api.handleOidcCallback(code, st))) throw new Error("Sign-in failed")
+        const target = code && st ? await api.handleOidcCallback(code, st) : null
         const user = await api.getUserInfo()
         if (!user) {
           if (api.isSignedOut()) {
@@ -72,9 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         api.clearLoginInProgress()
         api.clearSignedOut()
         if (!cancelled) {
-          if (code && st && config.authorization_enabled && !user.canManage) {
-            window.location.replace("/chat")
-            return
+          if (target) {
+            const path = new URL(target, window.location.origin).pathname
+            const needsManage = /^\/(manage|studio)(\/|$)/.test(path)
+            const destination = needsManage && config.authorization_enabled && !user.canManage ? "/chat" : target
+            if (destination !== window.location.pathname + window.location.search + window.location.hash) {
+              window.location.replace(destination)
+              return
+            }
           }
           setState({
             ready: true,
@@ -85,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
         }
       } catch {
-        if (!cancelled) redirectToLogin()
+        if (!cancelled) setState((s) => ({ ...s, signInFailed: true }))
       }
     })()
     return () => {
