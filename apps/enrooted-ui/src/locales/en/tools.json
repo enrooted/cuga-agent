@@ -3,6 +3,7 @@
     "opensInNewTab": "{{label}} (opens in a new tab)"
   },
   "authType": {
+    "keycloak": "Keycloak user token exchange",
     "none": "No auth",
     "header": "Header",
     "bearer": "Bearer token",
@@ -116,6 +117,8 @@
       "unknownError": "error"
     },
     "auth": {
+      "profile": "Delegation profile",
+      "profileHelp": "Calls use the signed-in user’s identity. Enter the profile name configured on the server and its exact HTTPS MCP URL.",
       "legend": "Authentication",
       "type": "Auth type",
       "key": "Header / query key"
