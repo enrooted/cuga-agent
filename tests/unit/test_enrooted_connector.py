@@ -138,7 +138,7 @@ async def test_exchange_rejects_mismatched_claims(configured, monkeypatch, chang
     monkeypatch.setattr(keycloak_exchange, "get_oidc_client", lambda: client)
     monkeypatch.setattr(
         delegated_sessions,
-        "load",
+        "active_session",
         AsyncMock(
             return_value={
                 "issuer": ISSUER,
@@ -259,7 +259,9 @@ async def test_live_session_with_failed_exchange_stops_before_dispatch(
     monkeypatch.setattr(keycloak_exchange, "get_oidc_client", lambda: client)
     monkeypatch.setattr(keycloak_exchange, "issuer_config", AsyncMock(return_value=cfg))
     monkeypatch.setattr(
-        delegated_sessions, "load", AsyncMock(return_value={"issuer": ISSUER, "access_token": "test-user"})
+        delegated_sessions,
+        "active_session",
+        AsyncMock(return_value={"issuer": ISSUER, "access_token": "test-user"}),
     )
     response = httpx.Response(403, json={"error": idp_error})
     post = AsyncMock(
@@ -297,3 +299,114 @@ async def test_cancelling_turn_retires_binding_in_inherited_tasks():
     released.set()
     assert not await observers[0]
     assert keycloak_exchange.current_turn.get() is None
+
+
+@pytest.mark.parametrize("logout_during_refresh", [False, True])
+async def test_renewing_polls_share_rotation_and_respect_logout(tmp_path, monkeypatch, logout_during_refresh):
+    from cuga.backend.server.auth.models import UserInfo
+
+    store = LocalRelationalStore(str(tmp_path / "session.db"))
+    monkeypatch.setattr(delegated_sessions, "_get_store", lambda: store)
+    cipher = Fernet(Fernet.generate_key())
+    monkeypatch.setattr(delegated_sessions, "_fernet", lambda: cipher)
+    claims = {"iss": ISSUER, "exp": int(time.time()) - 1, "sid": "original"}
+    handle = await delegated_sessions.create(
+        "old", claims, UserInfo(sub="alice"), 3600, refresh_token="first"
+    )
+    started, finish = asyncio.Event(), asyncio.Event()
+
+    async def rotate(session):
+        started.set()
+        await finish.wait()
+        assert session["refresh_token"] == "first"
+        return {
+            **session,
+            "access_token": "new",
+            "refresh_token": "second",
+            "claims": {**claims, "exp": time.time() + 120},
+        }
+
+    client = SimpleNamespace(
+        discovery_url=ISSUER + "/.well-known/openid-configuration",
+        refresh_delegated_session=AsyncMock(side_effect=rotate),
+    )
+    try:
+        deadline = (await store.fetchone("SELECT expires FROM cuga_delegated_sessions"))["expires"]
+        polls = [asyncio.create_task(delegated_sessions.active_session(handle, client)) for _ in range(4)]
+        await asyncio.wait_for(started.wait(), 3)
+        if logout_during_refresh:
+            await delegated_sessions.load("session", handle, consume=True)
+        finish.set()
+        results = await asyncio.gather(*polls)
+        client.refresh_delegated_session.assert_awaited_once()
+        if logout_during_refresh:
+            assert results == [None] * 4
+        else:
+            assert all(result["access_token"] == "new" for result in results)
+            row = await store.fetchone("SELECT value, expires FROM cuga_delegated_sessions")
+            assert row["expires"] == deadline
+            assert json.loads(cipher.decrypt(row["value"].encode()))["refresh_token"] == "second"
+            await store.execute_batch([("UPDATE cuga_delegated_sessions SET expires = 0", ())])
+            assert await delegated_sessions.active_session(handle, client) is None
+    finally:
+        await store.close()
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/chat/research?view=memory#last",
+        "/studio",
+        "/manage/my-agent",
+        "/",
+        "//elsewhere.test",
+        "https://elsewhere.test",
+        "/chat/../auth/logout",
+        "/chat\\elsewhere",
+        "/auth/logout",
+    ],
+)
+def test_oidc_return_locations(path):
+    from cuga.backend.server.auth.oidc_client import ui_return_path
+
+    expected = (
+        path if path in {"/chat/research?view=memory#last", "/studio", "/manage/my-agent", "/"} else "/manage"
+    )
+    assert ui_return_path(path) == expected
+
+
+@pytest.mark.parametrize(
+    ("status", "reason", "invalidated"), [(400, "invalid_grant", True), (503, "unavailable", False)]
+)
+async def test_refresh_failure_invalidates_only_a_rejected_grant(
+    tmp_path, monkeypatch, status, reason, invalidated
+):
+    from fastapi import HTTPException
+    from cuga.backend.server.auth.models import UserInfo
+
+    store = LocalRelationalStore(str(tmp_path / "session.db"))
+    monkeypatch.setattr(delegated_sessions, "_get_store", lambda: store)
+    cipher = Fernet(Fernet.generate_key())
+    monkeypatch.setattr(delegated_sessions, "_fernet", lambda: cipher)
+    claims = {"iss": ISSUER, "exp": int(time.time()) - 1, "sid": "original"}
+    handle = await delegated_sessions.create("old", claims, UserInfo(sub="alice"), 300, refresh_token="first")
+    request = httpx.Request("POST", ISSUER + "/token")
+    response = httpx.Response(status, json={"error": reason}, request=request)
+    client = SimpleNamespace(
+        discovery_url=ISSUER + "/.well-known/openid-configuration",
+        refresh_delegated_session=AsyncMock(
+            side_effect=httpx.HTTPStatusError("renewal failed", request=request, response=response)
+        ),
+    )
+    try:
+        if invalidated:
+            assert await delegated_sessions.active_session(handle, client) is None
+            assert await delegated_sessions.load("session", handle) is None
+        else:
+            with pytest.raises(HTTPException) as err:
+                await delegated_sessions.active_session(handle, client)
+            assert err.value.status_code == 502
+            saved = await delegated_sessions.load("session", handle)
+            assert saved["refresh_token"] == "first" and "refreshing_until" not in saved
+    finally:
+        await store.close()
