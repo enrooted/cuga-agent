@@ -38,6 +38,7 @@
     "authOff": "Inloggning är avstängd på servern",
     "signedInAs": "Inloggad som",
     "language": "Språk",
+    "sessionExpired": "Din session har gått ut. Logga in för att fortsätta.",
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "signedOutTitle": "Du är utloggad",
