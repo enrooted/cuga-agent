@@ -2929,7 +2929,7 @@ async def authenticated_chat_turn(request: Request, user=Depends(require_chat_ac
 async def auth_login(request: Request):
     if not _auth_enabled():
         return RedirectResponse(url="/", status_code=302)
-    from cuga.backend.server.auth.oidc_client import get_oidc_client
+    from cuga.backend.server.auth.oidc_client import get_oidc_client, ui_return_path
 
     client = get_oidc_client()
     if not client:
@@ -2944,6 +2944,16 @@ async def auth_login(request: Request):
     response.set_cookie(
         key="cuga_auth_state",
         value=state,
+        max_age=600,
+        httponly=True,
+        samesite=state_samesite,
+        secure=secure,
+    )
+    from urllib.parse import quote
+
+    response.set_cookie(
+        "cuga_login_return",
+        quote(ui_return_path(request.query_params.get("return_to")), safe=""),
         max_age=600,
         httponly=True,
         samesite=state_samesite,
@@ -3006,7 +3016,7 @@ async def auth_callback(request: Request):
             state[:8],
         )
         raise HTTPException(status_code=400, detail="Invalid state: state mismatch")
-    from cuga.backend.server.auth.oidc_client import get_oidc_client
+    from cuga.backend.server.auth.oidc_client import get_oidc_client, ui_return_path
 
     client = get_oidc_client()
     if not client:
@@ -3086,7 +3096,10 @@ async def auth_callback(request: Request):
         token = token_response.access_token
     cookie_name = getattr(auth, "session_cookie_name", "cuga_session") if auth else "cuga_session"
     session_max_age = getattr(auth, "session_max_age", 3600) if auth else 3600
-    response = JSONResponse({"ok": True, "redirect": "/manage"})
+    from urllib.parse import unquote
+
+    target = ui_return_path(unquote(request.cookies.get("cuga_login_return", "")))
+    response = JSONResponse({"ok": True, "redirect": target})
     secure = getattr(auth, "require_https", False) if auth else False
     direct_mode = bool(os.environ.get("CUGA_DELEGATION_CONFIG"))
     if direct_mode:
@@ -3112,7 +3125,12 @@ async def auth_callback(request: Request):
                 validator.to_user_info(access) if token == token_response.access_token else _user_info
             )
             token = await delegated_sessions.create(
-                token_response.access_token, access, login_user, session_max_age
+                token_response.access_token,
+                access,
+                login_user,
+                session_max_age,
+                refresh_token=token_response.refresh_token,
+                use_id_roles=token != token_response.access_token,
             )
         except Exception as exc:
             raise HTTPException(401, "Unable to establish an evidence session") from exc
@@ -3142,6 +3160,7 @@ async def auth_callback(request: Request):
         )
     state_samesite = "none" if secure else "lax"
     response.delete_cookie("cuga_auth_state", secure=secure, samesite=state_samesite)
+    response.delete_cookie("cuga_login_return", secure=secure, samesite=state_samesite)
     return response
 
 
