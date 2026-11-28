@@ -136,6 +136,8 @@ def run(command, *, chat=False):
         client["attributes"].update(
             {"standard.token.exchange.enabled": "true", "pkce.code.challenge.method": "S256"}
         )
+        if lifetime := os.environ.get("CUGA_TEST_ACCESS_TOKEN_LIFESPAN"):
+            client["attributes"]["access.token.lifespan"] = str(int(lifetime))
         admin.http.put(f"{prefix}/{client['id']}", json=client).raise_for_status()
         admin.call(
             "POST", f"{prefix}/{client['id']}/protocol-mappers/models", **live.audience_mapper("cuga-backend")
