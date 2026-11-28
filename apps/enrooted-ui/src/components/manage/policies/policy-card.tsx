@@ -89,7 +89,7 @@ export function PolicyCard({
   return (
     <li className="overflow-hidden rounded-xl border bg-card">
       <div className={cn("p-3", expanded && "bg-muted/50")}>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Checkbox
             aria-label={t("card.enable")}
             checked={enabled}
@@ -99,13 +99,13 @@ export function PolicyCard({
           <Input
             id={`name-${domId}`}
             aria-label={t("card.name")}
-            className="max-w-sm min-w-0 flex-1"
+            className="max-w-sm min-w-24 flex-1"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder={namePlaceholder}
             disabled={disabled}
           />
-          <div className="ml-auto flex shrink-0 items-center gap-1">
+          <div className="ml-auto flex max-w-full flex-wrap items-center gap-1">
             {actions}
             <IconAction
               label={expanded ? t("card.collapse") : t("card.expand")}

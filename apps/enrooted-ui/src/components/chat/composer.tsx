@@ -11,6 +11,7 @@ import * as React from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowUpIcon, FileTextIcon, PaperclipIcon, RotateCwIcon, SquareIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 
+import { AiDisclosure } from "@/components/ai-disclosure"
 import {
   Attachment,
   AttachmentAction,
@@ -195,6 +196,7 @@ export function Composer({
 }) {
   const { t } = useTranslation("chat")
   const [value, setValue] = React.useState("")
+  const disclosureId = React.useId()
   const [caret, setCaret] = React.useState(0)
   const [highlight, setHighlight] = React.useState(0)
   const [dismissed, setDismissed] = React.useState<{ value: string; tokenStart: number } | null>(null)
@@ -303,7 +305,8 @@ export function Composer({
   const segments = splitKnownCommands(value, known)
 
   return (
-    <div className="relative">
+    <div className="relative flex flex-col gap-1.5">
+      <AiDisclosure id={disclosureId} />
       {open && (
         <div
           role="listbox"
@@ -396,6 +399,7 @@ export function Composer({
             disabled={disabled}
             placeholder={placeholder ?? t("composer.placeholder")}
             aria-label={t("composer.message")}
+            aria-describedby={disclosureId}
             aria-autocomplete="list"
             aria-controls={open ? "cuga-slash-options" : undefined}
             aria-activedescendant={open && match ? `cuga-slash-option-${match.name}` : undefined}

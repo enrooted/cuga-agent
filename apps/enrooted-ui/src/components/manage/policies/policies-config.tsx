@@ -285,13 +285,14 @@ function ToolGuardAction({
             ? t("guardAction.selectTools")
             : t("guardAction.generate")
   const disabled = guarded ? false : anyGenerating || !policiesEnabled || !policy.enabled || !concrete
+  const showGenerateLabel = !guarded && policiesEnabled && policy.enabled && concrete
   return (
     <Tooltip>
       {/* The span keeps the explanation reachable while the button is disabled. */}
       <TooltipTrigger render={<span className="inline-flex" />}>
         <Button
           variant="ghost"
-          size="icon-sm"
+          size={showGenerateLabel ? "sm" : "icon-sm"}
           aria-label={label}
           disabled={disabled}
           onClick={guarded ? onView : onGenerate}
@@ -303,6 +304,7 @@ function ToolGuardAction({
           ) : (
             <ShieldIcon />
           )}
+          {showGenerateLabel && label}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{label}</TooltipContent>

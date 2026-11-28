@@ -93,7 +93,7 @@
     "policyDisabled": "Policy is disabled",
     "policiesDisabled": "Policies disabled",
     "selectTools": "Select specific target tools to generate a guard",
-    "generate": "Generate tool guard"
+    "generate": "Generate guard with AI"
   },
   "toast": {
     "errorTitle": "Error",

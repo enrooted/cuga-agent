@@ -1,4 +1,5 @@
 {
+  "aiDisclosure": "You’re chatting with an AI assistant.",
   "action": {
     "cancel": "Cancel",
     "close": "Close",
