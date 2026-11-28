@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea"
 import * as api from "@/lib/manage/tools-api"
 import {
   AUTH_TYPE_OPTIONS,
+  KEYCLOAK_USER_EXCHANGE,
   parseGatewayInstanceUrl,
   type AuthType,
   type GatewayRunAs,
@@ -57,6 +58,8 @@ export interface AddToolDialogProps {
   /** Open as the dedicated MCP gateway form (no templates, type or connection choice). */
   gatewayOnly?: boolean
 }
+
+type AuthSelection = AuthType | typeof KEYCLOAK_USER_EXCHANGE
 
 const emptyAuth: ToolAuth = { type: "none" }
 
@@ -156,7 +159,7 @@ function initFromTool(initial: ToolEntry | null | undefined) {
       : transport === "http"
         ? "url-http"
         : "url"
-  const authType: AuthType = !auth.type || auth.type === "none" ? "none" : auth.type
+  const authType: AuthSelection = auth.mode ?? auth.type ?? "none"
   return {
     name: initial?.name ?? "",
     type: initial?.type ?? "mcp",
@@ -166,6 +169,7 @@ function initFromTool(initial: ToolEntry | null | undefined) {
     argsText: (initial?.args ?? []).join("\n"),
     description: initial?.description ?? "",
     authType,
+    profile: auth.profile ?? "",
     authKey: auth.key ?? "",
     authValue: val,
     useSavedSecret: typeof val === "string" && isSecretRef(val),
@@ -207,7 +211,8 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
   const [argsText, setArgsText] = React.useState(init.argsText)
   const [description, setDescription] = React.useState(init.description)
   const [envText, setEnvText] = React.useState(() => envToText(initial?.env))
-  const [authType, setAuthType] = React.useState<AuthType>(init.authType)
+  const [authType, setAuthType] = React.useState<AuthSelection>(init.authType)
+  const [profile, setProfile] = React.useState(init.profile)
   const [authKey, setAuthKey] = React.useState(init.authKey)
   const [authValue, setAuthValue] = React.useState(init.authValue)
   const [useSavedSecret, setUseSavedSecret] = React.useState(init.useSavedSecret)
@@ -268,7 +273,8 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
     setArgsText(config.argsText || (config.args || []).join("\n"))
     setDescription(config.description || "")
     const auth = config.auth ?? emptyAuth
-    setAuthType(auth.type === "none" || !auth.type ? "none" : auth.type)
+    setAuthType(auth.mode ?? auth.type ?? "none")
+    setProfile(auth.profile ?? "")
     setAuthKey(auth.key ?? "")
     setAuthValue(auth.value ?? "")
     setEnvText(envToText(config.env))
@@ -276,7 +282,9 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
   }
 
   const isGateway = type === "mcp" && mcpMode === "gateway"
-  const effectiveAuthType: AuthType = isGateway ? GATEWAY_AUTH_TYPE : authType
+  const isDelegated = authType === KEYCLOAK_USER_EXCHANGE
+  const isHttpMcp = type === "mcp" && mcpMode === "url-http"
+  const effectiveAuthType: AuthSelection = isGateway ? GATEWAY_AUTH_TYPE : authType
   const authOption = AUTH_TYPE_OPTIONS.find((o) => o.value === authType)
   const needsKey = !isGateway && (authOption?.needsKey ?? false)
   const gatewayInstanceId = isGateway ? parseGatewayInstanceUrl(url) : null
@@ -435,7 +443,10 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
       } else if (type === "mcp" && url.trim()) {
         tool.transport = mcpMode === "url-http" ? "http" : "sse"
       }
-      if (authType !== "none") {
+      if (isDelegated) {
+        tool.auth = { mode: KEYCLOAK_USER_EXCHANGE, profile: profile.trim() }
+        if (initial?.include) tool.include = initial.include
+      } else if (authType !== "none") {
         let authValueFinal = authValue.trim()
 
         if (saveAsNewSecret && authValueFinal) {
@@ -460,10 +471,11 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
             ...(needsKey && authKey.trim() && { key: authKey.trim() }),
             value: authValueFinal,
           }
-        } else if (initial?.auth && initial.auth.type !== "none") {
+        } else if (initial?.auth?.type && initial.auth.type !== KEYCLOAK_USER_EXCHANGE && initial.auth.type !== "none") {
           tool.auth = {
-            ...initial.auth,
             type: authType,
+            value: initial.auth.value,
+            key: initial.auth.key,
             ...(needsKey && authKey.trim() && { key: authKey.trim() }),
           }
         }
@@ -548,7 +560,8 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
   const valid =
     !nameError &&
     !envError &&
-    description.trim().length > 0 &&
+    (isDelegated || description.trim().length > 0) &&
+    (!isDelegated || (isHttpMcp && !!profile.trim() && /^https:\/\//i.test(url.trim()))) &&
     (type === "openapi"
       ? url.trim().length > 0
       : isGateway
@@ -798,7 +811,7 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
                   onChange={(e) => setType(e.target.value as "mcp" | "openapi")}
                 >
                   <NativeSelectOption value="mcp">{t("addTool.type.mcp")}</NativeSelectOption>
-                  <NativeSelectOption value="openapi">{t("addTool.type.openapi")}</NativeSelectOption>
+                  <NativeSelectOption value="openapi" disabled={isDelegated}>{t("addTool.type.openapi")}</NativeSelectOption>
                 </NativeSelect>
               </Field>
               )}
@@ -812,10 +825,10 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
                     value={mcpMode}
                     onChange={(e) => setMcpMode(e.target.value as McpConnectionMode)}
                   >
-                    <NativeSelectOption value="url">{t("addTool.connection.url")}</NativeSelectOption>
+                    <NativeSelectOption value="url" disabled={isDelegated}>{t("addTool.connection.url")}</NativeSelectOption>
                     <NativeSelectOption value="url-http">{t("addTool.connection.urlHttp")}</NativeSelectOption>
-                    <NativeSelectOption value="command">{t("addTool.connection.command")}</NativeSelectOption>
-                    <NativeSelectOption value="gateway">{t("addTool.connection.gateway")}</NativeSelectOption>
+                    <NativeSelectOption value="command" disabled={isDelegated}>{t("addTool.connection.command")}</NativeSelectOption>
+                    <NativeSelectOption value="gateway" disabled={isDelegated}>{t("addTool.connection.gateway")}</NativeSelectOption>
                   </NativeSelect>
                 </Field>
               )}
@@ -923,7 +936,7 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("addTool.descriptionField.placeholder")}
                   rows={2}
-                  required
+                  required={!isDelegated}
                 />
               </Field>
 
@@ -1002,8 +1015,11 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
                     id="tool-auth-type"
                     className="w-full"
                     value={authType}
-                    onChange={(e) => setAuthType(e.target.value as AuthType)}
+                    onChange={(e) => setAuthType(e.target.value as AuthSelection)}
                   >
+                    {(isHttpMcp || isDelegated) && (
+                      <NativeSelectOption value={KEYCLOAK_USER_EXCHANGE}>{t("authType.keycloak")}</NativeSelectOption>
+                    )}
                     {AUTH_TYPE_OPTIONS.map((opt) => (
                       <NativeSelectOption key={opt.value} value={opt.value}>
                         {t(opt.labelKey)}
@@ -1024,7 +1040,19 @@ export function AddToolDialog({ onClose, onSave, initial, agentId, gatewayOnly }
                   </Field>
                 )}
 
-                {authType !== "none" && secretFields}
+                {isDelegated ? (
+                  <Field>
+                    <FieldLabel htmlFor="tool-delegation-profile">{t("addTool.auth.profile")}</FieldLabel>
+                    <Input
+                      id="tool-delegation-profile"
+                      value={profile}
+                      onChange={(e) => setProfile(e.target.value)}
+                      required
+                      aria-describedby="tool-delegation-help"
+                    />
+                    <FieldDescription id="tool-delegation-help">{t("addTool.auth.profileHelp")}</FieldDescription>
+                  </Field>
+                ) : authType !== "none" && secretFields}
               </FieldSet>
               )}
             </FieldGroup>
