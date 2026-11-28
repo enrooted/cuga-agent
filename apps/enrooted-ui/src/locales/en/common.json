@@ -38,6 +38,7 @@
     "authOff": "Sign-in is turned off on this server",
     "signedInAs": "Signed in as",
     "language": "Language",
+    "sessionExpired": "Your session has expired. Sign in to continue.",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "signedOutTitle": "You are signed out",

@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 import json
 import os
 import socket
+import time
 from urllib.parse import parse_qs, urlsplit
 
 import aiohttp
@@ -26,9 +27,11 @@ class LoginForm(HTMLParser):
             self.action = fields["action"]
 
 
-async def sign_in(chat, username):
+async def sign_in(chat, username, return_to="/manage"):
     async with httpx.AsyncClient(verify=os.environ["SSL_CERT_FILE"]) as browser:
-        start = await browser.get(os.environ["CUGA_TEST_LOGIN_ORIGIN"] + "/auth/login")
+        start = await browser.get(
+            os.environ["CUGA_TEST_LOGIN_ORIGIN"] + "/auth/login", params={"return_to": return_to}
+        )
         assert start.status_code == 302
         chat.cookies.update(start.cookies)
         login = await browser.get(start.headers["location"])
@@ -43,6 +46,7 @@ async def sign_in(chat, username):
         params = parse_qs(urlsplit(callback.headers["location"]).query)
     signed_in = await chat.post("/auth/callback", json={k: params[k][0] for k in ("code", "state")})
     assert signed_in.status_code == 200, signed_in.text
+    assert signed_in.json()["redirect"] == return_to
     assert chat.cookies["cuga_session"].startswith("ds.")
 
 
@@ -183,3 +187,31 @@ async def test_two_users_through_cuga_stream(monkeypatch):
         async with httpx.AsyncClient(verify=os.environ["SSL_CERT_FILE"], cookies=alice.cookies) as replica:
             assert (await replica.post(os.environ["CUGA_TEST_LOGIN_ORIGIN"] + "/auth/logout")).is_success
         assert (await alice.get("/auth/userinfo")).status_code == 401
+
+
+async def test_oidc_session_outlasts_access_token():
+    if not os.environ.get("CUGA_TEST_ALICE_PASSWORD") or not os.environ.get(
+        "CUGA_TEST_ACCESS_TOKEN_LIFESPAN"
+    ):
+        pytest.skip("Run the disposable stack with CUGA_TEST_ACCESS_TOKEN_LIFESPAN=10")
+    from cuga.backend.server import main
+    from cuga.backend.server.auth import delegated_sessions, keycloak_exchange
+    from cuga.backend.tools_env.registry.delegation import profiles
+
+    origin = os.environ["OIDC_REDIRECT_URI"].removesuffix("/manage")
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url=origin) as chat:
+        await sign_in(chat, "alice", "/chat/legal?view=memory")
+        handle = chat.cookies["cuga_session"]
+        first = await delegated_sessions.load("session", handle)
+        await asyncio.sleep(max(0, first["claims"]["exp"] - time.time() + 0.2))
+        async with httpx.AsyncClient(verify=os.environ["SSL_CERT_FILE"], cookies=chat.cookies) as replica:
+            responses = await asyncio.gather(
+                chat.get("/auth/userinfo"),
+                replica.get(os.environ["CUGA_TEST_LOGIN_ORIGIN"] + "/auth/userinfo"),
+            )
+        assert all(r.status_code == 200 and r.json()["sub"] == first["user"]["sub"] for r in responses)
+        renewed = await delegated_sessions.load("session", handle)
+        assert renewed["claims"]["exp"] > first["claims"]["exp"]
+        assert await keycloak_exchange.exchange(handle, profiles()["enrooted"])
+        assert (await chat.post("/auth/logout")).is_success
+        assert await delegated_sessions.active_session(handle, keycloak_exchange.get_oidc_client()) is None

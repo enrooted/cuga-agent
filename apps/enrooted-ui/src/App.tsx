@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ThemeProvider } from "next-themes"
+import { toast } from "sonner"
 import { LogInIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom"
@@ -54,6 +55,14 @@ function EventsGate({ children }: { children: React.ReactNode }) {
 function Gate({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const { ready, signInFailed, signedOut } = useAuth()
+  React.useEffect(() => {
+    const notify = () => toast(t("account.sessionExpired"), {
+      id: "session-expired", duration: Infinity,
+      action: { label: t("account.signIn"), onClick: api.login },
+    })
+    window.addEventListener(api.SESSION_EXPIRED_EVENT, notify)
+    return () => window.removeEventListener(api.SESSION_EXPIRED_EVENT, notify)
+  }, [t])
   if (signInFailed || signedOut) {
     return (
       <div className="app-backdrop flex h-dvh flex-col items-center justify-center gap-3 p-6 text-center">

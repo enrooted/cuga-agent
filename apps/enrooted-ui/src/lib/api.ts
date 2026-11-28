@@ -87,17 +87,28 @@ export function login() {
   setSignedOut(false)
   clearLoginInProgress()
   markLoginInProgress()
-  window.location.href = "/auth/login"
+  const here = new URL(window.location.href)
+  here.searchParams.delete("code")
+  here.searchParams.delete("state")
+  window.location.assign("/auth/login?" + new URLSearchParams({ return_to: here.pathname + here.search + here.hash }))
 }
 
-let loginRedirecting = false
+export const SESSION_EXPIRED_EVENT = "cuga:session-expired"
+let checkingSession = false
 export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(url, { ...init, credentials: "include" })
-  if (res.status === 401 && !loginRedirecting) {
-    const config = await getAuthConfig().catch(() => null)
-    if (config?.enabled && !isSignedOut()) {
-      loginRedirecting = true
-      window.location.href = "/auth/login"
+  // A tool or service can reject its own credentials. Check the browser session
+  // independently before offering sign-in, and keep the current view mounted.
+  if (res.status === 401 && !checkingSession && !isSignedOut()) {
+    checkingSession = true
+    try {
+      if ((await getAuthConfig()).enabled && !(await getUserInfo())) {
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+      }
+    } catch {
+      // A failed session probe is not evidence that the user signed out.
+    } finally {
+      checkingSession = false
     }
   }
   return res
@@ -113,7 +124,8 @@ export type UserInfo = {
 export async function getUserInfo(): Promise<UserInfo | null> {
   // AuthProvider owns the initial redirect and the one-time PKCE transaction.
   const res = await fetch("/auth/userinfo", { credentials: "include" })
-  if (!res.ok) return null
+  if (res.status === 401) return null
+  if (!res.ok) throw new Error("Session check failed")
   const data = await res.json()
   return {
     name: data.name,
@@ -136,7 +148,11 @@ export async function handleOidcCallback(code: string, state: string) {
   url.searchParams.delete("code")
   url.searchParams.delete("state")
   window.history.replaceState(null, "", url.pathname + url.search + url.hash)
-  return res.ok
+  if (!res.ok) throw new Error("Sign-in failed")
+  const data = await res.json()
+  const target = new URL(data.redirect || "/manage", window.location.origin)
+  if (target.origin !== window.location.origin || target.pathname.startsWith("//")) return "/manage"
+  return target.pathname + target.search + target.hash
 }
 export async function logout(): Promise<void> {
   const res = await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined)
