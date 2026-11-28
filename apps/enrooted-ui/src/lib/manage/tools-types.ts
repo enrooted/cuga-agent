@@ -18,11 +18,12 @@ export type AuthType =
   /** MCP gateway instance API key, exchanged by the registry for an instance token. */
   | "account_iam_apikey"
 
-export interface ToolAuth {
-  type: AuthType
-  key?: string
-  value?: string
-}
+export const KEYCLOAK_USER_EXCHANGE = "keycloak_user_exchange"
+
+export type ToolAuth =
+  | { type: AuthType; key?: string; value?: string; mode?: never; profile?: never }
+  // The registry also accepts the legacy `type` spelling for delegated MCP tools.
+  | { mode?: typeof KEYCLOAK_USER_EXCHANGE; type?: typeof KEYCLOAK_USER_EXCHANGE; profile: string; key?: never; value?: never }
 
 export type McpTransport = "sse" | "stdio" | "http"
 
