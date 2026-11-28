@@ -41,6 +41,16 @@ The public backend serves `GET /health`, `GET /openapi.json`, `POST /stream` and
 
 For OIDC, the bundled `/manage` page normally finishes the login. An API client using delegated evidence needs to start at `GET /auth/login`, receive the authorization redirect at its registered callback, and POST the returned `code` and `state` to `/auth/callback` with the original CUGA state cookie. Keep the resulting session cookie for `POST /stream`. A standalone bearer token can authenticate supported API calls, but direct evidence exchange requires the signed-in CUGA session. For a browser client, serve its callback at the configured origin and route its CUGA requests through the same origin.
 
+The Enrooted UI returns to the original Chat, Manage, or Studio route after sign-in. If a background poll encounters an expired session, the page keeps the draft and offers a Sign in action. In the delegated OIDC deployment, CUGA stores the refresh token encrypted with the session and renews the access token on demand. The original session deadline (`auth.session_max_age`) still applies.
+
+To verify rotation with a 10-second access token, run the following command from the fork root on a workstation configured for the disposable test stack.
+
+```sh
+CUGA_TEST_ACCESS_TOKEN_LIFESPAN=10 .venv/bin/python deployment/enrooted/test_stack.py \
+  .venv/bin/pytest -q -m manual tests/integration/test_enrooted_handbook.py::test_oidc_session_outlasts_access_token
+```
+
+
 ## Repeat the isolated connector test
 
 The test launcher uses a fresh loopback Keycloak container, a temporary CA, an enforcing Enrooted Context process and the real Python FastMCP server. The Context project's test fixture ingests the handbook in temporary storage. Each login starts on a separate CUGA worker and completes in the Chat process using authorization code and PKCE. The workers share a temporary SQLite database and the deployment keys. The test logs out on the login worker and checks that the cookie stops working in Chat. The test selects tools deterministically inside the real Chat streaming endpoint. This exercises delegation independently of model selection. Use the Chromium test below or section 7 of the Context demo to evaluate the generated answer.
