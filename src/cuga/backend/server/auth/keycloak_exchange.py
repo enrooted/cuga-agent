@@ -74,10 +74,13 @@ async def issuer_config(client):
 
 
 async def exchange(handle, profile):
-    session = await delegated_sessions.load("session", handle) if handle else None
+    client = get_oidc_client()
+    try:
+        session = await delegated_sessions.active_session(handle, client)
+    except HTTPException as exc:
+        raise DelegationError(exc.status_code, exc.detail) from exc
     if session is None:
         raise DelegationError(401, "Sign in again to use evidence tools.")
-    client = get_oidc_client()
     try:
         cfg = await issuer_config(client)
         if session["issuer"] != cfg["issuer"]:
