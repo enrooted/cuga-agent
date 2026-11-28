@@ -1,6 +1,8 @@
+import asyncio
 import base64
 import hashlib
 import os
+import re
 import secrets
 import time
 from typing import Any, Optional
@@ -11,6 +13,18 @@ from loguru import logger
 
 from cuga.backend.server.auth.models import TokenResponse, UserInfo
 from cuga.backend.server.auth.jwt_validator import JWTValidator
+
+
+def ui_return_path(value: str | None) -> str:
+    """Keep the return location on a known local UI route; the registered OIDC redirect URI stays fixed."""
+    if not value or len(value) > 2048 or not value.isascii() or not value.isprintable():
+        return "/manage"
+    path = value.split("?", 1)[0].split("#", 1)[0]
+    if not re.fullmatch(r"/(?:(?:chat|manage|studio)(?:/[a-zA-Z0-9_-]+)?/?)?", path):
+        return "/manage"
+    if "\\" in value:
+        return "/manage"
+    return value
 
 
 def _pkce_pair() -> tuple[str, str]:
@@ -171,6 +185,56 @@ class OIDCClient:
         user_info = validator.to_user_info(payload)
 
         return token_response, user_info
+
+    async def refresh_delegated_session(self, session: dict) -> dict:
+        from .keycloak_exchange import issuer_config
+
+        discovery = await issuer_config(self)
+        async with httpx.AsyncClient(verify=self._ssl, timeout=10) as http:
+            response = await http.post(
+                discovery["token_endpoint"],
+                data={
+                    "grant_type": "refresh_token",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    "refresh_token": session["refresh_token"],
+                },
+            )
+            response.raise_for_status()
+            tokens = TokenResponse.model_validate(response.json())
+        validator = self._get_validator(discovery["jwks_uri"], discovery["issuer"])
+        claims = await asyncio.to_thread(
+            validator.validate_and_decode, tokens.access_token, audience=self.client_id
+        )
+        if (
+            tokens.token_type.lower() != "bearer"
+            or claims.get("typ") != "Bearer"
+            or claims.get("azp") != self.client_id
+            or not claims.get("exp")
+            or claims.get("sub") != session["user"]["sub"]
+            or claims.get("sid") != session["claims"]["sid"]
+        ):
+            raise ValueError("Renewed access token does not match the session")
+        role_claims = claims
+        if session["use_id_roles"]:
+            if not tokens.id_token:
+                raise ValueError("Missing renewed identity token")
+            role_claims = await asyncio.to_thread(
+                validator.validate_and_decode, tokens.id_token, audience=self.client_id
+            )
+            if (
+                not role_claims.get("exp")
+                or role_claims.get("sub") != claims["sub"]
+                or role_claims.get("sid", claims["sid"]) != claims["sid"]
+            ):
+                raise ValueError("Renewed identity token does not match the session")
+        return {
+            **session,
+            "claims": claims,
+            "user": validator.to_user_info(role_claims).model_dump(),
+            "access_token": tokens.access_token,
+            "refresh_token": tokens.refresh_token or session["refresh_token"],
+        }
 
     async def exchange_service_token(self, access_token: str, instance_id: str) -> str:
         if not self.iam_proxy_url:
