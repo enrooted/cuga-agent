@@ -246,10 +246,8 @@ async def get_current_user(request: Request) -> Optional[UserInfo]:
 
         client = get_oidc_client()
         check_delegated_origin(request, client)
-        session = await delegated_sessions.load("session", token) if enabled() and client else None
-        if not session or session["issuer"] != client.discovery_url.removesuffix(
-            "/.well-known/openid-configuration"
-        ):
+        session = await delegated_sessions.active_session(token, client) if enabled() else None
+        if not session:
             raise HTTPException(401, "Sign in again")
         request.state.delegated_session = token
         return UserInfo.model_validate(session["user"])
